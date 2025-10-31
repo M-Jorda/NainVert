@@ -92,6 +92,9 @@ export function useRefunds() {
   }
 
   const refundStats = computed(() => {
+    if (!refunds.value || !Array.isArray(refunds.value) || refunds.value.length === 0) {
+      return { total: 0, requested: 0, approved: 0, rejected: 0, processed: 0 }
+    }
     const stats = { total: refunds.value.length, requested: 0, approved: 0, rejected: 0, processed: 0 }
     refunds.value.forEach(refund => {
       stats[refund.status] = (stats[refund.status] || 0) + 1

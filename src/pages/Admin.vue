@@ -7,8 +7,10 @@ const {
   updateRefundStatus,
   addRefundNote,
   deleteRefund,
-  refundStats
-} = useRefunds()
+  refundStats: _refundStats
+} = useRefunds() || {}
+
+const refundStats = _refundStats || { total: 0, requested: 0, approved: 0, rejected: 0, processed: 0 }
 const refundFilter = ref('all')
 const selectedRefund = ref(null)
 const refundNoteInput = ref('')
@@ -63,104 +65,8 @@ onMounted(() => {
 })
 <template>
   <div class="min-h-screen py-20">
-    <!-- Login Form -->
-    <div v-if="!adminStore.isAuthenticated" class="container max-w-md mx-auto px-4">
-      <div class="bg-[var(--color-black-light)] border border-[rgba(57,255,20,0.3)] rounded-xl p-8">
-        <h1 class="text-3xl font-bold text-center mb-8">
-          <span class="text-gradient">Admin Panel</span>
-        </h1>
-        
-        <form @submit.prevent="handleLogin" class="flex flex-col gap-4">
-          <div>
-            <label class="block text-sm font-semibold mb-2 text-[var(--color-text-secondary)]">
-              Email
-            </label>
-            <input 
-              v-model="email"
-              type="email"
-              class="form-input"
-              placeholder="admin@nainvert.com"
-              required
-            >
-          </div>
-          
-          <div>
-            <label class="block text-sm font-semibold mb-2 text-[var(--color-text-secondary)]">
-              Mot de passe
-            </label>
-            <input 
-              v-model="password"
-              type="password"
-              class="form-input"
-              placeholder="Entrez le mot de passe"
-              required
-              :disabled="isBlocked"
-            >
-          </div>
-
-          <!-- Captcha (after 2 failed attempts) -->
-          <div v-if="showCaptcha && !isBlocked" class="p-4 bg-[rgba(57,255,20,0.05)] border border-[rgba(57,255,20,0.3)] rounded-lg">
-            <label class="block text-sm font-semibold mb-2 text-[var(--color-text-secondary)]">
-              🤖 Vérification anti-robot
-            </label>
-            <div class="flex items-center gap-3">
-              <span class="text-2xl font-bold text-[var(--color-neon-green)] font-mono">
-                {{ captchaQuestion.num1 }} + {{ captchaQuestion.num2 }} = ?
-              </span>
-              <input 
-                v-model="captchaAnswer"
-                type="number"
-                class="form-input w-24"
-                placeholder="?"
-                required
-                :disabled="isBlocked"
-              >
-            </div>
-          </div>
-
-          <!-- Block warning -->
-          <div v-if="isBlocked" class="p-4 bg-red-500/10 border border-red-500 rounded-lg">
-            <div class="flex items-center gap-3 mb-2">
-              <svg class="w-6 h-6 text-red-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="10"></circle>
-                <line x1="12" y1="8" x2="12" y2="12"></line>
-                <line x1="12" y1="16" x2="12.01" y2="16"></line>
-              </svg>
-              <div>
-                <div class="text-red-500 font-bold">Compte temporairement bloqué</div>
-                <div class="text-red-400 text-sm">Trop de tentatives échouées</div>
-              </div>
-            </div>
-            <div class="text-center text-2xl font-mono font-bold text-red-500 mt-3">
-              {{ blockRemainingTime }}
-            </div>
-          </div>
-
-          <!-- Failed attempts warning -->
-          <div v-if="failedAttempts > 0 && !isBlocked" class="p-3 bg-orange-500/10 border border-orange-500 rounded-lg text-orange-500 text-sm">
-            <div class="flex items-center gap-2">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
-                <line x1="12" y1="9" x2="12" y2="13"></line>
-                <line x1="12" y1="17" x2="12.01" y2="17"></line>
-              </svg>
-              <span>{{ failedAttempts }} tentative(s) échouée(s)</span>
-            </div>
-          </div>
-          
-          <div v-if="loginError || adminStore.error" class="p-3 bg-red-500/10 border border-red-500 rounded-lg text-red-500 text-sm">
-            {{ adminStore.error || 'Erreur de connexion' }}
-          </div>
-          
-          <button type="submit" class="btn btn-primary" :disabled="adminStore.loading || isBlocked">
-            {{ isBlocked ? 'Bloqué' : (adminStore.loading ? 'Connexion...' : 'Se connecter') }}
-          </button>
-        </form>
-      </div>
-    </div>
-
     <!-- Admin Dashboard -->
-    <div v-else class="container max-w-7xl mx-auto px-4">
+    <div v-if="adminStore.isAuthenticated || activeTab === 'security'" class="container max-w-7xl mx-auto px-4">
       <div class="flex items-center justify-between mb-8">
         <h1 class="text-4xl font-bold">
           <span class="text-gradient">Admin Panel</span>
@@ -236,28 +142,28 @@ onMounted(() => {
           🍯
         </span>
       <!-- Onglet Remboursements -->
-      <div v-if="activeTab === 'refunds'" class="refunds-tab">
+  <div v-show="activeTab === 'refunds'" class="refunds-tab">
         <h2 class="text-2xl font-bold mb-6 text-white">Gestion des Remboursements</h2>
         <!-- Statistiques -->
         <div class="flex gap-4 mb-6">
           <div class="stat-card stat-total">
-            <div class="stat-value">{{ refundStats.total }}</div>
+            <div class="stat-value">{{ refundStats && refundStats.total !== undefined ? refundStats.total : 0 }}</div>
             <div class="stat-label">Total</div>
           </div>
           <div class="stat-card stat-requested">
-            <div class="stat-value">{{ refundStats.requested }}</div>
+            <div class="stat-value">{{ refundStats && refundStats.requested !== undefined ? refundStats.requested : 0 }}</div>
             <div class="stat-label">Demandés</div>
           </div>
           <div class="stat-card stat-approved">
-            <div class="stat-value">{{ refundStats.approved }}</div>
+            <div class="stat-value">{{ refundStats && refundStats.approved !== undefined ? refundStats.approved : 0 }}</div>
             <div class="stat-label">Approuvés</div>
           </div>
           <div class="stat-card stat-rejected">
-            <div class="stat-value">{{ refundStats.rejected }}</div>
+            <div class="stat-value">{{ refundStats && refundStats.rejected !== undefined ? refundStats.rejected : 0 }}</div>
             <div class="stat-label">Rejetés</div>
           </div>
           <div class="stat-card stat-processed">
-            <div class="stat-value">{{ refundStats.processed }}</div>
+            <div class="stat-value">{{ refundStats && refundStats.processed !== undefined ? refundStats.processed : 0 }}</div>
             <div class="stat-label">Traités</div>
           </div>
         </div>
@@ -286,74 +192,12 @@ onMounted(() => {
             </thead>
             <tbody>
               <tr v-for="refund in filteredRefunds" :key="refund.id" class="border-b border-[rgba(57,255,20,0.05)] hover:bg-[rgba(57,255,20,0.03)]">
-              <!-- ...existing code for refund rows... -->
+                <!-- ...existing code for refund rows... -->
               </tr>
             </tbody>
           </table>
         </div>
-
-        <!-- Easter Eggs Section (déplacé hors du tableau) -->
-        <div class="content-section">
-          <h2 class="text-2xl font-bold mb-4 text-white flex items-center gap-2">
-            <span>🥚</span> Easter Eggs
-          </h2>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div 
-              v-for="egg in easterEggsList" 
-              :key="egg.key"
-              class="p-6 bg-[rgba(57,255,20,0.05)] border border-[rgba(57,255,20,0.2)] rounded-lg hover:border-[var(--color-neon-green)] transition-all"
-            >
-              <div class="flex items-start gap-4 mb-4">
-                <input 
-                  v-model="egg.icon"
-                  @blur="updateEasterEgg(egg.key, { icon: egg.icon })"
-                  class="text-4xl w-16 text-center bg-transparent border-b-2 border-transparent hover:border-[rgba(57,255,20,0.3)] focus:border-[var(--color-neon-green)] transition-colors outline-none"
-                  maxlength="2"
-                >
-                <div class="flex-1">
-                  <input 
-                    v-model="egg.title"
-                    @blur="updateEasterEgg(egg.key, { title: egg.title })"
-                    class="w-full text-xl font-bold text-white bg-transparent border-b-2 border-transparent hover:border-[rgba(57,255,20,0.3)] focus:border-[var(--color-neon-green)] transition-colors outline-none mb-1"
-                  >
-                  <div class="text-xs text-[var(--color-text-secondary)] font-mono">
-                    Clé: {{ egg.key }} | Ordre: {{ egg.order }}
-                  </div>
-                </div>
-              </div>
-              <textarea 
-                v-model="egg.text"
-                @blur="updateEasterEgg(egg.key, { text: egg.text })"
-                class="w-full text-sm text-[var(--color-text-secondary)] italic bg-transparent border border-transparent hover:border-[rgba(57,255,20,0.3)] focus:border-[var(--color-neon-green)] transition-colors outline-none rounded p-2 mb-3 min-h-[100px] resize-none"
-              ></textarea>
-              <input 
-                v-model="egg.author"
-                @blur="updateEasterEgg(egg.key, { author: egg.author || null })"
-                class="w-full text-xs text-[var(--color-text-secondary)] text-right bg-transparent border-b border-transparent hover:border-[rgba(57,255,20,0.3)] focus:border-[var(--color-neon-green)] transition-colors outline-none"
-                placeholder="Auteur (optionnel)"
-              >
-              <div class="flex items-center justify-between mt-4 pt-4 border-t border-[rgba(57,255,20,0.1)]">
-                <label class="flex items-center gap-2 cursor-pointer">
-                  <input 
-                    type="checkbox" 
-                    v-model="egg.active"
-                    @change="updateEasterEgg(egg.key, { active: egg.active })"
-                    class="w-4 h-4 rounded border-[rgba(57,255,20,0.3)] bg-transparent checked:bg-[var(--color-neon-green)]"
-                  >
-                  <span class="text-xs text-[var(--color-text-secondary)]">
-                    {{ egg.active ? 'Actif' : 'Désactivé' }}
-                  </span>
-                </label>
-                <span class="px-2 py-1 text-xs rounded" :class="egg.active ? 'bg-[var(--color-neon-green)]/10 text-[var(--color-neon-green)]' : 'bg-gray-500/10 text-gray-500'">
-                  {{ egg.active ? '✓ Visible' : '✗ Caché' }}
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-        <!-- Fin de la table remboursements -->
-        <!-- ...existing code for refund rows... -->
-        <!-- Les balises tbody/table sont déjà fermées correctement ci-dessus -->
+        <!-- Modal détail remboursement -->
         <!-- Modal détail remboursement -->
         <div v-if="selectedRefund" class="modal-overlay">
           <div class="modal">
@@ -518,94 +362,88 @@ onMounted(() => {
       <!-- Content Tab -->
       <div v-if="activeTab === 'content' && siteContent" class="content-tab">
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          
           <!-- Home Page Content -->
           <div class="content-section">
             <h2 class="text-2xl font-bold mb-4 text-white flex items-center gap-2">
               <span>🏠</span> Page d'accueil
             </h2>
-            
             <!-- Hero Section -->
             <div class="content-card">
               <h3 class="text-lg font-semibold mb-4 text-[var(--color-neon-green)]">Section Hero</h3>
               <div class="flex flex-col gap-3">
                 <div>
                   <label class="block text-sm font-semibold mb-2 text-[var(--color-text-secondary)]">Titre</label>
-                  <input 
-                    v-model="siteContent.home.title"
-                    class="form-input"
-                  >
+                  <input v-model="siteContent.home.title" class="form-input">
                 </div>
                 <div>
                   <label class="block text-sm font-semibold mb-2 text-[var(--color-text-secondary)]">Sous-titre</label>
-                  <input 
-                    v-model="siteContent.home.subtitle"
-                    class="form-input"
-                  >
+                  <input v-model="siteContent.home.subtitle" class="form-input">
                 </div>
                 <div>
                   <label class="block text-sm font-semibold mb-2 text-[var(--color-text-secondary)]">Call-to-Action</label>
-                  <input 
-                    v-model="siteContent.home.cta"
-                    class="form-input"
-                  >
+                  <input v-model="siteContent.home.cta" class="form-input">
                 </div>
               </div>
             </div>
           </div>
-
           <!-- Contact Page Content -->
           <div class="content-section">
             <h2 class="text-2xl font-bold mb-4 text-white flex items-center gap-2">
               <span>📧</span> Page Contact
             </h2>
-            
             <div class="content-card">
               <h3 class="text-lg font-semibold mb-4 text-[var(--color-neon-green)]">Informations</h3>
               <div class="flex flex-col gap-3">
                 <div>
                   <label class="block text-sm font-semibold mb-2 text-[var(--color-text-secondary)]">Titre</label>
-                  <input 
-                    v-model="siteContent.contact.title"
-                    class="form-input"
-                  >
+                  <input v-model="siteContent.contact.title" class="form-input">
                 </div>
                 <div>
                   <label class="block text-sm font-semibold mb-2 text-[var(--color-text-secondary)]">Sous-titre</label>
-                  <textarea 
-                    v-model="siteContent.contact.subtitle"
-                    class="form-textarea"
-                    rows="3"
-                  ></textarea>
+                  <textarea v-model="siteContent.contact.subtitle" class="form-textarea" rows="3"></textarea>
                 </div>
                 <div>
                   <label class="block text-sm font-semibold mb-2 text-[var(--color-text-secondary)]">Email</label>
-                  <input 
-                    v-model="siteContent.contact.email"
-                    type="email"
-                    class="form-input"
-                  >
+                  <input v-model="siteContent.contact.email" type="email" class="form-input">
                 </div>
                 <div>
                   <label class="block text-sm font-semibold mb-2 text-[var(--color-text-secondary)]">Instagram</label>
-                  <input 
-                    v-model="siteContent.contact.instagram"
-                    class="form-input"
-                  >
+                  <input v-model="siteContent.contact.instagram" class="form-input">
                 </div>
                 <div>
                   <label class="block text-sm font-semibold mb-2 text-[var(--color-text-secondary)]">Horaires</label>
-                  <input 
-                    v-model="siteContent.contact.hours"
-                    class="form-input"
-                  >
+                  <input v-model="siteContent.contact.hours" class="form-input">
                 </div>
               </div>
             </div>
           </div>
-
         </div>
-
+        <!-- Easter Eggs Section (après Accueil et Contact) -->
+        <div class="content-section mt-8">
+          <h2 class="text-2xl font-bold mb-4 text-white flex items-center gap-2">
+            <span>🥚</span> Easter Eggs
+          </h2>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div v-for="egg in easterEggsList" :key="egg.key" class="p-6 bg-[rgba(57,255,20,0.05)] border border-[rgba(57,255,20,0.2)] rounded-lg hover:border-[var(--color-neon-green)] transition-all">
+              <div class="flex items-start gap-4 mb-4">
+                <input v-model="egg.icon" @blur="updateEasterEgg(egg.key, { icon: egg.icon })" class="text-4xl w-16 text-center bg-transparent border-b-2 border-transparent hover:border-[rgba(57,255,20,0.3)] focus:border-[var(--color-neon-green)] transition-colors outline-none" maxlength="2">
+                <div class="flex-1">
+                  <input v-model="egg.title" @blur="updateEasterEgg(egg.key, { title: egg.title })" class="w-full text-xl font-bold text-white bg-transparent border-b-2 border-transparent hover:border-[rgba(57,255,20,0.3)] focus:border-[var(--color-neon-green)] transition-colors outline-none mb-1">
+                  <div class="text-xs text-[var(--color-text-secondary)] font-mono">Clé: {{ egg.key }} | Ordre: {{ egg.order }}</div>
+                </div>
+              </div>
+              <textarea v-model="egg.text" @blur="updateEasterEgg(egg.key, { text: egg.text })" class="w-full text-sm text-[var(--color-text-secondary)] italic bg-transparent border border-transparent hover:border-[rgba(57,255,20,0.3)] focus:border-[var(--color-neon-green)] transition-colors outline-none rounded p-2 mb-3 min-h-[100px] resize-none"></textarea>
+              <input v-model="egg.author" @blur="updateEasterEgg(egg.key, { author: egg.author || null })" class="w-full text-xs text-[var(--color-text-secondary)] text-right bg-transparent border-b border-transparent hover:border-[rgba(57,255,20,0.3)] focus:border-[var(--color-neon-green)] transition-colors outline-none" placeholder="Auteur (optionnel)">
+              <div class="flex items-center justify-between mt-4 pt-4 border-t border-[rgba(57,255,20,0.1)]">
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" v-model="egg.active" @change="updateEasterEgg(egg.key, { active: egg.active })" class="w-4 h-4 rounded border-[rgba(57,255,20,0.3)] bg-transparent checked:bg-[var(--color-neon-green)]">
+                  <span class="text-xs text-[var(--color-text-secondary)]">{{ egg.active ? 'Actif' : 'Désactivé' }}</span>
+                </label>
+                <span class="px-2 py-1 text-xs rounded" :class="egg.active ? 'bg-[var(--color-neon-green)]/10 text-[var(--color-neon-green)]' : 'bg-gray-500/10 text-gray-500'">{{ egg.active ? '✓ Visible' : '✗ Caché' }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
         <!-- Save Button -->
         <div class="mt-8 flex justify-end">
           <button @click="saveSiteContent" class="btn btn-primary">
@@ -621,6 +459,94 @@ onMounted(() => {
 
       <!-- Security Tab -->
       <div v-show="activeTab === 'security'">
+        <!-- Connexions hackers (logs honeypot) -->
+        <div class="content-section mt-8">
+          <h2 class="text-2xl font-bold mb-4 text-white flex items-center gap-2">
+            <span>🍯</span> Tentatives d'intrusion (Honeypot)
+          </h2>
+          <div v-if="loadingLogs" class="text-center py-4 text-[var(--color-text-secondary)]">Chargement des logs...</div>
+          <div v-else-if="honeypotLogs.length === 0" class="text-center py-4 text-[var(--color-text-secondary)]">Aucune tentative détectée.</div>
+          <div v-else>
+            <table class="w-full text-sm bg-[var(--color-black-light)] rounded-xl overflow-hidden mb-4">
+              <thead>
+                <tr class="bg-[rgba(255,0,0,0.05)]">
+                  <th class="p-3 text-left">Date</th>
+                  <th class="p-3 text-left">Email</th>
+                  <th class="p-3 text-left">IP</th>
+                  <th class="p-3 text-left">User-Agent</th>
+                  <th class="p-3 text-left">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="log in sortedHoneypotLogs" :key="log.id" class="border-b border-[rgba(255,0,0,0.05)] hover:bg-[rgba(255,0,0,0.03)]">
+                  <td class="p-3">{{ formatDate(log.timestamp) }}</td>
+                  <td class="p-3">{{ log.email || '-' }}</td>
+                  <td class="p-3">{{ log.ip || '-' }}</td>
+                  <td class="p-3 truncate max-w-[200px]">{{ log.userAgent || '-' }}</td>
+                  <td class="p-3">
+                    <button @click="deleteLog(log.id)" class="btn btn-xs btn-danger">Supprimer</button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <button @click="clearHoneypotLogs" class="btn btn-danger">Tout supprimer</button>
+          </div>
+        </div>
+        <!-- Bloc Connexion déplacé ici -->
+        <div v-if="!adminStore.isAuthenticated || !adminStore.user" class="container max-w-md mx-auto px-4 mb-8">
+          <div class="bg-[var(--color-black-light)] border border-[rgba(57,255,20,0.3)] rounded-xl p-8">
+            <h1 class="text-3xl font-bold text-center mb-8">
+              <span class="text-gradient">Connexion Admin</span>
+            </h1>
+            <form @submit.prevent="handleLogin" class="flex flex-col gap-4">
+              <div>
+                <label class="block text-sm font-semibold mb-2 text-[var(--color-text-secondary)]">Email</label>
+                <input v-model="email" type="email" class="form-input" placeholder="admin@nainvert.com" required>
+              </div>
+              <div>
+                <label class="block text-sm font-semibold mb-2 text-[var(--color-text-secondary)]">Mot de passe</label>
+                <input v-model="password" type="password" class="form-input" placeholder="Entrez le mot de passe" required :disabled="isBlocked">
+              </div>
+              <div v-if="showCaptcha && !isBlocked" class="p-4 bg-[rgba(57,255,20,0.05)] border border-[rgba(57,255,20,0.3)] rounded-lg">
+                <label class="block text-sm font-semibold mb-2 text-[var(--color-text-secondary)]">🤖 Vérification anti-robot</label>
+                <div class="flex items-center gap-3">
+                  <span class="text-2xl font-bold text-[var(--color-neon-green)] font-mono">{{ captchaQuestion.num1 }} + {{ captchaQuestion.num2 }} = ?</span>
+                  <input v-model="captchaAnswer" type="number" class="form-input w-24" placeholder="?" required :disabled="isBlocked">
+                </div>
+              </div>
+              <div v-if="isBlocked" class="p-4 bg-red-500/10 border border-red-500 rounded-lg">
+                <div class="flex items-center gap-3 mb-2">
+                  <svg class="w-6 h-6 text-red-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                  </svg>
+                  <div>
+                    <div class="text-red-500 font-bold">Compte temporairement bloqué</div>
+                    <div class="text-red-400 text-sm">Trop de tentatives échouées</div>
+                  </div>
+                </div>
+                <div class="text-center text-2xl font-mono font-bold text-red-500 mt-3">{{ blockRemainingTime }}</div>
+              </div>
+              <div v-if="failedAttempts > 0 && !isBlocked" class="p-3 bg-orange-500/10 border border-orange-500 rounded-lg text-orange-500 text-sm">
+                <div class="flex items-center gap-2">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                    <line x1="12" y1="9" x2="12" y2="13"></line>
+                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                  </svg>
+                  <span>{{ failedAttempts }} tentative(s) échouée(s)</span>
+                </div>
+              </div>
+              <div v-if="loginError || adminStore.error" class="p-3 bg-red-500/10 border border-red-500 rounded-lg text-red-500 text-sm">
+                {{ adminStore.error || 'Erreur de connexion' }}
+              </div>
+              <button type="submit" class="btn btn-primary" :disabled="adminStore.loading || isBlocked">
+                {{ isBlocked ? 'Bloqué' : (adminStore.loading ? 'Connexion...' : 'Se connecter') }}
+              </button>
+            </form>
+          </div>
+        </div>
         <div class="bg-[var(--color-black-light)] border border-[rgba(57,255,20,0.3)] rounded-xl p-8 max-w-2xl">
           <h2 class="text-2xl font-bold mb-6 text-gradient">Changer le mot de passe</h2>
           
@@ -1340,10 +1266,11 @@ const {
   orderStats 
 } = useOrders()
 
+
 const email = ref('')
 const password = ref('')
 const loginError = ref(false)
-const activeTab = ref('products')
+const activeTab = ref(adminStore.isAuthenticated ? 'products' : 'security')
 
 // Password change form
 const passwordForm = ref({
@@ -1467,6 +1394,9 @@ const handleDeleteOrder = async (orderId) => {
 
 onMounted(async () => {
   await adminStore.initAuth()
+  if (!adminStore.isAuthenticated) {
+    activeTab.value = 'security'
+  }
   await loadProducts()
   await loadSiteContent()
   await loadEasterEggs()
