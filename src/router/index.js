@@ -4,6 +4,12 @@ import Products from '@/pages/Products.vue'
 import ProductDetail from '@/pages/ProductDetail.vue'
 import Contact from '@/pages/Contact.vue'
 import Admin from '@/pages/Admin.vue'
+import Honeypot from '@/pages/Honeypot.vue'
+import NotFound from '@/pages/NotFound.vue'
+import Shipping from '@/pages/Shipping.vue'
+import Returns from '@/pages/Returns.vue'
+import Terms from '@/pages/Terms.vue'
+import Legal from '@/pages/Legal.vue'
 
 const routes = [
   {
@@ -42,16 +48,65 @@ const routes = [
     }
   },
   {
-    path: '/admin',
-    name: 'Admin',
+    path: '/rho',
+    name: 'RealAdmin',
     component: Admin,
+    meta: {
+      title: 'NainVert - Administration'
+    }
+  },
+  {
+    path: '/admin',
+    name: 'Honeypot',
+    component: Honeypot,
     meta: {
       title: 'Admin Panel - NainVert'
     }
   },
   {
+    path: '/shipping',
+    name: 'Shipping',
+    component: Shipping,
+    meta: {
+      title: 'Livraison - NainVert',
+      description: 'Informations sur les délais et frais de livraison'
+    }
+  },
+  {
+    path: '/returns',
+    name: 'Returns',
+    component: Returns,
+    meta: {
+      title: 'Retours & Remboursements - NainVert',
+      description: 'Conditions de retour et remboursement'
+    }
+  },
+  {
+    path: '/terms',
+    name: 'Terms',
+    component: Terms,
+    meta: {
+      title: 'CGV - NainVert',
+      description: 'Conditions Générales de Vente'
+    }
+  },
+  {
+    path: '/legal',
+    name: 'Legal',
+    component: Legal,
+    meta: {
+      title: 'Mentions Légales - NainVert',
+      description: 'Mentions légales et protection des données'
+    }
+  },
+  {
     path: '/:pathMatch(.*)*',
-    redirect: '/'
+    name: 'NotFound',
+    component: NotFound,
+    meta: {
+      title: '404 - Page non trouvée - NainVert',
+      description: 'Cette page n\'existe pas'
+    }
   }
 ]
 

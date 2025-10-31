@@ -1,6 +1,13 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'firebase/auth'
+import { 
+  signInWithEmailAndPassword, 
+  signOut, 
+  onAuthStateChanged,
+  updatePassword,
+  EmailAuthProvider,
+  reauthenticateWithCredential
+} from 'firebase/auth'
 import { auth } from '@/config/firebase'
 
 export const useAdminStore = defineStore('admin', () => {
@@ -34,12 +41,42 @@ export const useAdminStore = defineStore('admin', () => {
   const logout = async () => {
     try {
       await signOut(auth)
-      user.value = null
       isAuthenticated.value = false
-      console.log('✅ Admin déconnecté')
+      user.value = null
     } catch (err) {
-      console.error('❌ Erreur de déconnexion:', err)
-      error.value = err.message
+      console.error('Erreur lors de la déconnexion:', err)
+    }
+  }
+
+  // Changement de mot de passe sécurisé
+  const changePassword = async (currentPassword, newPassword) => {
+    loading.value = true
+    error.value = null
+
+    try {
+      const currentUser = auth.currentUser
+      if (!currentUser || !currentUser.email) {
+        throw new Error('Aucun utilisateur connecté')
+      }
+
+      // 1. Ré-authentification obligatoire pour sécurité
+      const credential = EmailAuthProvider.credential(currentUser.email, currentPassword)
+      await reauthenticateWithCredential(currentUser, credential)
+
+      // 2. Changement du mot de passe
+      await updatePassword(currentUser, newPassword)
+
+      return { success: true, message: 'Mot de passe modifié avec succès' }
+    } catch (err) {
+      console.error('Erreur changement mot de passe:', err)
+      const errorMsg = getErrorMessage(err.code) || 'Erreur lors du changement de mot de passe'
+      error.value = errorMsg
+      return { 
+        success: false, 
+        message: errorMsg
+      }
+    } finally {
+      loading.value = false
     }
   }
 
@@ -68,7 +105,9 @@ export const useAdminStore = defineStore('admin', () => {
       'auth/invalid-email': 'Email invalide',
       'auth/user-disabled': 'Ce compte a été désactivé',
       'auth/too-many-requests': 'Trop de tentatives, réessayez plus tard',
-      'auth/invalid-credential': 'Email ou mot de passe incorrect'
+      'auth/invalid-credential': 'Email ou mot de passe incorrect',
+      'auth/weak-password': 'Le mot de passe doit contenir au moins 6 caractères',
+      'auth/requires-recent-login': 'Pour des raisons de sécurité, reconnectez-vous'
     }
     return messages[errorCode] || 'Erreur de connexion'
   }
@@ -83,6 +122,7 @@ export const useAdminStore = defineStore('admin', () => {
     loading,
     login,
     logout,
+    changePassword,
     initAuth,
     checkAuth
   }

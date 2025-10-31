@@ -48,10 +48,10 @@
         <div class="flex flex-col gap-3">
           <h4 class="text-white text-base font-bold uppercase tracking-wider mb-2">Informations</h4>
           <ul class="list-none flex flex-col gap-2">
-            <li><a href="#" class="text-[var(--color-text-secondary)] text-[0.95rem] transition-all duration-200 hover:text-[var(--color-neon-green)] hover:pl-2">Livraison</a></li>
-            <li><a href="#" class="text-[var(--color-text-secondary)] text-[0.95rem] transition-all duration-200 hover:text-[var(--color-neon-green)] hover:pl-2">Retours</a></li>
-            <li><a href="#" class="text-[var(--color-text-secondary)] text-[0.95rem] transition-all duration-200 hover:text-[var(--color-neon-green)] hover:pl-2">CGV</a></li>
-            <li><a href="#" class="text-[var(--color-text-secondary)] text-[0.95rem] transition-all duration-200 hover:text-[var(--color-neon-green)] hover:pl-2">Mentions légales</a></li>
+            <li><router-link to="/shipping" class="text-[var(--color-text-secondary)] text-[0.95rem] transition-all duration-200 hover:text-[var(--color-neon-green)] hover:pl-2">Livraison</router-link></li>
+            <li><router-link to="/returns" class="text-[var(--color-text-secondary)] text-[0.95rem] transition-all duration-200 hover:text-[var(--color-neon-green)] hover:pl-2">Retours</router-link></li>
+            <li><router-link to="/terms" class="text-[var(--color-text-secondary)] text-[0.95rem] transition-all duration-200 hover:text-[var(--color-neon-green)] hover:pl-2">CGV</router-link></li>
+            <li><router-link to="/legal" class="text-[var(--color-text-secondary)] text-[0.95rem] transition-all duration-200 hover:text-[var(--color-neon-green)] hover:pl-2">Mentions légales</router-link></li>
           </ul>
         </div>
 

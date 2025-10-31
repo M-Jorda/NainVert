@@ -139,6 +139,19 @@
               ></textarea>
             </div>
 
+            <!-- Honeypot field (hidden from humans, visible to bots) -->
+            <div class="honeypot-field" aria-hidden="true">
+              <label for="website">Website (ne pas remplir)</label>
+              <input
+                id="website"
+                v-model="formData.honeypot"
+                type="text"
+                name="website"
+                tabindex="-1"
+                autocomplete="off"
+              />
+            </div>
+
             <button type="submit" class="btn btn-primary w-full py-4 text-lg" :disabled="isSubmitting">
               <svg v-if="!isSubmitting" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <line x1="22" y1="2" x2="11" y2="13"></line>
@@ -176,12 +189,15 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import EasterEggModal from '../components/EasterEggModal.vue'
 import { useEasterEgg } from '../composables/useEasterEgg'
 import { useSiteContent } from '../composables/useSiteContent'
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore'
+import { db } from '@/config/firebase'
 
 const formData = reactive({
   name: '',
   email: '',
   subject: '',
-  message: ''
+  message: '',
+  honeypot: '' // Honeypot field
 })
 
 const { siteContent, loadSiteContent } = useSiteContent()
@@ -202,11 +218,40 @@ const handleSubmit = async () => {
   submitError.value = false
 
   try {
-    // Simuler l'envoi du formulaire
-    // TODO: Remplacer par un vrai appel API
-    await new Promise(resolve => setTimeout(resolve, 1500))
+    // 🍯 Honeypot check: if filled, it's a bot
+    if (formData.honeypot) {
+      console.log('🤖 Bot détecté via honeypot')
+      // Silently fail for bots (they think it succeeded)
+      await new Promise(resolve => setTimeout(resolve, 1500))
+      submitSuccess.value = true
+      // Reset form
+      formData.name = ''
+      formData.email = ''
+      formData.subject = ''
+      formData.message = ''
+      formData.honeypot = ''
+      setTimeout(() => { submitSuccess.value = false }, 5000)
+      return
+    }
+
+    // Validation
+    if (!formData.name || !formData.email || !formData.subject || !formData.message) {
+      throw new Error('Tous les champs sont requis')
+    }
+
+    // Save to Firestore
+    await addDoc(collection(db, 'messages'), {
+      name: formData.name,
+      email: formData.email,
+      subject: formData.subject,
+      message: formData.message,
+      timestamp: serverTimestamp(),
+      status: 'unread',
+      userAgent: navigator.userAgent,
+      source: 'contact-form'
+    })
     
-    console.log('Form submitted:', formData)
+    console.log('✅ Message enregistré dans Firestore')
     
     submitSuccess.value = true
     
@@ -215,13 +260,14 @@ const handleSubmit = async () => {
     formData.email = ''
     formData.subject = ''
     formData.message = ''
+    formData.honeypot = ''
     
     // Hide success message after 5 seconds
     setTimeout(() => {
       submitSuccess.value = false
     }, 5000)
   } catch (error) {
-    console.error('Form submission error:', error)
+    console.error('❌ Erreur envoi formulaire:', error)
     submitError.value = true
     
     // Hide error message after 5 seconds
@@ -265,5 +311,15 @@ const handleSubmit = async () => {
   transform: scale(1.3) rotate(10deg);
   opacity: 1;
   filter: drop-shadow(0 0 8px rgba(57, 255, 20, 0.6));
+}
+
+/* Honeypot field (hidden from humans) */
+.honeypot-field {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
 }
 </style>
