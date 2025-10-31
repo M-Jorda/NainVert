@@ -2,50 +2,65 @@
 
 Site e-commerce moderne pour la marque NainVert, spécialisée dans le streetwear psychédélique.
 
-## 🚀 Technologies
+## 🚀 Stack Technique
 
-- **Vue 3** - Framework JavaScript progressif
-- **Vite** - Build tool ultra-rapide
-- **Vue Router** - Routing
-- **Pinia** - State management
-- **CSS Variables** - Thème personnalisé noir & vert psychédélique
+- **Vue 3.4.21** - Framework JavaScript progressif (Composition API)
+- **Vite 7.1.12** - Build tool ultra-rapide
+- **Vue Router 4.3.0** - Routing SPA
+- **Pinia 2.1.7** - State management moderne
+- **Tailwind CSS 4.1.16** - Framework CSS utility-first
+- **Firebase** - Backend (Firestore + Authentication)
+  - Firestore pour la base de données
+  - Firebase Auth pour l'authentification admin
 
 ## 📁 Structure du Projet
 
 ```
 NainVert/
-├── public/                 # Fichiers statiques
-│   ├── products/          # Images produits
+├── public/                     # Fichiers statiques
+│   ├── products/              # Images produits
 │   ├── favicon.svg
 │   ├── manifest.json
 │   ├── robots.txt
 │   └── sitemap.xml
 ├── src/
-│   ├── components/        # Composants réutilisables
+│   ├── components/            # Composants réutilisables
 │   │   ├── Header.vue
 │   │   ├── Footer.vue
 │   │   ├── Cart.vue
 │   │   ├── CartIcon.vue
 │   │   ├── ProductCard.vue
-│   │   └── ProductGrid.vue
-│   ├── pages/            # Pages de l'application
+│   │   ├── ProductGrid.vue
+│   │   └── EasterEggModal.vue
+│   ├── pages/                 # Pages de l'application
 │   │   ├── Home.vue
 │   │   ├── Products.vue
 │   │   ├── ProductDetail.vue
-│   │   └── Contact.vue
-│   ├── stores/           # Stores Pinia
-│   │   └── cart.js
-│   ├── data/             # Données
-│   │   └── products.js
-│   ├── router/           # Configuration du routeur
+│   │   ├── Contact.vue
+│   │   └── Admin.vue          # Panel admin Firebase
+│   ├── composables/           # Logique réutilisable
+│   │   ├── useProducts.js     # Gestion produits Firestore
+│   │   ├── useSiteContent.js  # Gestion contenu Firestore
+│   │   └── useEasterEgg.js    # Easter eggs cachés
+│   ├── stores/                # Stores Pinia
+│   │   ├── cart.js            # Panier (localStorage)
+│   │   └── admin.js           # Auth Firebase
+│   ├── config/                # Configuration
+│   │   └── firebase.js        # Config Firebase
+│   ├── router/                # Configuration du routeur
 │   │   └── index.js
-│   ├── styles/           # Styles globaux
-│   │   └── main.css
+│   ├── styles/                # Styles globaux
+│   │   └── main.css           # Tailwind + variables CSS
 │   ├── App.vue
 │   └── main.js
+├── scripts/                    # Scripts utilitaires
+│   ├── importToFirestore.js   # Import données vers Firebase
+│   └── testFirestore.js       # Test connexion Firebase
 ├── index.html
 ├── vite.config.js
 ├── package.json
+├── FIREBASE_SETUP.md          # Guide setup Firebase
+├── MIGRATION_COMPLETE.md      # Guide migration & tests
 └── README.md
 ```
 
@@ -83,28 +98,32 @@ NainVert/
 
 ### ✅ Implémenté
 
-- [x] Navigation responsive avec menu mobile
-- [x] Page d'accueil avec hero et produits en vedette
-- [x] Page catalogue avec filtres (T-shirts / Pulls)
-- [x] Page détail produit avec galerie d'images
-- [x] Sélection de taille
-- [x] Panier latéral avec gestion des quantités
-- [x] Page de contact avec formulaire
-- [x] Animations et transitions fluides
-- [x] Design responsive (mobile, tablette, desktop)
-- [x] SEO optimisé (meta tags, sitemap)
-- [x] Thème psychédélique noir & vert
+- [x] **Frontend moderne** avec Vue 3 + Tailwind CSS
+- [x] **Backend Firebase** (Firestore + Authentication)
+- [x] **Panel Admin** complet pour gérer :
+  - Produits (nom, prix, description, images, stock)
+  - Contenu du site (home, contact)
+- [x] **Navigation responsive** avec menu mobile
+- [x] **Page d'accueil** avec hero et produits vedette
+- [x] **Catalogue** avec filtres (T-shirts / Pulls)
+- [x] **Page détail produit** avec galerie d'images
+- [x] **Panier** latéral avec gestion des quantités (localStorage)
+- [x] **Page de contact** avec formulaire
+- [x] **Easter eggs** cachés dans le site (10 citations)
+- [x] **Animations** et transitions fluides
+- [x] **Design futuriste** noir & vert néon avec glassmorphism
+- [x] **SEO optimisé** (meta tags, sitemap)
 
 ### 🔜 À venir
 
 - [ ] Intégration paiement (Stripe/PayPal)
-- [ ] Modal de vue rapide (quick view)
-- [ ] Wishlist / Favoris
-- [ ] Système de notation / avis
-- [ ] Backend API pour les commandes
-- [ ] Authentification utilisateur
+- [ ] Firebase Storage pour hébergement images
+- [ ] Règles de sécurité Firestore avancées
+- [ ] Système de commandes avec backend
+- [ ] Authentification client (pour commandes)
 - [ ] Historique des commandes
 - [ ] Newsletter (intégration Mailchimp)
+- [ ] Analytics (Google Analytics / Firebase)
 
 ## 🛍️ Produits
 
@@ -125,37 +144,42 @@ Le site propose 4 produits :
 - **/products/:slug** - Détail d'un produit
 - **/contact** - Formulaire de contact
 
-## 🔧 Configuration
+## 🔧 Configuration Firebase
 
-### Ajouter des produits
+### Première installation
 
-Éditer le fichier `src/data/products.js` :
+1. **Configurer Firebase** (voir `FIREBASE_SETUP.md` pour le guide détaillé)
+   ```bash
+   # Mettre vos clés Firebase dans src/config/firebase.js
+   ```
 
-```javascript
-{
-  id: 5,
-  name: 'Nouveau Produit',
-  slug: 'nouveau-produit',
-  type: 'tshirt', // ou 'hoodie'
-  price: 40,
-  description: 'Description du produit...',
-  images: ['/products/image1.jpg', '/products/image2.jpg'],
-  sizes: ['S', 'M', 'L', 'XL'],
-  colors: ['Noir'],
-  inStock: true,
-  featured: false
-}
-```
+2. **Importer les données initiales**
+   ```bash
+   npm run import-firebase
+   ```
+
+3. **Créer un utilisateur admin** dans Firebase Console
+   - Aller dans Authentication > Users
+   - Ajouter un utilisateur avec email/password
+
+### Panel Admin
+
+- **URL** : `/admin`
+- **Connexion** : Email + mot de passe Firebase
+- **Fonctionnalités** :
+  - Modifier les produits (nom, prix, description, images, stock)
+  - Modifier le contenu du site (home, contact)
+  - Tout est sauvegardé automatiquement dans Firestore
 
 ### Personnaliser les couleurs
 
 Éditer les variables CSS dans `src/styles/main.css` :
 
 ```css
-:root {
-  --neon-green: #39FF14;
-  --cyan-green: #00FF88;
-  --lime-green: #B0FF00;
+@theme {
+  --color-neon-green: #39FF14;
+  --color-cyan-green: #00FF88;
+  --color-lime-green: #B0FF00;
 }
 ```
 
@@ -174,8 +198,9 @@ Le site propose 4 produits :
    - **Build command** : `npm run build`
    - **Publish directory** : `dist`
    - **Node version** : 18+
+3. Les clés Firebase sont publiques (frontend), donc pas besoin de variables d'environnement
 
-### Firebase Hosting
+### Firebase Hosting (recommandé)
 
 ```bash
 npm install -g firebase-tools
@@ -184,6 +209,20 @@ firebase init hosting
 npm run build
 firebase deploy
 ```
+
+**Avantage** : Tout hébergé au même endroit (site + base de données)
+
+## 🔒 Sécurité
+
+- **Frontend** : Les clés Firebase API sont publiques (normal pour le web)
+- **Backend** : Les règles Firestore protègent l'écriture (uniquement les utilisateurs authentifiés)
+- **Admin** : Authentification Firebase (email/password)
+- **Amélioration possible** : Restreindre les règles Firestore à un UID admin spécifique
+
+## 📚 Documentation
+
+- **FIREBASE_SETUP.md** - Guide complet de configuration Firebase
+- **MIGRATION_COMPLETE.md** - Guide de test et dépannage
 
 ## 📄 Licence
 
