@@ -1,0 +1,222 @@
+<template>
+  <header class="header">
+    <div class="container">
+      <nav class="nav">
+        <!-- Logo -->
+        <router-link to="/" class="logo">
+          <span class="logo-text">NAIN</span>
+          <span class="logo-text-accent">VERT</span>
+        </router-link>
+
+        <!-- Navigation Links -->
+        <div class="nav-links" :class="{ 'nav-links-open': mobileMenuOpen }">
+          <router-link to="/" class="nav-link" @click="closeMobileMenu">
+            Accueil
+          </router-link>
+          <router-link to="/products" class="nav-link" @click="closeMobileMenu">
+            Articles
+          </router-link>
+          <router-link to="/contact" class="nav-link" @click="closeMobileMenu">
+            Contact
+          </router-link>
+        </div>
+
+        <!-- Cart Icon -->
+        <CartIcon />
+
+        <!-- Mobile Menu Button -->
+        <button 
+          class="mobile-menu-btn" 
+          @click="toggleMobileMenu"
+          aria-label="Menu"
+        >
+          <span class="hamburger" :class="{ 'hamburger-open': mobileMenuOpen }"></span>
+        </button>
+      </nav>
+    </div>
+  </header>
+</template>
+
+<script setup>
+import { ref } from 'vue'
+import CartIcon from './CartIcon.vue'
+
+const mobileMenuOpen = ref(false)
+
+const toggleMobileMenu = () => {
+  mobileMenuOpen.value = !mobileMenuOpen.value
+}
+
+const closeMobileMenu = () => {
+  mobileMenuOpen.value = false
+}
+</script>
+
+<style scoped>
+.header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  background: rgba(10, 10, 10, 0.95);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--black-lighter);
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 80px;
+  gap: var(--spacing-lg);
+}
+
+/* Logo */
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+  font-size: 1.5rem;
+  font-weight: 900;
+  text-decoration: none;
+  letter-spacing: 0.1em;
+  transition: all var(--transition-fast);
+}
+
+.logo-text {
+  color: var(--text-primary);
+}
+
+.logo-text-accent {
+  color: var(--neon-green);
+  text-shadow: var(--shadow-neon);
+}
+
+.logo:hover .logo-text-accent {
+  animation: glow 1s ease-in-out infinite;
+}
+
+/* Navigation Links */
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-lg);
+  margin-left: auto;
+  margin-right: var(--spacing-lg);
+}
+
+.nav-link {
+  position: relative;
+  color: var(--text-secondary);
+  font-weight: 600;
+  font-size: 0.95rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  transition: all var(--transition-fast);
+}
+
+.nav-link::after {
+  content: '';
+  position: absolute;
+  bottom: -5px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: var(--neon-green);
+  transition: width var(--transition-normal);
+}
+
+.nav-link:hover,
+.nav-link.router-link-active {
+  color: var(--neon-green);
+}
+
+.nav-link:hover::after,
+.nav-link.router-link-active::after {
+  width: 100%;
+}
+
+/* Mobile Menu Button */
+.mobile-menu-btn {
+  display: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: var(--spacing-xs);
+  z-index: 1001;
+}
+
+.hamburger {
+  display: block;
+  width: 25px;
+  height: 2px;
+  background: var(--neon-green);
+  position: relative;
+  transition: all var(--transition-normal);
+}
+
+.hamburger::before,
+.hamburger::after {
+  content: '';
+  position: absolute;
+  width: 25px;
+  height: 2px;
+  background: var(--neon-green);
+  transition: all var(--transition-normal);
+}
+
+.hamburger::before {
+  top: -8px;
+}
+
+.hamburger::after {
+  bottom: -8px;
+}
+
+.hamburger-open {
+  background: transparent;
+}
+
+.hamburger-open::before {
+  top: 0;
+  transform: rotate(45deg);
+}
+
+.hamburger-open::after {
+  bottom: 0;
+  transform: rotate(-45deg);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .mobile-menu-btn {
+    display: block;
+  }
+
+  .nav-links {
+    position: fixed;
+    top: 80px;
+    left: 0;
+    right: 0;
+    flex-direction: column;
+    background: rgba(10, 10, 10, 0.98);
+    backdrop-filter: blur(10px);
+    padding: var(--spacing-lg);
+    gap: var(--spacing-md);
+    transform: translateX(-100%);
+    transition: transform var(--transition-normal);
+    border-bottom: 1px solid var(--black-lighter);
+  }
+
+  .nav-links-open {
+    transform: translateX(0);
+  }
+
+  .nav-link {
+    width: 100%;
+    padding: var(--spacing-sm);
+    text-align: center;
+  }
+}
+</style>

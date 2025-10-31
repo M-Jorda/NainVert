@@ -1,0 +1,5 @@
+<svg width="400" height="500" xmlns="http://www.w3.org/2000/svg">
+  <rect width="400" height="500" fill="#1a1a1a"/>
+  <text x="200" y="240" font-family="Arial" font-size="24" font-weight="bold" fill="#39FF14" text-anchor="middle">NEON DREAMS</text>
+  <text x="200" y="270" font-family="Arial" font-size="18" fill="#00FF88" text-anchor="middle">Back View</text>
+</svg>

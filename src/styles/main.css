@@ -1,0 +1,156 @@
+@import "tailwindcss";
+
+@theme {
+  /* Couleurs personnalisées */
+  --color-black: #0a0a0a;
+  --color-black-light: #1a1a1a;
+  --color-black-lighter: #2a2a2a;
+  
+  --color-neon-green: #39FF14;
+  --color-cyan-green: #00FF88;
+  --color-lime-green: #B0FF00;
+  --color-dark-green: #0d4d0d;
+  
+  --color-text-primary: #ffffff;
+  --color-text-secondary: #b0b0b0;
+  --color-text-muted: #666666;
+  
+  /* Font family */
+  --font-family-sans: 'Montserrat', system-ui, sans-serif;
+  
+  /* Animations */
+  --animate-glow: glow 2s ease-in-out infinite;
+  --animate-float: float 20s infinite ease-in-out;
+}
+
+@keyframes glow {
+  0%, 100% { text-shadow: 0 0 10px #39FF14; }
+  50% { text-shadow: 0 0 15px #39FF14, 0 0 30px #39FF14, 0 0 45px #39FF14; }
+}
+
+@keyframes float {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  25% { transform: translate(30px, -30px) scale(1.1); }
+  50% { transform: translate(-20px, 40px) scale(0.9); }
+  75% { transform: translate(40px, 20px) scale(1.05); }
+}
+
+/* Base styles */
+body {
+  font-family: var(--font-family-sans);
+  background-color: var(--color-black);
+  color: var(--color-text-primary);
+}
+
+/* Boutons personnalisés - Style futuriste NainVert */
+.btn {
+  @apply inline-flex items-center justify-center gap-2 px-8 py-4 font-semibold cursor-pointer uppercase tracking-wide;
+  position: relative;
+  border-radius: 12px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  backdrop-filter: blur(10px);
+}
+
+.btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 12px;
+  padding: 1px;
+  background: linear-gradient(145deg, rgba(57, 255, 20, 0.3), rgba(0, 255, 136, 0.3));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.btn:hover::before {
+  opacity: 1;
+}
+
+.btn-primary {
+  background: linear-gradient(145deg, rgba(57, 255, 20, 0.15), rgba(0, 255, 136, 0.12));
+  border: 1px solid var(--color-neon-green);
+  color: var(--color-neon-green);
+  box-shadow: 0 0 20px rgba(57, 255, 20, 0.3), 0 0 40px rgba(57, 255, 20, 0.15), inset 0 0 30px rgba(57, 255, 20, 0.1);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 25px rgba(57, 255, 20, 0.4), 0 0 50px rgba(57, 255, 20, 0.2), inset 0 0 40px rgba(57, 255, 20, 0.15);
+}
+
+.btn-secondary {
+  background: linear-gradient(145deg, rgba(26, 26, 26, 0.8), rgba(42, 42, 42, 0.6));
+  border: 1px solid rgba(57, 255, 20, 0.3);
+  color: var(--color-text-secondary);
+}
+
+.btn-secondary:hover {
+  border-color: var(--color-neon-green);
+  color: var(--color-neon-green);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(57, 255, 20, 0.15), 0 0 20px rgba(57, 255, 20, 0.1);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--color-text-secondary);
+  border: 1px solid rgba(57, 255, 20, 0.2);
+}
+
+.btn-ghost:hover {
+  border-color: rgba(57, 255, 20, 0.5);
+  color: var(--color-neon-green);
+  box-shadow: 0 0 15px rgba(57, 255, 20, 0.2);
+}
+
+/* Form elements */
+.form-input,
+.form-textarea,
+.form-select {
+  @apply w-full px-4 py-4 rounded-lg transition-all duration-200;
+  background: var(--color-black-lighter);
+  border: 2px solid var(--color-black-lighter);
+  color: var(--color-text-primary);
+}
+
+.form-input:focus,
+.form-textarea:focus,
+.form-select:focus {
+  outline: none;
+  border-color: var(--color-neon-green);
+  box-shadow: 0 0 0 3px rgba(57, 255, 20, 0.1);
+}
+
+/* Utility classes */
+.text-gradient {
+  background: linear-gradient(135deg, var(--color-neon-green), var(--color-cyan-green));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.neon-text {
+  color: var(--color-neon-green);
+  text-shadow: 0 0 10px #39FF14, 0 0 20px #39FF14;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-black);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-neon-green);
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-cyan-green);
+}

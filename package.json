@@ -1,0 +1,27 @@
+{
+  "name": "nainvert",
+  "version": "1.0.0",
+  "description": "Site e-commerce NainVert - Vêtements streetwear",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "import-firebase": "node scripts/importToFirestore.js",
+    "test-firebase": "node scripts/testFirestore.js"
+  },
+  "dependencies": {
+    "firebase": "^12.5.0",
+    "pinia": "^2.1.7",
+    "vue": "^3.4.21",
+    "vue-router": "^4.3.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.16",
+    "@vitejs/plugin-vue": "^5.0.4",
+    "autoprefixer": "^10.4.21",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^4.1.16",
+    "vite": "^7.1.12"
+  }
+}

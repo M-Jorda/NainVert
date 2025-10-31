@@ -1,0 +1,5 @@
+<svg width="400" height="500" xmlns="http://www.w3.org/2000/svg">
+  <rect width="400" height="500" fill="#0d0d0d"/>
+  <text x="200" y="230" font-family="Arial" font-size="22" font-weight="bold" fill="#00FF88" text-anchor="middle">ELECTRIC JUNGLE</text>
+  <text x="200" y="260" font-family="Arial" font-size="18" fill="#39FF14" text-anchor="middle">Back View</text>
+</svg>
