@@ -90,7 +90,8 @@ onMounted(() => {
       </div>
 
       <!-- Tabs Navigation -->
-      <div class="flex gap-2 mb-8 border-b border-[rgba(57,255,20,0.2)]">
+      <div class="sticky top-20 z-40 bg-[var(--color-background)] py-4 mb-8 border-b border-[rgba(57,255,20,0.2)] backdrop-blur-md bg-opacity-95">
+        <div class="flex gap-2 overflow-x-auto">
         <button :class="['tab-btn', { active: activeTab === 'products' }]" @click="activeTab = 'products'">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
@@ -141,8 +142,11 @@ onMounted(() => {
         <span v-if="honeypotLogs.length > 0" class="ml-auto flex items-center text-red-500 text-xl" title="Tentatives d'intrusion">
           🍯
         </span>
+        </div>
+      </div>
+      
       <!-- Onglet Remboursements -->
-  <div v-show="activeTab === 'refunds'" class="refunds-tab">
+      <div v-show="activeTab === 'refunds'" class="refunds-tab">
         <h2 class="text-2xl font-bold mb-6 text-white">Gestion des Remboursements</h2>
         <!-- Statistiques -->
         <div class="flex gap-4 mb-6">
@@ -234,382 +238,41 @@ onMounted(() => {
           </div>
         </div>
       </div>
-      </div>
 
       <!-- Products Tab -->
-      <div v-if="activeTab === 'products'" class="products-tab">
-        <h2 class="text-2xl font-bold mb-6 text-white">Gestion des Produits</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div 
-            v-for="product in products" 
-            :key="product.id"
-            class="bg-[var(--color-black-light)] border border-[rgba(57,255,20,0.2)] rounded-xl hover:border-[var(--color-neon-green)] transition-all duration-300"
-          >
-            <div class="flex gap-4 p-4">
-              <!-- Product Image (compact) -->
-              <div class="relative w-32 h-32 flex-shrink-0 bg-[rgba(57,255,20,0.05)] rounded-lg overflow-hidden group">
-                <img 
-                  :src="product.images[0]" 
-                  :alt="product.name"
-                  class="w-full h-full object-cover"
-                >
-                
-                <!-- Edit Image Button -->
-                <div class="absolute inset-0 bg-black/80 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                  <button 
-                    @click="openImageModal(product)"
-                    class="px-3 py-2 bg-[var(--color-neon-green)] text-black text-xs font-bold rounded-lg hover:scale-105 transition-transform"
-                  >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="inline mr-1">
-                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                    </svg>
-                    Images
-                  </button>
-                </div>
-              </div>
-
-              <!-- Product Fields -->
-              <div class="flex-1 flex flex-col gap-2 min-w-0">
-                <!-- Nom -->
-                <div>
-                  <label class="block text-xs font-semibold mb-1 text-[var(--color-text-secondary)]">Nom</label>
-                  <input 
-                    v-model="product.name"
-                    @blur="updateProduct(product.slug, { name: product.name })"
-                    class="form-input text-sm py-2"
-                  >
-                </div>
-
-                <!-- Prix et Stock -->
-                <div class="grid grid-cols-2 gap-2">
-                  <div>
-                    <label class="block text-xs font-semibold mb-1 text-[var(--color-text-secondary)]">Prix (€)</label>
-                    <div class="flex items-stretch gap-1">
-                      <button
-                        @click="decrementPrice(product)"
-                        class="price-control-btn-compact"
-                        :disabled="product.price <= 1"
-                      >
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-                          <line x1="5" y1="12" x2="19" y2="12"></line>
-                        </svg>
-                      </button>
-                      <input 
-                        v-model.number="product.price"
-                        @blur="updateProduct(product.slug, { price: product.price })"
-                        type="number"
-                        min="1"
-                        class="form-input text-sm py-2 flex-1 text-center"
-                      >
-                      <button
-                        @click="incrementPrice(product)"
-                        class="price-control-btn-compact"
-                      >
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-                          <line x1="12" y1="5" x2="12" y2="19"></line>
-                          <line x1="5" y1="12" x2="19" y2="12"></line>
-                        </svg>
-                      </button>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label class="block text-xs font-semibold mb-1 text-[var(--color-text-secondary)]">En stock</label>
-                    <label class="inline-flex items-center cursor-pointer h-[38px] px-3 bg-[var(--color-black-lighter)] rounded-lg border border-[rgba(57,255,20,0.2)]">
-                      <input 
-                        v-model="product.inStock"
-                        @change="updateProduct(product.slug, { inStock: product.inStock })"
-                        type="checkbox"
-                        class="w-4 h-4 rounded border-2 border-[rgba(57,255,20,0.3)] bg-transparent checked:bg-[var(--color-neon-green)] transition-all"
-                      >
-                      <span class="ml-2 text-xs text-[var(--color-text-secondary)]">
-                        {{ product.inStock ? '✓ Dispo' : '✗ Rupture' }}
-                      </span>
-                    </label>
-                  </div>
-                </div>
-
-                <!-- Description -->
-                <div>
-                  <label class="block text-xs font-semibold mb-1 text-[var(--color-text-secondary)]">Description</label>
-                  <textarea 
-                    v-model="product.description"
-                    @blur="updateProduct(product.slug, { description: product.description })"
-                    class="form-textarea text-sm py-2"
-                    rows="2"
-                  ></textarea>
-                </div>
-
-                <!-- Info badges -->
-                <div class="flex gap-1 flex-wrap text-xs">
-                  <span class="px-2 py-1 bg-[rgba(57,255,20,0.1)] border border-[rgba(57,255,20,0.2)] rounded text-[var(--color-neon-green)]">
-                    {{ product.images.length }} image{{ product.images.length > 1 ? 's' : '' }}
-                  </span>
-                  <span class="px-2 py-1 bg-[rgba(57,255,20,0.1)] border border-[rgba(57,255,20,0.2)] rounded text-[var(--color-neon-green)]">
-                    {{ product.type }}
-                  </span>
-                  <span class="px-2 py-1 bg-[rgba(57,255,20,0.1)] border border-[rgba(57,255,20,0.2)] rounded text-[var(--color-neon-green)]">
-                    {{ product.sizes.join(', ') }}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <ProductsTab 
+        v-if="activeTab === 'products'" 
+        :products="products"
+        @update-product="updateProduct"
+        @open-image-modal="openImageModal"
+      />
 
       <!-- Content Tab -->
-      <div v-if="activeTab === 'content' && siteContent" class="content-tab">
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <!-- Home Page Content -->
-          <div class="content-section">
-            <h2 class="text-2xl font-bold mb-4 text-white flex items-center gap-2">
-              <span>🏠</span> Page d'accueil
-            </h2>
-            <!-- Hero Section -->
-            <div class="content-card">
-              <h3 class="text-lg font-semibold mb-4 text-[var(--color-neon-green)]">Section Hero</h3>
-              <div class="flex flex-col gap-3">
-                <div>
-                  <label class="block text-sm font-semibold mb-2 text-[var(--color-text-secondary)]">Titre</label>
-                  <input v-model="siteContent.home.title" class="form-input">
-                </div>
-                <div>
-                  <label class="block text-sm font-semibold mb-2 text-[var(--color-text-secondary)]">Sous-titre</label>
-                  <input v-model="siteContent.home.subtitle" class="form-input">
-                </div>
-                <div>
-                  <label class="block text-sm font-semibold mb-2 text-[var(--color-text-secondary)]">Call-to-Action</label>
-                  <input v-model="siteContent.home.cta" class="form-input">
-                </div>
-              </div>
-            </div>
-          </div>
-          <!-- Contact Page Content -->
-          <div class="content-section">
-            <h2 class="text-2xl font-bold mb-4 text-white flex items-center gap-2">
-              <span>📧</span> Page Contact
-            </h2>
-            <div class="content-card">
-              <h3 class="text-lg font-semibold mb-4 text-[var(--color-neon-green)]">Informations</h3>
-              <div class="flex flex-col gap-3">
-                <div>
-                  <label class="block text-sm font-semibold mb-2 text-[var(--color-text-secondary)]">Titre</label>
-                  <input v-model="siteContent.contact.title" class="form-input">
-                </div>
-                <div>
-                  <label class="block text-sm font-semibold mb-2 text-[var(--color-text-secondary)]">Sous-titre</label>
-                  <textarea v-model="siteContent.contact.subtitle" class="form-textarea" rows="3"></textarea>
-                </div>
-                <div>
-                  <label class="block text-sm font-semibold mb-2 text-[var(--color-text-secondary)]">Email</label>
-                  <input v-model="siteContent.contact.email" type="email" class="form-input">
-                </div>
-                <div>
-                  <label class="block text-sm font-semibold mb-2 text-[var(--color-text-secondary)]">Instagram</label>
-                  <input v-model="siteContent.contact.instagram" class="form-input">
-                </div>
-                <div>
-                  <label class="block text-sm font-semibold mb-2 text-[var(--color-text-secondary)]">Horaires</label>
-                  <input v-model="siteContent.contact.hours" class="form-input">
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <!-- Easter Eggs Section (après Accueil et Contact) -->
-        <div class="content-section mt-8">
-          <h2 class="text-2xl font-bold mb-4 text-white flex items-center gap-2">
-            <span>🥚</span> Easter Eggs
-          </h2>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div v-for="egg in easterEggsList" :key="egg.key" class="p-6 bg-[rgba(57,255,20,0.05)] border border-[rgba(57,255,20,0.2)] rounded-lg hover:border-[var(--color-neon-green)] transition-all">
-              <div class="flex items-start gap-4 mb-4">
-                <input v-model="egg.icon" @blur="updateEasterEgg(egg.key, { icon: egg.icon })" class="text-4xl w-16 text-center bg-transparent border-b-2 border-transparent hover:border-[rgba(57,255,20,0.3)] focus:border-[var(--color-neon-green)] transition-colors outline-none" maxlength="2">
-                <div class="flex-1">
-                  <input v-model="egg.title" @blur="updateEasterEgg(egg.key, { title: egg.title })" class="w-full text-xl font-bold text-white bg-transparent border-b-2 border-transparent hover:border-[rgba(57,255,20,0.3)] focus:border-[var(--color-neon-green)] transition-colors outline-none mb-1">
-                  <div class="text-xs text-[var(--color-text-secondary)] font-mono">Clé: {{ egg.key }} | Ordre: {{ egg.order }}</div>
-                </div>
-              </div>
-              <textarea v-model="egg.text" @blur="updateEasterEgg(egg.key, { text: egg.text })" class="w-full text-sm text-[var(--color-text-secondary)] italic bg-transparent border border-transparent hover:border-[rgba(57,255,20,0.3)] focus:border-[var(--color-neon-green)] transition-colors outline-none rounded p-2 mb-3 min-h-[100px] resize-none"></textarea>
-              <input v-model="egg.author" @blur="updateEasterEgg(egg.key, { author: egg.author || null })" class="w-full text-xs text-[var(--color-text-secondary)] text-right bg-transparent border-b border-transparent hover:border-[rgba(57,255,20,0.3)] focus:border-[var(--color-neon-green)] transition-colors outline-none" placeholder="Auteur (optionnel)">
-              <div class="flex items-center justify-between mt-4 pt-4 border-t border-[rgba(57,255,20,0.1)]">
-                <label class="flex items-center gap-2 cursor-pointer">
-                  <input type="checkbox" v-model="egg.active" @change="updateEasterEgg(egg.key, { active: egg.active })" class="w-4 h-4 rounded border-[rgba(57,255,20,0.3)] bg-transparent checked:bg-[var(--color-neon-green)]">
-                  <span class="text-xs text-[var(--color-text-secondary)]">{{ egg.active ? 'Actif' : 'Désactivé' }}</span>
-                </label>
-                <span class="px-2 py-1 text-xs rounded" :class="egg.active ? 'bg-[var(--color-neon-green)]/10 text-[var(--color-neon-green)]' : 'bg-gray-500/10 text-gray-500'">{{ egg.active ? '✓ Visible' : '✗ Caché' }}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-        <!-- Save Button -->
-        <div class="mt-8 flex justify-end">
-          <button @click="saveSiteContent" class="btn btn-primary">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
-              <polyline points="17 21 17 13 7 13 7 21"></polyline>
-              <polyline points="7 3 7 8 15 8"></polyline>
-            </svg>
-            Sauvegarder le contenu
-          </button>
-        </div>
-      </div>
+      <ContentTab
+        v-if="activeTab === 'content' && siteContent"
+        :siteContent="siteContent"
+        :easterEggsList="easterEggsList"
+        @auto-save="autoSaveContent"
+        @update-easter-egg="updateEasterEgg"
+      />
 
       <!-- Security Tab -->
-      <div v-show="activeTab === 'security'">
-        <!-- Connexions hackers (logs honeypot) -->
-        <div class="content-section mt-8">
-          <h2 class="text-2xl font-bold mb-4 text-white flex items-center gap-2">
-            <span>🍯</span> Tentatives d'intrusion (Honeypot)
-          </h2>
-          <div v-if="loadingLogs" class="text-center py-4 text-[var(--color-text-secondary)]">Chargement des logs...</div>
-          <div v-else-if="honeypotLogs.length === 0" class="text-center py-4 text-[var(--color-text-secondary)]">Aucune tentative détectée.</div>
-          <div v-else>
-            <table class="w-full text-sm bg-[var(--color-black-light)] rounded-xl overflow-hidden mb-4">
-              <thead>
-                <tr class="bg-[rgba(255,0,0,0.05)]">
-                  <th class="p-3 text-left">Date</th>
-                  <th class="p-3 text-left">Email</th>
-                  <th class="p-3 text-left">IP</th>
-                  <th class="p-3 text-left">User-Agent</th>
-                  <th class="p-3 text-left">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="log in sortedHoneypotLogs" :key="log.id" class="border-b border-[rgba(255,0,0,0.05)] hover:bg-[rgba(255,0,0,0.03)]">
-                  <td class="p-3">{{ formatDate(log.timestamp) }}</td>
-                  <td class="p-3">{{ log.email || '-' }}</td>
-                  <td class="p-3">{{ log.ip || '-' }}</td>
-                  <td class="p-3 truncate max-w-[200px]">{{ log.userAgent || '-' }}</td>
-                  <td class="p-3">
-                    <button @click="deleteLog(log.id)" class="btn btn-xs btn-danger">Supprimer</button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-            <button @click="clearHoneypotLogs" class="btn btn-danger">Tout supprimer</button>
-          </div>
-        </div>
-        <!-- Bloc Connexion déplacé ici -->
-        <div v-if="!adminStore.isAuthenticated || !adminStore.user" class="container max-w-md mx-auto px-4 mb-8">
-          <div class="bg-[var(--color-black-light)] border border-[rgba(57,255,20,0.3)] rounded-xl p-8">
-            <h1 class="text-3xl font-bold text-center mb-8">
-              <span class="text-gradient">Connexion Admin</span>
-            </h1>
-            <form @submit.prevent="handleLogin" class="flex flex-col gap-4">
-              <div>
-                <label class="block text-sm font-semibold mb-2 text-[var(--color-text-secondary)]">Email</label>
-                <input v-model="email" type="email" class="form-input" placeholder="admin@nainvert.com" required>
-              </div>
-              <div>
-                <label class="block text-sm font-semibold mb-2 text-[var(--color-text-secondary)]">Mot de passe</label>
-                <input v-model="password" type="password" class="form-input" placeholder="Entrez le mot de passe" required :disabled="isBlocked">
-              </div>
-              <div v-if="showCaptcha && !isBlocked" class="p-4 bg-[rgba(57,255,20,0.05)] border border-[rgba(57,255,20,0.3)] rounded-lg">
-                <label class="block text-sm font-semibold mb-2 text-[var(--color-text-secondary)]">🤖 Vérification anti-robot</label>
-                <div class="flex items-center gap-3">
-                  <span class="text-2xl font-bold text-[var(--color-neon-green)] font-mono">{{ captchaQuestion.num1 }} + {{ captchaQuestion.num2 }} = ?</span>
-                  <input v-model="captchaAnswer" type="number" class="form-input w-24" placeholder="?" required :disabled="isBlocked">
-                </div>
-              </div>
-              <div v-if="isBlocked" class="p-4 bg-red-500/10 border border-red-500 rounded-lg">
-                <div class="flex items-center gap-3 mb-2">
-                  <svg class="w-6 h-6 text-red-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <line x1="12" y1="8" x2="12" y2="12"></line>
-                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
-                  </svg>
-                  <div>
-                    <div class="text-red-500 font-bold">Compte temporairement bloqué</div>
-                    <div class="text-red-400 text-sm">Trop de tentatives échouées</div>
-                  </div>
-                </div>
-                <div class="text-center text-2xl font-mono font-bold text-red-500 mt-3">{{ blockRemainingTime }}</div>
-              </div>
-              <div v-if="failedAttempts > 0 && !isBlocked" class="p-3 bg-orange-500/10 border border-orange-500 rounded-lg text-orange-500 text-sm">
-                <div class="flex items-center gap-2">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
-                    <line x1="12" y1="9" x2="12" y2="13"></line>
-                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
-                  </svg>
-                  <span>{{ failedAttempts }} tentative(s) échouée(s)</span>
-                </div>
-              </div>
-              <div v-if="loginError || adminStore.error" class="p-3 bg-red-500/10 border border-red-500 rounded-lg text-red-500 text-sm">
-                {{ adminStore.error || 'Erreur de connexion' }}
-              </div>
-              <button type="submit" class="btn btn-primary" :disabled="adminStore.loading || isBlocked">
-                {{ isBlocked ? 'Bloqué' : (adminStore.loading ? 'Connexion...' : 'Se connecter') }}
-              </button>
-            </form>
-          </div>
-        </div>
-        <div class="bg-[var(--color-black-light)] border border-[rgba(57,255,20,0.3)] rounded-xl p-8 max-w-2xl">
-          <h2 class="text-2xl font-bold mb-6 text-gradient">Changer le mot de passe</h2>
-          
-          <form @submit.prevent="handleChangePassword" class="flex flex-col gap-6">
-            <div>
-              <label class="block text-sm font-semibold mb-2 text-[var(--color-text-secondary)]">
-                Mot de passe actuel
-              </label>
-              <input 
-                v-model="passwordForm.current"
-                type="password"
-                class="form-input"
-                placeholder="Entrez votre mot de passe actuel"
-                required
-              >
-            </div>
-
-            <div>
-              <label class="block text-sm font-semibold mb-2 text-[var(--color-text-secondary)]">
-                Nouveau mot de passe
-              </label>
-              <input 
-                v-model="passwordForm.new"
-                type="password"
-                class="form-input"
-                placeholder="Minimum 6 caractères"
-                required
-                minlength="6"
-              >
-            </div>
-
-            <div>
-              <label class="block text-sm font-semibold mb-2 text-[var(--color-text-secondary)]">
-                Confirmer le nouveau mot de passe
-              </label>
-              <input 
-                v-model="passwordForm.confirm"
-                type="password"
-                class="form-input"
-                placeholder="Retapez le nouveau mot de passe"
-                required
-                minlength="6"
-              >
-            </div>
-
-            <!-- Messages -->
-            <div v-if="passwordMessage.text" 
-                 :class="[
-                   'p-4 rounded-lg border',
-                   passwordMessage.type === 'success' 
-                     ? 'bg-[var(--color-primary)]/10 border-[var(--color-primary)] text-[var(--color-primary)]'
-                     : 'bg-red-500/10 border-red-500 text-red-500'
-                 ]"
-            >
-              {{ passwordMessage.text }}
-            </div>
-
-            <button type="submit" class="btn btn-primary" :disabled="adminStore.loading">
-              {{ adminStore.loading ? 'Modification...' : 'Changer le mot de passe' }}
-            </button>
-          </form>
-        </div>
-      </div>
+      <SecurityTab
+        v-show="activeTab === 'security'"
+        :honeypotLogs="honeypotLogs"
+        :sortedHoneypotLogs="sortedHoneypotLogs"
+        :loadingLogs="loadingLogs"
+        :isAuthenticated="adminStore.isAuthenticated"
+        :loginData="{ email, password, showCaptcha, captchaQuestion, captchaAnswer, isBlocked, blockRemainingTime, failedAttempts, loginError }"
+        :passwordForm="passwordForm"
+        :passwordMessage="passwordMessage"
+        @delete-log="deleteLog"
+        @clear-honeypot-logs="clearHoneypotLogs"
+        @handle-login="handleLogin"
+        @update-login-field="(field, value) => { if (field === 'email') email = value; else if (field === 'password') password = value; else if (field === 'captchaAnswer') captchaAnswer = value; }"
+        @handle-change-password="handleChangePassword"
+        @update-password-field="(field, value) => passwordForm[field] = value"
+      />
 
       <!-- Intrusions Tab -->
       <div v-show="activeTab === 'intrusions'">
@@ -713,140 +376,15 @@ onMounted(() => {
 
 
       <!-- Orders Tab -->
-      <div v-show="activeTab === 'orders'">
-        <div class="bg-[var(--color-black-light)] border border-[rgba(57,255,20,0.3)] rounded-xl p-8">
-          <!-- Header avec statistiques -->
-          <div class="mb-8">
-            <h2 class="text-2xl font-bold text-gradient mb-6">🛒 Gestion des Commandes</h2>
-            
-            <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
-              <div class="stat-card">
-                <div class="stat-value">{{ orderStats.total }}</div>
-                <div class="stat-label">Total</div>
-              </div>
-              <div class="stat-card stat-pending">
-                <div class="stat-value">{{ orderStats.pending }}</div>
-                <div class="stat-label">En attente</div>
-              </div>
-              <div class="stat-card stat-shipped">
-                <div class="stat-value">{{ orderStats.shipped }}</div>
-                <div class="stat-label">Expédiées</div>
-              </div>
-              <div class="stat-card stat-delivered">
-                <div class="stat-value">{{ orderStats.delivered }}</div>
-                <div class="stat-label">Livrées</div>
-              </div>
-              <div class="stat-card stat-revenue">
-                <div class="stat-value">{{ orderStats.totalRevenue.toFixed(2) }}€</div>
-                <div class="stat-label">CA Total</div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Filtres -->
-          <div class="mb-6">
-            <div class="flex gap-2 flex-wrap">
-              <button 
-                @click="orderFilter = 'all'"
-                :class="['filter-btn', { active: orderFilter === 'all' }]"
-              >
-                Toutes
-              </button>
-              <button 
-                @click="orderFilter = 'pending'"
-                :class="['filter-btn', { active: orderFilter === 'pending' }]"
-              >
-                En attente
-              </button>
-              <button 
-                @click="orderFilter = 'paid'"
-                :class="['filter-btn', { active: orderFilter === 'paid' }]"
-              >
-                Payées
-              </button>
-              <button 
-                @click="orderFilter = 'shipped'"
-                :class="['filter-btn', { active: orderFilter === 'shipped' }]"
-              >
-                Expédiées
-              </button>
-              <button 
-                @click="orderFilter = 'delivered'"
-                :class="['filter-btn', { active: orderFilter === 'delivered' }]"
-              >
-                Livrées
-              </button>
-              <button 
-                @click="orderFilter = 'cancelled'"
-                :class="['filter-btn', { active: orderFilter === 'cancelled' }]"
-              >
-                Annulées
-              </button>
-            </div>
-          </div>
-
-          <!-- Liste des commandes -->
-          <div v-if="loadingOrders" class="text-center py-8 text-[var(--color-text-secondary)]">
-            Chargement des commandes...
-          </div>
-
-          <div v-else-if="filteredOrders.length === 0" class="text-center py-12">
-            <svg class="w-16 h-16 mx-auto mb-4 text-[var(--color-text-secondary)] opacity-50" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="9" cy="21" r="1"></circle>
-              <circle cx="20" cy="21" r="1"></circle>
-              <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
-            </svg>
-            <p class="text-[var(--color-text-secondary)]">Aucune commande trouvée</p>
-          </div>
-
-          <div v-else class="space-y-4">
-            <div 
-              v-for="order in filteredOrders" 
-              :key="order.id"
-              class="order-card"
-              @click="selectedOrder = order"
-            >
-              <div class="flex items-start justify-between">
-                <div class="flex-1">
-                  <div class="flex items-center gap-3 mb-2">
-                    <h3 class="text-lg font-bold text-white">{{ order.orderId }}</h3>
-                    <span :class="['status-badge', `status-${order.status}`]">
-                      {{ getStatusLabel(order.status) }}
-                    </span>
-                  </div>
-                  
-                  <div class="text-sm text-[var(--color-text-secondary)] space-y-1">
-                    <p>
-                      <strong>Client:</strong> {{ order.customer?.firstName }} {{ order.customer?.lastName }}
-                    </p>
-                    <p>
-                      <strong>Email:</strong> {{ order.customer?.email }}
-                    </p>
-                    <p>
-                      <strong>Date:</strong> {{ formatOrderDate(order.createdAt) }}
-                    </p>
-                    <p>
-                      <strong>Produits:</strong> {{ order.items?.length || 0 }} article(s)
-                    </p>
-                  </div>
-                </div>
-
-                <div class="text-right">
-                  <div class="text-2xl font-bold text-[var(--color-neon-green)] mb-2">
-                    {{ order.total?.toFixed(2) }}€
-                  </div>
-                  <button 
-                    @click.stop="selectedOrder = order"
-                    class="btn-small btn-primary"
-                  >
-                    Voir détails
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <OrdersTab
+        v-show="activeTab === 'orders'"
+        :orderStats="orderStats"
+        :orderFilter="orderFilter"
+        :filteredOrders="filteredOrders"
+        :loadingOrders="loadingOrders"
+        @update-filter="value => orderFilter = value"
+        @select-order="order => selectedOrder = order"
+      />
 
       <!-- Order Detail Modal -->
       <teleport to="body">
@@ -1008,102 +546,14 @@ onMounted(() => {
       </teleport>
 
       <!-- Messages Tab -->
-      <div v-show="activeTab === 'messages'">
-        <div class="bg-[var(--color-black-light)] border border-[rgba(57,255,20,0.3)] rounded-xl p-8">
-          <div class="flex items-center justify-between mb-6">
-            <h2 class="text-2xl font-bold text-gradient">📬 Messages de contact</h2>
-            <div class="text-sm text-[var(--color-text-secondary)]">
-              {{ unreadMessages }} non lu(s)
-            </div>
-          </div>
-
-          <div v-if="loadingMessages" class="text-center py-8 text-[var(--color-text-secondary)]">
-            Chargement des messages...
-          </div>
-
-          <div v-else-if="contactMessages.length === 0" class="text-center py-12">
-            <svg class="w-16 h-16 mx-auto mb-4 text-[var(--color-text-secondary)] opacity-50" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
-              <polyline points="22,6 12,13 2,6"></polyline>
-            </svg>
-            <p class="text-[var(--color-text-secondary)]">Aucun message reçu</p>
-          </div>
-
-          <div v-else class="space-y-4">
-            <div 
-              v-for="message in contactMessages" 
-              :key="message.id"
-              :class="[
-                'p-6 border-2 rounded-lg transition-all',
-                message.status === 'unread' 
-                  ? 'bg-[rgba(57,255,20,0.1)] border-[var(--color-neon-green)]' 
-                  : 'bg-[rgba(57,255,20,0.05)] border-[rgba(57,255,20,0.2)]'
-              ]"
-            >
-              <!-- Header -->
-              <div class="flex items-start justify-between gap-4 mb-4">
-                <div class="flex-1">
-                  <div class="flex items-center gap-3 mb-2">
-                    <h3 class="text-lg font-bold text-white">{{ message.name }}</h3>
-                    <span 
-                      :class="[
-                        'px-2 py-0.5 text-xs font-bold rounded',
-                        message.status === 'unread' 
-                          ? 'bg-[var(--color-neon-green)] text-black' 
-                          : 'bg-gray-500/20 text-gray-400'
-                      ]"
-                    >
-                      {{ message.status === 'unread' ? 'NOUVEAU' : 'Lu' }}
-                    </span>
-                    <span class="px-2 py-0.5 bg-[rgba(57,255,20,0.1)] text-[var(--color-neon-green)] text-xs rounded">
-                      {{ message.subject }}
-                    </span>
-                  </div>
-                  <a :href="`mailto:${message.email}`" class="text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-neon-green)] transition-colors">
-                    {{ message.email }}
-                  </a>
-                </div>
-                <div class="flex gap-2">
-                  <button 
-                    @click="toggleMessageStatus(message.id, message.status)"
-                    class="p-2 border border-[rgba(57,255,20,0.3)] rounded-lg hover:border-[var(--color-neon-green)] hover:bg-[rgba(57,255,20,0.1)] transition-all"
-                    :title="message.status === 'read' ? 'Marquer comme non lu' : 'Marquer comme lu'"
-                  >
-                    <svg v-if="message.status === 'unread'" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <polyline points="20 6 9 17 4 12"></polyline>
-                    </svg>
-                    <svg v-else width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
-                      <polyline points="22,6 12,13 2,6"></polyline>
-                    </svg>
-                  </button>
-                  <button 
-                    @click="deleteMessage(message.id)"
-                    class="p-2 text-red-400 border border-red-500/30 rounded-lg hover:border-red-500 hover:bg-red-500/10 transition-all"
-                    title="Supprimer"
-                  >
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <polyline points="3 6 5 6 21 6"></polyline>
-                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                    </svg>
-                  </button>
-                </div>
-              </div>
-
-              <!-- Message -->
-              <div class="p-4 bg-black/30 rounded-lg mb-4">
-                <p class="text-sm text-[var(--color-text-secondary)] whitespace-pre-wrap">{{ message.message }}</p>
-              </div>
-
-              <!-- Footer -->
-              <div class="flex items-center justify-between text-xs text-[var(--color-text-secondary)]">
-                <span>{{ formatDate(message.timestamp) }}</span>
-                <span class="font-mono">{{ message.source }}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <MessagesTab
+        v-show="activeTab === 'messages'"
+        :contactMessages="contactMessages"
+        :unreadMessages="unreadMessages"
+        :loadingMessages="loadingMessages"
+        @toggle-message-status="toggleMessageStatus"
+        @delete-message="deleteMessage"
+      />
     </div>
 
     <!-- Image Upload Modal -->
@@ -1237,6 +687,12 @@ onMounted(() => {
 </template>
 
 <script setup>
+// Sauvegarde automatique champ par champ pour le contenu home/contact
+function autoSaveContent(section, key, value) {
+  const data = {}
+  data[section] = { ...siteContent.value[section], [key]: value }
+  updateSiteContent(data)
+}
 import { ref, computed, onMounted } from 'vue'
 import { useAdminStore } from '../stores/admin'
 import { useProducts } from '../composables/useProducts'
@@ -1245,6 +701,14 @@ import { useEasterEggsFirestore } from '../composables/useEasterEggsFirestore'
 import { useOrders } from '../composables/useOrders'
 import { collection, query, orderBy, onSnapshot, deleteDoc, doc, getDocs, updateDoc } from 'firebase/firestore'
 import { db } from '@/config/firebase'
+
+// Composants admin tabs
+import ProductsTab from '../components/admin/ProductsTab.vue'
+import ContentTab from '../components/admin/ContentTab.vue'
+import OrdersTab from '../components/admin/OrdersTab.vue'
+import RefundsTab from '../components/admin/RefundsTab.vue'
+import MessagesTab from '../components/admin/MessagesTab.vue'
+import SecurityTab from '../components/admin/SecurityTab.vue'
 
 const adminStore = useAdminStore()
 const { products, loadProducts, updateProduct } = useProducts()
@@ -1887,6 +1351,11 @@ const removeImage = async (imageIndex) => {
   font-weight: 700;
   border-radius: 10px;
   animation: pulse-badge 2s infinite;
+}
+
+/* Sticky tabs bar */
+.sticky {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
 }
 
 @keyframes pulse-badge {

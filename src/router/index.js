@@ -10,6 +10,7 @@ import Shipping from '@/pages/Shipping.vue'
 import Returns from '@/pages/Returns.vue'
 import Terms from '@/pages/Terms.vue'
 import Legal from '@/pages/Legal.vue'
+import DevTools from '@/pages/DevTools.vue'
 
 const routes = [
   {
@@ -61,6 +62,14 @@ const routes = [
     component: Honeypot,
     meta: {
       title: 'Admin Panel - NainVert'
+    }
+  },
+  {
+    path: '/dev-tools',
+    name: 'DevTools',
+    component: DevTools,
+    meta: {
+      title: 'Dev Tools - NainVert'
     }
   },
   {

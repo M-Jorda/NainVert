@@ -11,6 +11,6 @@ export default defineConfig({
   },
   server: {
     port: 3000,
-    open: true
+    open: false // Désactiver l'ouverture automatique du navigateur pour éviter l'erreur spawn EIO
   }
 })
