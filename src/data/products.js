@@ -1,26 +1,17 @@
-// Script d'import des produits NainVert vers Firestore
-// Usage: node scripts/importToFirestore.js
+// Fonction pour charger les produits depuis localStorage ou données par défaut
+function loadProducts() {
+  const stored = localStorage.getItem('nainvert_products')
+  if (stored) {
+    try {
+      return JSON.parse(stored)
+    } catch (e) {
+      console.error('Erreur lors du chargement des produits depuis localStorage', e)
+    }
+  }
+  return defaultProducts
+}
 
-import { initializeApp } from 'firebase/app'
-import { getFirestore, collection, doc, setDoc } from 'firebase/firestore'
-
-// ⚠️ IMPORTANT: Remplace ces valeurs par celles de ton projet Firebase
-const firebaseConfig = {
-  apiKey: "AIzaSyCVYNc5nhSpjxyKtyTkG5HrQ3LA3vVCDn8",
-  authDomain: "nainvert-2561c.firebaseapp.com",
-  projectId: "nainvert-2561c",
-  storageBucket: "nainvert-2561c.firebasestorage.app",
-  messagingSenderId: "16726954023",
-  appId: "1:16726954023:web:99ba7c15d4aecc7c4d7e02",
-  measurementId: "G-PH2TWG5E8C"
-};
-
-// Initialisation Firebase
-const app = initializeApp(firebaseConfig)
-const db = getFirestore(app)
-
-// Données des produits à importer
-const products = [
+const defaultProducts = [
   {
     id: 1,
     name: 'Neon Dreams T-Shirt',
@@ -110,56 +101,23 @@ const products = [
   }
 ]
 
-// Contenu du site à importer
-const siteContent = {
-  home: {
-    title: "Bienvenue chez NainVert",
-    subtitle: "Collection exclusive de vêtements streetwear psychédéliques",
-    cta: "Découvrir la collection"
-  },
-  contact: {
-    title: "Contactez-nous",
-    subtitle: "Une question ? N'hésitez pas à nous contacter",
-    email: "contact@nainvert.com",
-    instagram: "@nainvert",
-    hours: "Lun-Ven: 9h-18h"
-  },
-  footer: {
-    tagline: "NainVert - L'authenticité psychédélique"
-  }
+// Export des produits (chargés depuis localStorage ou défauts)
+export const products = loadProducts()
+
+// Fonction helper pour obtenir un produit par slug
+export function getProductBySlug(slug) {
+  const currentProducts = loadProducts()
+  return currentProducts.find(product => product.slug === slug)
 }
 
-// Fonction principale d'import
-async function importData() {
-  console.log('🚀 Début de l\'import vers Firestore...\n')
-
-  try {
-    // Import des produits
-    console.log('📦 Import des produits...')
-    for (const product of products) {
-      const docRef = doc(db, 'products', product.slug)
-      await setDoc(docRef, product)
-      console.log(`✅ Produit importé: ${product.name}`)
-    }
-
-    // Import du contenu du site
-    console.log('\n📝 Import du contenu du site...')
-    const contentRef = doc(db, 'siteContent', 'global')
-    await setDoc(contentRef, siteContent)
-    console.log('✅ Contenu du site importé')
-
-    console.log('\n🎉 Import terminé avec succès !')
-    console.log('\n📊 Résumé:')
-    console.log(`   - ${products.length} produits importés`)
-    console.log('   - 1 document de contenu importé')
-    console.log('\n💡 Tu peux maintenant voir tes données dans la console Firebase!')
-    
-    process.exit(0)
-  } catch (error) {
-    console.error('❌ Erreur lors de l\'import:', error)
-    process.exit(1)
-  }
+// Fonction helper pour obtenir les produits par type
+export function getProductsByType(type) {
+  const currentProducts = loadProducts()
+  return currentProducts.filter(product => product.type === type)
 }
 
-// Lancement du script
-importData()
+// Fonction helper pour obtenir les produits en vedette
+export function getFeaturedProducts() {
+  const currentProducts = loadProducts()
+  return currentProducts.filter(product => product.featured)
+}

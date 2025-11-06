@@ -10,10 +10,11 @@
       
       <div class="space-y-6">
         <SeedRefunds />
+        <SeedMessages />
       </div>
       
       <div class="mt-8 text-center">
-        <router-link to="/admin" class="text-[var(--color-primary)] hover:underline">
+        <router-link to="/rho" class="text-[var(--color-primary)] hover:underline">
           ← Retour à l'admin
         </router-link>
       </div>
@@ -23,4 +24,5 @@
 
 <script setup>
 import SeedRefunds from '../components/SeedRefunds.vue'
+import SeedMessages from '../components/SeedMessages.vue'
 </script>

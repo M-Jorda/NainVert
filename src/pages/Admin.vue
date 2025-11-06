@@ -1,68 +1,3 @@
-import { useRefunds } from '../composables/useRefunds'
-// Refunds management
-const {
-  refunds,
-  loading: loadingRefunds,
-  loadRefunds,
-  updateRefundStatus,
-  addRefundNote,
-  deleteRefund,
-  refundStats: _refundStats
-} = useRefunds() || {}
-
-const refundStats = _refundStats || { total: 0, requested: 0, approved: 0, rejected: 0, processed: 0 }
-const refundFilter = ref('all')
-const selectedRefund = ref(null)
-const refundNoteInput = ref('')
-const refundStatusInput = ref('requested')
-const filteredRefunds = computed(() => {
-  if (refundFilter.value === 'all') return refunds.value
-  return refunds.value.filter(r => r.status === refundFilter.value)
-})
-const getRefundStatusLabel = (status) => {
-  const labels = {
-    requested: 'Demandé',
-    approved: 'Approuvé',
-    rejected: 'Rejeté',
-    processed: 'Traité'
-  }
-  return labels[status] || status
-}
-const selectRefund = (refund) => {
-  selectedRefund.value = refund
-  refundNoteInput.value = refund.notes || ''
-  refundStatusInput.value = refund.status
-  if (refund.orderId) {
-    linkedOrder.value = orders.value.find(o => o.id === refund.orderId) || null
-  } else {
-    linkedOrder.value = null
-  }
-}
-const handleUpdateRefundStatus = async (refundId, newStatus) => {
-  const result = await updateRefundStatus(refundId, newStatus)
-  if (result.success) {
-    selectedRefund.value.status = newStatus
-  } else {
-    alert('Erreur lors de la mise à jour du statut')
-  }
-}
-const handleUpdateRefundNote = async (refundId, note) => {
-  const result = await addRefundNote(refundId, note)
-  if (!result.success) {
-    alert('Erreur lors de la mise à jour de la note')
-  }
-}
-const handleDeleteRefund = async (refundId) => {
-  if (!confirm('Supprimer ce remboursement ?')) return
-  const result = await deleteRefund(refundId)
-  if (!result.success) {
-    alert('Erreur lors de la suppression')
-  }
-}
-const linkedOrder = ref(null)
-onMounted(() => {
-  loadRefunds()
-})
 <template>
   <div class="min-h-screen py-20">
     <!-- Admin Dashboard -->
@@ -183,6 +118,12 @@ onMounted(() => {
         </div>
         <!-- Liste des remboursements -->
         <div v-if="loadingRefunds" class="text-center py-8 text-[var(--color-text-secondary)]">Chargement des remboursements...</div>
+        <div v-else-if="!filteredRefunds || filteredRefunds.length === 0" class="text-center py-12">
+          <svg class="w-16 h-16 mx-auto mb-4 text-[var(--color-text-secondary)] opacity-50" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 19c.88 0 1.75-.39 2.36-1.09l6.36-7.09A2 2 0 0 0 19.36 8H4.64a2 2 0 0 0-1.36 3.82l6.36 7.09A3.001 3.001 0 0 0 12 19z"></path>
+          </svg>
+          <p class="text-[var(--color-text-secondary)]">Aucun remboursement trouvé</p>
+        </div>
         <div v-else>
           <table class="w-full text-sm bg-[var(--color-black-light)] rounded-xl overflow-hidden">
             <thead>
@@ -195,49 +136,164 @@ onMounted(() => {
               </tr>
             </thead>
             <tbody>
-              <tr v-for="refund in filteredRefunds" :key="refund.id" class="border-b border-[rgba(57,255,20,0.05)] hover:bg-[rgba(57,255,20,0.03)]">
-                <!-- ...existing code for refund rows... -->
+              <tr v-for="refund in filteredRefunds" :key="refund.id" class="border-b border-[rgba(57,255,20,0.05)] hover:bg-[rgba(57,255,20,0.03)] cursor-pointer" @click="selectRefund(refund)">
+                <td class="p-3">{{ formatOrderDate(refund.createdAt) }}</td>
+                <td class="p-3">{{ refund.orderId || '-' }}</td>
+                <td class="p-3 font-bold text-[var(--color-neon-green)]">{{ refund.amount ? refund.amount.toFixed(2) : '0.00' }}€</td>
+                <td class="p-3">
+                  <span :class="[
+                    'px-2 py-1 text-xs font-bold rounded',
+                    refund.status === 'requested' && 'bg-yellow-500/20 text-yellow-400',
+                    refund.status === 'approved' && 'bg-green-500/20 text-green-400',
+                    refund.status === 'rejected' && 'bg-red-500/20 text-red-400',
+                    refund.status === 'processed' && 'bg-blue-500/20 text-blue-400'
+                  ]">
+                    {{ getRefundStatusLabel(refund.status) }}
+                  </span>
+                </td>
+                <td class="p-3">
+                  <button @click.stop="selectRefund(refund)" class="btn btn-xs btn-primary">Détails</button>
+                </td>
               </tr>
             </tbody>
           </table>
         </div>
-        <!-- Modal détail remboursement -->
-        <!-- Modal détail remboursement -->
-        <div v-if="selectedRefund" class="modal-overlay">
-          <div class="modal">
-            <h3 class="text-xl font-bold mb-4">Détail du remboursement</h3>
-            <div class="mb-2"><b>ID:</b> {{ selectedRefund.id }}</div>
-            <div class="mb-2"><b>Statut:</b> <span :class="['badge', 'badge-' + selectedRefund.status]">{{ getRefundStatusLabel(selectedRefund.status) }}</span></div>
-            <div class="mb-2"><b>Montant:</b> {{ selectedRefund.amount ? selectedRefund.amount.toFixed(2) : '-' }}€</div>
-            <div class="mb-2"><b>Date:</b> {{ formatOrderDate(selectedRefund.createdAt) }}</div>
-            <div class="mb-2"><b>Commande liée:</b> <span v-if="selectedRefund.orderId">#{{ selectedRefund.orderId }}</span><span v-else>-</span></div>
-            <div v-if="linkedOrder" class="mb-2 p-2 bg-[rgba(57,255,20,0.05)] rounded">
-              <div><b>Client:</b> {{ linkedOrder.customerName || '-' }}</div>
-              <div><b>Email:</b> {{ linkedOrder.customerEmail || '-' }}</div>
-              <div><b>Montant commande:</b> {{ linkedOrder.total ? linkedOrder.total.toFixed(2) : '-' }}€</div>
-              <div><b>Statut commande:</b> {{ getStatusLabel(linkedOrder.status) }}</div>
-            </div>
-            <div class="mb-2"><b>Motif:</b> {{ selectedRefund.reason || '-' }}</div>
-            <div class="mb-2"><b>Note admin:</b>
-              <textarea v-model="refundNoteInput" class="form-input w-full" rows="2"></textarea>
-              <button class="btn btn-xs btn-primary mt-2" @click="handleUpdateRefundNote(selectedRefund.id, refundNoteInput)">Enregistrer la note</button>
-            </div>
-            <div class="mb-2">
-              <b>Changer le statut:</b>
-              <select v-model="refundStatusInput" class="form-input">
-                <option value="requested">Demandé</option>
-                <option value="approved">Approuvé</option>
-                <option value="rejected">Rejeté</option>
-                <option value="processed">Traité</option>
-              </select>
-              <button class="btn btn-xs btn-primary ml-2" @click="handleUpdateRefundStatus(selectedRefund.id, refundStatusInput)">Mettre à jour</button>
-            </div>
-            <div class="flex justify-end mt-4">
-              <button class="btn btn-secondary" @click="selectedRefund = null">Fermer</button>
+      </div>
+
+      <!-- Modal détail remboursement -->
+      <teleport to="body">
+        <transition name="modal-fade">
+          <div 
+            v-if="selectedRefund" 
+            class="fixed inset-0 bg-black/95 backdrop-blur-sm z-[9999] flex items-center justify-center p-4"
+            @click="selectedRefund = null"
+          >
+            <div 
+              class="bg-[var(--color-black-light)] border border-[rgba(57,255,20,0.3)] rounded-xl max-w-4xl w-full p-8 max-h-[90vh] overflow-y-auto"
+              @click.stop
+            >
+              <div class="flex items-center justify-between mb-6">
+                <h2 class="text-2xl font-bold text-gradient">
+                  Détail du remboursement
+                </h2>
+                <button 
+                  @click="selectedRefund = null"
+                  class="w-10 h-10 flex items-center justify-center border border-[rgba(57,255,20,0.2)] rounded-lg text-[var(--color-text-secondary)] hover:border-[var(--color-neon-green)] hover:text-[var(--color-neon-green)] transition-all"
+                >
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                  </svg>
+                </button>
+              </div>
+
+              <!-- Informations du remboursement -->
+              <div class="mb-6 p-6 bg-[rgba(57,255,20,0.05)] border border-[rgba(57,255,20,0.2)] rounded-lg">
+                <h3 class="text-lg font-bold text-white mb-4">💰 Informations</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <strong class="text-white">ID:</strong>
+                    <span class="ml-2 text-[var(--color-text-secondary)]">{{ selectedRefund.id }}</span>
+                  </div>
+                  <div>
+                    <strong class="text-white">Statut:</strong>
+                    <span :class="[
+                      'ml-2 px-2 py-1 text-xs font-bold rounded',
+                      selectedRefund.status === 'requested' && 'bg-yellow-500/20 text-yellow-400',
+                      selectedRefund.status === 'approved' && 'bg-green-500/20 text-green-400',
+                      selectedRefund.status === 'rejected' && 'bg-red-500/20 text-red-400',
+                      selectedRefund.status === 'processed' && 'bg-blue-500/20 text-blue-400'
+                    ]">
+                      {{ getRefundStatusLabel(selectedRefund.status) }}
+                    </span>
+                  </div>
+                  <div>
+                    <strong class="text-white">Montant:</strong>
+                    <span class="ml-2 text-[var(--color-neon-green)] font-bold">{{ selectedRefund.amount ? selectedRefund.amount.toFixed(2) : '-' }}€</span>
+                  </div>
+                  <div>
+                    <strong class="text-white">Date:</strong>
+                    <span class="ml-2 text-[var(--color-text-secondary)]">{{ formatOrderDate(selectedRefund.createdAt) }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Commande liée -->
+              <div v-if="linkedOrder || selectedRefund.orderId" class="mb-6 p-6 bg-[rgba(57,255,20,0.05)] border border-[rgba(57,255,20,0.2)] rounded-lg">
+                <h3 class="text-lg font-bold text-white mb-4">📦 Commande liée</h3>
+                <div v-if="linkedOrder" class="space-y-2 text-sm">
+                  <div>
+                    <strong class="text-white">N° Commande:</strong>
+                    <span class="ml-2 text-[var(--color-neon-green)]">#{{ linkedOrder.orderId }}</span>
+                  </div>
+                  <div>
+                    <strong class="text-white">Client:</strong>
+                    <span class="ml-2 text-[var(--color-text-secondary)]">{{ linkedOrder.customer?.firstName }} {{ linkedOrder.customer?.lastName }}</span>
+                  </div>
+                  <div>
+                    <strong class="text-white">Email:</strong>
+                    <span class="ml-2 text-[var(--color-text-secondary)]">{{ linkedOrder.customer?.email }}</span>
+                  </div>
+                  <div>
+                    <strong class="text-white">Montant commande:</strong>
+                    <span class="ml-2 text-[var(--color-neon-green)]">{{ linkedOrder.total ? linkedOrder.total.toFixed(2) : '-' }}€</span>
+                  </div>
+                  <div>
+                    <strong class="text-white">Statut commande:</strong>
+                    <span class="ml-2 text-[var(--color-text-secondary)]">{{ getStatusLabel(linkedOrder.status) }}</span>
+                  </div>
+                </div>
+                <div v-else class="text-sm text-[var(--color-text-secondary)]">
+                  Commande #{{ selectedRefund.orderId }} (détails non disponibles)
+                </div>
+              </div>
+
+              <!-- Motif et note -->
+              <div class="mb-6 p-6 bg-[rgba(57,255,20,0.05)] border border-[rgba(57,255,20,0.2)] rounded-lg">
+                <h3 class="text-lg font-bold text-white mb-4">📝 Détails</h3>
+                <div class="mb-4">
+                  <strong class="text-white">Motif:</strong>
+                  <p class="mt-2 p-3 bg-black/30 rounded text-[var(--color-text-secondary)]">{{ selectedRefund.reason || '-' }}</p>
+                </div>
+                <div>
+                  <label class="block text-sm font-semibold text-white mb-2">Note admin:</label>
+                  <textarea v-model="refundNoteInput" class="form-textarea w-full" rows="3"></textarea>
+                  <button class="btn btn-primary mt-2" @click="handleUpdateRefundNote(selectedRefund.id, refundNoteInput)">Enregistrer la note</button>
+                </div>
+              </div>
+
+              <!-- Actions admin -->
+              <div class="p-6 bg-[rgba(57,255,20,0.05)] border border-[rgba(57,255,20,0.2)] rounded-lg">
+                <h3 class="text-lg font-bold text-white mb-4">⚙️ Actions</h3>
+                <div class="mb-4">
+                  <label class="block text-sm font-semibold text-white mb-2">Changer le statut</label>
+                  <div class="flex gap-2">
+                    <select v-model="refundStatusInput" class="form-input flex-1">
+                      <option value="requested">Demandé</option>
+                      <option value="approved">Approuvé</option>
+                      <option value="rejected">Rejeté</option>
+                      <option value="processed">Traité</option>
+                    </select>
+                    <button class="btn btn-primary" @click="handleUpdateRefundStatus(selectedRefund.id, refundStatusInput)">Mettre à jour</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Danger zone -->
+              <div class="mt-6 p-6 bg-red-500/10 border border-red-500/30 rounded-lg">
+                <h3 class="text-lg font-bold text-red-400 mb-4">⚠️ Zone dangereuse</h3>
+                <button 
+                  @click="handleDeleteRefund(selectedRefund.id); selectedRefund = null"
+                  class="btn btn-danger"
+                >
+                  Supprimer le remboursement
+                </button>
+                <p class="text-xs text-red-400 mt-2">Cette action est irréversible !</p>
+              </div>
             </div>
           </div>
-        </div>
-      </div>
+        </transition>
+      </teleport>
 
       <!-- Products Tab -->
       <ProductsTab 
@@ -551,9 +607,106 @@ onMounted(() => {
         :contactMessages="contactMessages"
         :unreadMessages="unreadMessages"
         :loadingMessages="loadingMessages"
+        @select-message="message => selectedMessage = message"
         @toggle-message-status="toggleMessageStatus"
         @delete-message="deleteMessage"
       />
+
+      <!-- Message Detail Modal -->
+      <teleport to="body">
+        <transition name="modal-fade">
+          <div 
+            v-if="selectedMessage" 
+            class="fixed inset-0 bg-black/95 backdrop-blur-sm z-[9999] flex items-center justify-center p-4"
+            @click="selectedMessage = null"
+          >
+            <div 
+              class="bg-[var(--color-black-light)] border border-[rgba(57,255,20,0.3)] rounded-xl max-w-3xl w-full p-8 max-h-[90vh] overflow-y-auto"
+              @click.stop
+            >
+              <div class="flex items-center justify-between mb-6">
+                <h2 class="text-2xl font-bold text-gradient">
+                  📬 Message de {{ selectedMessage.name }}
+                </h2>
+                <button 
+                  @click="selectedMessage = null"
+                  class="w-10 h-10 flex items-center justify-center border border-[rgba(57,255,20,0.2)] rounded-lg text-[var(--color-text-secondary)] hover:border-[var(--color-neon-green)] hover:text-[var(--color-neon-green)] transition-all"
+                >
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                  </svg>
+                </button>
+              </div>
+
+              <!-- Informations du message -->
+              <div class="mb-6 p-6 bg-[rgba(57,255,20,0.05)] border border-[rgba(57,255,20,0.2)] rounded-lg">
+                <div class="flex items-center gap-3 mb-4">
+                  <span 
+                    :class="[
+                      'px-3 py-1 text-xs font-bold rounded',
+                      selectedMessage.status === 'unread' 
+                        ? 'bg-[var(--color-neon-green)] text-black' 
+                        : 'bg-gray-500/20 text-gray-400'
+                    ]"
+                  >
+                    {{ selectedMessage.status === 'unread' ? 'NOUVEAU' : 'Lu' }}
+                  </span>
+                  <span class="px-3 py-1 bg-[rgba(57,255,20,0.1)] text-[var(--color-neon-green)] text-xs font-bold rounded">
+                    {{ selectedMessage.subject }}
+                  </span>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <strong class="text-white">Nom:</strong>
+                    <span class="ml-2 text-[var(--color-text-secondary)]">{{ selectedMessage.name }}</span>
+                  </div>
+                  <div>
+                    <strong class="text-white">Email:</strong>
+                    <a :href="`mailto:${selectedMessage.email}`" class="ml-2 text-[var(--color-neon-green)] hover:underline">{{ selectedMessage.email }}</a>
+                  </div>
+                  <div>
+                    <strong class="text-white">Date:</strong>
+                    <span class="ml-2 text-[var(--color-text-secondary)]">{{ formatOrderDate(selectedMessage.timestamp) }}</span>
+                  </div>
+                  <div>
+                    <strong class="text-white">Source:</strong>
+                    <span class="ml-2 text-[var(--color-text-secondary)] font-mono">{{ selectedMessage.source }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Contenu du message -->
+              <div class="mb-6 p-6 bg-black/30 rounded-lg">
+                <h3 class="text-lg font-bold text-white mb-3">💬 Message</h3>
+                <p class="text-[var(--color-text-secondary)] whitespace-pre-wrap leading-relaxed">{{ selectedMessage.message }}</p>
+              </div>
+
+              <!-- Actions -->
+              <div class="flex gap-3">
+                <button 
+                  @click="toggleMessageStatus(selectedMessage.id, selectedMessage.status)"
+                  class="btn btn-primary flex-1"
+                >
+                  {{ selectedMessage.status === 'read' ? 'Marquer comme non lu' : 'Marquer comme lu' }}
+                </button>
+                <button 
+                  @click="deleteMessage(selectedMessage.id); selectedMessage = null"
+                  class="btn btn-danger flex-1"
+                >
+                  Supprimer
+                </button>
+                <button 
+                  @click="selectedMessage = null"
+                  class="btn btn-secondary"
+                >
+                  Fermer
+                </button>
+              </div>
+            </div>
+          </div>
+        </transition>
+      </teleport>
     </div>
 
     <!-- Image Upload Modal -->
@@ -699,6 +852,7 @@ import { useProducts } from '../composables/useProducts'
 import { useSiteContent } from '../composables/useSiteContent'
 import { useEasterEggsFirestore } from '../composables/useEasterEggsFirestore'
 import { useOrders } from '../composables/useOrders'
+import { useRefunds } from '../composables/useRefunds'
 import { collection, query, orderBy, onSnapshot, deleteDoc, doc, getDocs, updateDoc } from 'firebase/firestore'
 import { db } from '@/config/firebase'
 
@@ -730,6 +884,73 @@ const {
   orderStats 
 } = useOrders()
 
+// Refunds management from Firestore
+const {
+  refunds,
+  loading: loadingRefunds,
+  loadRefunds,
+  updateRefundStatus,
+  addRefundNote,
+  deleteRefund,
+  refundStats
+} = useRefunds()
+
+const refundFilter = ref('all')
+const selectedRefund = ref(null)
+const refundNoteInput = ref('')
+const refundStatusInput = ref('requested')
+const linkedOrder = ref(null)
+
+const filteredRefunds = computed(() => {
+  if (!refunds.value) return []
+  if (refundFilter.value === 'all') return refunds.value
+  return refunds.value.filter(r => r.status === refundFilter.value)
+})
+
+const getRefundStatusLabel = (status) => {
+  const labels = {
+    requested: 'Demandé',
+    approved: 'Approuvé',
+    rejected: 'Rejeté',
+    processed: 'Traité'
+  }
+  return labels[status] || status
+}
+
+const selectRefund = (refund) => {
+  selectedRefund.value = refund
+  refundNoteInput.value = refund.notes || ''
+  refundStatusInput.value = refund.status
+  if (refund.orderId) {
+    linkedOrder.value = orders.value.find(o => o.id === refund.orderId) || null
+  } else {
+    linkedOrder.value = null
+  }
+}
+
+const handleUpdateRefundStatus = async (refundId, newStatus) => {
+  const result = await updateRefundStatus(refundId, newStatus)
+  if (result.success) {
+    selectedRefund.value.status = newStatus
+  } else {
+    alert('Erreur lors de la mise à jour du statut')
+  }
+}
+
+const handleUpdateRefundNote = async (refundId, note) => {
+  const result = await addRefundNote(refundId, note)
+  if (!result.success) {
+    alert('Erreur lors de la mise à jour de la note')
+  }
+}
+
+const handleDeleteRefund = async (refundId) => {
+  if (!confirm('Supprimer ce remboursement ?')) return
+  const result = await deleteRefund(refundId)
+  if (!result.success) {
+    alert('Erreur lors de la suppression')
+  }
+}
 
 const email = ref('')
 const password = ref('')
@@ -769,6 +990,7 @@ const loadingLogs = ref(false)
 // Contact messages
 const contactMessages = ref([])
 const loadingMessages = ref(false)
+const selectedMessage = ref(null)
 const unreadMessages = computed(() => {
   return contactMessages.value.filter(msg => msg.status === 'unread').length
 })
@@ -867,6 +1089,7 @@ onMounted(async () => {
   loadHoneypotLogs()
   loadContactMessages()
   loadOrders()
+  loadRefunds()
   checkBlockStatus()
   loadFailedAttempts()
 })
@@ -1455,6 +1678,7 @@ input[type="number"] {
   background: linear-gradient(145deg, rgba(57, 255, 20, 0.3), rgba(0, 255, 136, 0.3));
   -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   mask-composite: exclude;
   opacity: 0;
   transition: opacity 0.3s ease;
@@ -1652,5 +1876,26 @@ input[type="number"] {
 .btn-danger:hover {
   background: rgba(255, 0, 0, 0.3);
   border-color: #ff4444;
+}
+
+.btn-xs {
+  padding: 0.35rem 0.75rem;
+  font-size: 0.75rem;
+  border-radius: 6px;
+  font-weight: 600;
+}
+
+.btn-primary {
+  background: rgba(57, 255, 20, 0.15);
+  color: var(--color-neon-green);
+  border: 1px solid rgba(57, 255, 20, 0.4);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+  background: rgba(57, 255, 20, 0.25);
+  border-color: var(--color-neon-green);
+  box-shadow: 0 0 10px rgba(57, 255, 20, 0.3);
 }
 </style>

@@ -19,25 +19,36 @@
       <p class="text-[var(--color-text-secondary)]">Aucun message reçu</p>
     </div>
 
-    <div v-else class="space-y-4">
-      <div 
-        v-for="message in contactMessages" 
-        :key="message.id"
-        :class="[
-          'p-6 border-2 rounded-lg transition-all',
-          message.status === 'unread' 
-            ? 'bg-[rgba(57,255,20,0.1)] border-[var(--color-neon-green)]' 
-            : 'bg-[rgba(57,255,20,0.05)] border-[rgba(57,255,20,0.2)]'
-        ]"
-      >
-        <!-- Header -->
-        <div class="flex items-start justify-between gap-4 mb-4">
-          <div class="flex-1">
-            <div class="flex items-center gap-3 mb-2">
-              <h3 class="text-lg font-bold text-white">{{ message.name }}</h3>
+    <div v-else>
+      <table class="w-full text-sm bg-[var(--color-black-light)] rounded-xl overflow-hidden">
+        <thead>
+          <tr class="bg-[rgba(57,255,20,0.05)]">
+            <th class="p-3 text-left">Date</th>
+            <th class="p-3 text-left">Nom</th>
+            <th class="p-3 text-left">Email</th>
+            <th class="p-3 text-left">Sujet</th>
+            <th class="p-3 text-left">Statut</th>
+            <th class="p-3 text-left">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr 
+            v-for="message in contactMessages" 
+            :key="message.id" 
+            :class="[
+              'border-b border-[rgba(57,255,20,0.05)] hover:bg-[rgba(57,255,20,0.03)] cursor-pointer',
+              message.status === 'unread' && 'bg-[rgba(57,255,20,0.08)]'
+            ]" 
+            @click="$emit('select-message', message)"
+          >
+            <td class="p-3">{{ formatDate(message.timestamp) }}</td>
+            <td class="p-3 font-semibold">{{ message.name }}</td>
+            <td class="p-3 text-[var(--color-neon-green)]">{{ message.email }}</td>
+            <td class="p-3">{{ message.subject }}</td>
+            <td class="p-3">
               <span 
                 :class="[
-                  'px-2 py-0.5 text-xs font-bold rounded',
+                  'px-2 py-1 text-xs font-bold rounded',
                   message.status === 'unread' 
                     ? 'bg-[var(--color-neon-green)] text-black' 
                     : 'bg-gray-500/20 text-gray-400'
@@ -45,52 +56,13 @@
               >
                 {{ message.status === 'unread' ? 'NOUVEAU' : 'Lu' }}
               </span>
-              <span class="px-2 py-0.5 bg-[rgba(57,255,20,0.1)] text-[var(--color-neon-green)] text-xs rounded">
-                {{ message.subject }}
-              </span>
-            </div>
-            <a :href="`mailto:${message.email}`" class="text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-neon-green)] transition-colors">
-              {{ message.email }}
-            </a>
-          </div>
-          <div class="flex gap-2">
-            <button 
-              @click="$emit('toggle-message-status', message.id, message.status)"
-              class="p-2 border border-[rgba(57,255,20,0.3)] rounded-lg hover:border-[var(--color-neon-green)] hover:bg-[rgba(57,255,20,0.1)] transition-all"
-              :title="message.status === 'read' ? 'Marquer comme non lu' : 'Marquer comme lu'"
-            >
-              <svg v-if="message.status === 'unread'" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="20 6 9 17 4 12"></polyline>
-              </svg>
-              <svg v-else width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
-                <polyline points="22,6 12,13 2,6"></polyline>
-              </svg>
-            </button>
-            <button 
-              @click="$emit('delete-message', message.id)"
-              class="p-2 text-red-400 border border-red-500/30 rounded-lg hover:border-red-500 hover:bg-red-500/10 transition-all"
-              title="Supprimer"
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="3 6 5 6 21 6"></polyline>
-                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        <!-- Message -->
-        <div class="p-4 bg-black/30 rounded-lg mb-4">
-          <p class="text-sm text-[var(--color-text-secondary)] whitespace-pre-wrap">{{ message.message }}</p>
-        </div>
-
-        <!-- Footer -->
-        <div class="flex items-center justify-between text-xs text-[var(--color-text-secondary)]">
-          <span>{{ formatDate(message.timestamp) }}</span>
-          <span class="font-mono">{{ message.source }}</span>
-        </div>
-      </div>
+            </td>
+            <td class="p-3">
+              <button @click.stop="$emit('select-message', message)" class="btn btn-xs btn-primary">Détails</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
   </div>
 </template>
@@ -111,7 +83,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['toggle-message-status', 'delete-message'])
+const emit = defineEmits(['select-message', 'toggle-message-status', 'delete-message'])
 
 function formatDate(timestamp) {
   if (!timestamp) return '-'
@@ -125,3 +97,13 @@ function formatDate(timestamp) {
   }).format(date)
 }
 </script>
+
+<style scoped>
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+</style>

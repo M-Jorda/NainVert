@@ -25,12 +25,21 @@
       </button>
     </div>
 
-    <!-- Grid 2x2 fixe -->
-    <div class="grid grid-cols-2 gap-6 max-w-[900px] mx-auto">
+    <!-- Grid responsive - adapté au nombre d'articles -->
+    <div 
+      :class="[
+        'grid gap-6 w-full mx-auto',
+        filteredProducts.length === 1 ? 'grid-cols-1 max-w-md' : '',
+        filteredProducts.length === 2 ? 'grid-cols-1 sm:grid-cols-2 max-w-4xl' : '',
+        filteredProducts.length === 3 ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3' : '',
+        filteredProducts.length >= 4 ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4' : ''
+      ]"
+    >
       <ProductCard
         v-for="product in filteredProducts"
         :key="product.id"
         :product="product"
+        :compact="filteredProducts.length >= 4"
         @add-to-cart="handleAddToCart"
         @quick-view="handleQuickView"
         class="product-fade"
@@ -122,6 +131,7 @@ const handleQuickView = (product) => {
   background: linear-gradient(145deg, rgba(57, 255, 20, 0.3), rgba(0, 255, 136, 0.3));
   -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   mask-composite: exclude;
   opacity: 0;
   transition: opacity 0.3s ease;

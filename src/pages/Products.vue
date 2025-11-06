@@ -1,6 +1,6 @@
 <template>
   <div class="min-h-screen py-12 pb-20">
-    <div class="container max-w-[1200px] mx-auto px-4 md:px-8">
+    <div class="container mx-auto px-6 md:px-12 lg:px-16 xl:px-20">
       <!-- Page Header -->
       <header class="text-center mb-20 py-12">
         <h1 class="text-[clamp(2.5rem,5vw,4rem)] mb-6">

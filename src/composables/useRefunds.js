@@ -15,7 +15,7 @@ export function useRefunds() {
       refunds.value = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
       loading.value = false
     }, (error) => {
-      console.error('Erreur chargement remboursements:', error)
+      console.error('❌ Erreur chargement remboursements:', error)
       loading.value = false
     })
   }

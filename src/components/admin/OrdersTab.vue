@@ -84,63 +84,47 @@
       <p class="text-[var(--color-text-secondary)]">Aucune commande trouvée</p>
     </div>
 
-    <div v-else class="space-y-4">
-      <div 
-        v-for="order in filteredOrders" 
-        :key="order.id"
-        :class="[
-          'p-6 border-2 rounded-lg hover:shadow-lg transition-all cursor-pointer',
-          order.status === 'cancelled' 
-            ? 'bg-[rgba(239,68,68,0.05)] border-[rgba(239,68,68,0.3)] hover:border-red-400' 
-            : 'bg-[rgba(57,255,20,0.05)] border-[rgba(57,255,20,0.2)] hover:border-[var(--color-neon-green)]'
-        ]"
-        @click="$emit('select-order', order)"
-      >
-        <div class="flex items-start justify-between">
-          <div class="flex-1">
-            <div class="flex items-center gap-3 mb-3">
-              <h3 class="text-lg font-bold text-white">{{ order.orderId }}</h3>
+    <div v-else>
+      <table class="w-full text-sm bg-[var(--color-black-light)] rounded-xl overflow-hidden">
+        <thead>
+          <tr class="bg-[rgba(57,255,20,0.05)]">
+            <th class="p-3 text-left">N° Commande</th>
+            <th class="p-3 text-left">Client</th>
+            <th class="p-3 text-left">Date</th>
+            <th class="p-3 text-left">Montant</th>
+            <th class="p-3 text-left">Statut</th>
+            <th class="p-3 text-left">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr 
+            v-for="order in filteredOrders" 
+            :key="order.id" 
+            class="border-b border-[rgba(57,255,20,0.05)] hover:bg-[rgba(57,255,20,0.03)] cursor-pointer" 
+            @click="$emit('select-order', order)"
+          >
+            <td class="p-3 font-mono text-[var(--color-neon-green)]">{{ order.orderId }}</td>
+            <td class="p-3">{{ order.customer?.firstName }} {{ order.customer?.lastName }}</td>
+            <td class="p-3">{{ formatOrderDate(order.createdAt) }}</td>
+            <td class="p-3 font-bold text-[var(--color-neon-green)]">{{ order.total?.toFixed(2) }}€</td>
+            <td class="p-3">
               <span :class="[
-                'px-3 py-1 text-xs font-bold rounded-full',
-                order.status === 'pending' && 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/40',
-                order.status === 'paid' && 'bg-blue-500/20 text-blue-400 border border-blue-500/40',
-                order.status === 'shipped' && 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/40',
-                order.status === 'delivered' && 'bg-green-500/20 text-green-400 border border-green-500/40',
-                order.status === 'cancelled' && 'bg-red-500/20 text-red-400 border border-red-500/40'
+                'px-2 py-1 text-xs font-bold rounded',
+                order.status === 'pending' && 'bg-yellow-500/20 text-yellow-400',
+                order.status === 'paid' && 'bg-blue-500/20 text-blue-400',
+                order.status === 'shipped' && 'bg-cyan-500/20 text-cyan-400',
+                order.status === 'delivered' && 'bg-green-500/20 text-green-400',
+                order.status === 'cancelled' && 'bg-red-500/20 text-red-400'
               ]">
                 {{ getStatusLabel(order.status) }}
               </span>
-            </div>
-            
-            <div class="text-sm text-[var(--color-text-secondary)] space-y-1">
-              <p>
-                <strong class="text-white">Client:</strong> {{ order.customer?.firstName }} {{ order.customer?.lastName }}
-              </p>
-              <p>
-                <strong class="text-white">Email:</strong> {{ order.customer?.email }}
-              </p>
-              <p>
-                <strong class="text-white">Date:</strong> {{ formatOrderDate(order.createdAt) }}
-              </p>
-              <p>
-                <strong class="text-white">Produits:</strong> {{ order.items?.length || 0 }} article(s)
-              </p>
-            </div>
-          </div>
-
-          <div class="text-right ml-4">
-            <div class="text-2xl font-bold text-[var(--color-neon-green)] mb-3">
-              {{ order.total?.toFixed(2) }}€
-            </div>
-            <button 
-              @click.stop="$emit('select-order', order)"
-              class="px-4 py-2 bg-[var(--color-primary)] text-black font-bold rounded-lg hover:bg-[var(--color-neon-green)] transition-all"
-            >
-              Voir détails
-            </button>
-          </div>
-        </div>
-      </div>
+            </td>
+            <td class="p-3">
+              <button @click.stop="$emit('select-order', order)" class="btn btn-xs btn-primary">Détails</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
   </div>
 </template>

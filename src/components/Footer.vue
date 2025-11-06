@@ -7,23 +7,47 @@
     </div>
     
     <div class="relative max-w-[1200px] mx-auto px-4 md:px-8 z-10">
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
-        <!-- Logo & Description -->
+      <div class="grid grid-cols-1 md:grid-cols-[2fr_1fr_1fr] gap-8 mb-8">
+        <!-- Logo & Description (50%) -->
         <div class="flex flex-col gap-3">
-          <div class="flex gap-1 text-3xl font-black tracking-[0.1em] mb-2 logo-glow">
-            <span class="text-white">NAIN</span>
+          <router-link to="/" class="flex gap-1 text-3xl font-black tracking-[0.1em] mb-2 logo-glow cursor-pointer hover:opacity-80 transition-opacity">
+            <span class="text-white">LE NAIN</span>
             <span class="text-[var(--color-neon-green)]">VERT</span>
-          </div>
+          </router-link>
           <p class="text-[var(--color-text-secondary)] text-[0.95rem] leading-relaxed">
             Streetwear psychédélique pour esprits libres.
           </p>
           <div class="flex gap-3 mt-3">
             <a 
-              href="https://instagram.com/nainvert" 
+              :href="emailHref" 
+              class="social-link"
+              aria-label="Email"
+              title="Nous contacter"
+            >
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                <polyline points="22,6 12,13 2,6"></polyline>
+              </svg>
+            </a>
+            <a 
+              :href="whatsappHref" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              class="social-link"
+              aria-label="WhatsApp"
+              title="WhatsApp"
+            >
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+              </svg>
+            </a>
+            <a 
+              href="https://instagram.com/lenainvert" 
               target="_blank" 
               rel="noopener noreferrer"
               class="social-link"
               aria-label="Instagram"
+              title="Instagram"
             >
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
@@ -34,17 +58,16 @@
           </div>
         </div>
 
-        <!-- Navigation -->
+        <!-- Navigation (25%) -->
         <div class="flex flex-col gap-3">
           <h4 class="text-white text-base font-bold uppercase tracking-wider mb-2">Navigation</h4>
           <ul class="list-none flex flex-col gap-2">
             <li><router-link to="/" class="text-[var(--color-text-secondary)] text-[0.95rem] transition-all duration-200 hover:text-[var(--color-neon-green)] hover:pl-2">Accueil</router-link></li>
             <li><router-link to="/products" class="text-[var(--color-text-secondary)] text-[0.95rem] transition-all duration-200 hover:text-[var(--color-neon-green)] hover:pl-2">Articles</router-link></li>
-            <li><router-link to="/contact" class="text-[var(--color-text-secondary)] text-[0.95rem] transition-all duration-200 hover:text-[var(--color-neon-green)] hover:pl-2">Contact</router-link></li>
           </ul>
         </div>
 
-        <!-- Informations -->
+        <!-- Informations (25%) -->
         <div class="flex flex-col gap-3">
           <h4 class="text-white text-base font-bold uppercase tracking-wider mb-2">Informations</h4>
           <ul class="list-none flex flex-col gap-2">
@@ -53,24 +76,6 @@
             <li><router-link to="/terms" class="text-[var(--color-text-secondary)] text-[0.95rem] transition-all duration-200 hover:text-[var(--color-neon-green)] hover:pl-2">CGV</router-link></li>
             <li><router-link to="/legal" class="text-[var(--color-text-secondary)] text-[0.95rem] transition-all duration-200 hover:text-[var(--color-neon-green)] hover:pl-2">Mentions légales</router-link></li>
           </ul>
-        </div>
-
-        <!-- Newsletter -->
-        <div class="flex flex-col gap-3">
-          <h4 class="text-white text-base font-bold uppercase tracking-wider mb-2">Newsletter</h4>
-          <p class="text-[var(--color-text-secondary)] text-[0.9rem] leading-normal">
-            Restez informé des nouveautés et drops exclusifs.
-          </p>
-          <form class="flex flex-col gap-3 mt-3" @submit.prevent>
-            <input 
-              type="email" 
-              placeholder="votre@email.com" 
-              class="form-input"
-            >
-            <button type="submit" class="btn btn-primary">
-              S'inscrire
-            </button>
-          </form>
         </div>
       </div>
 
@@ -124,6 +129,20 @@ import { useEasterEgg } from '../composables/useEasterEgg'
 const currentYear = computed(() => new Date().getFullYear())
 
 const { isModalOpen, currentContent, openEasterEgg, closeEasterEgg } = useEasterEgg()
+
+// Protection anti-bot pour email et WhatsApp
+const decodeEmail = () => {
+  const parts = ['contact', 'lenainvert', 'com']
+  return parts[0] + '@' + parts[1] + '.' + parts[2]
+}
+
+const decodePhone = () => {
+  const parts = ['+33', '6', '12', '34', '56', '78']
+  return parts.join('')
+}
+
+const emailHref = computed(() => 'mailto:' + decodeEmail())
+const whatsappHref = computed(() => 'https://wa.me/' + decodePhone().replace(/[^0-9]/g, ''))
 </script>
 
 <style scoped>
@@ -167,6 +186,7 @@ const { isModalOpen, currentContent, openEasterEgg, closeEasterEgg } = useEaster
   background: linear-gradient(145deg, var(--color-neon-green), var(--color-cyan-green));
   -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   mask-composite: exclude;
   opacity: 0;
   transition: opacity 0.3s ease;

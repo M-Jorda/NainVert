@@ -1,22 +1,30 @@
 <template>
   <div id="app" class="min-h-screen flex flex-col bg-[var(--color-black)]">
-    <Header />
-    <main class="flex-1 pt-20">
+    <!-- Header désactivé pour design minimaliste -->
+    <!-- <Header /> -->
+    <main class="flex-1">
       <router-view v-slot="{ Component }">
         <transition name="fade" mode="out-in">
           <component :is="Component" />
         </transition>
       </router-view>
     </main>
-    <Footer />
+    <Footer v-if="showFooter" />
     <Cart />
   </div>
 </template>
 
 <script setup>
-import Header from './components/Header.vue'
+import { computed } from 'vue'
+import { useRoute } from 'vue-router'
+// import Header from './components/Header.vue'
 import Footer from './components/Footer.vue'
 import Cart from './components/Cart.vue'
+
+const route = useRoute()
+
+// Le footer ne s'affiche pas sur la page d'accueil
+const showFooter = computed(() => route.name !== 'Home')
 </script>
 
 <style scoped>

@@ -2,7 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import Home from '@/pages/Home.vue'
 import Products from '@/pages/Products.vue'
 import ProductDetail from '@/pages/ProductDetail.vue'
-import Contact from '@/pages/Contact.vue'
+// import Contact from '@/pages/Contact.vue'
 import Admin from '@/pages/Admin.vue'
 import Honeypot from '@/pages/Honeypot.vue'
 import NotFound from '@/pages/NotFound.vue'
@@ -39,15 +39,15 @@ const routes = [
       title: 'Produit - NainVert'
     }
   },
-  {
-    path: '/contact',
-    name: 'Contact',
-    component: Contact,
-    meta: {
-      title: 'Contact - NainVert',
-      description: 'Contactez-nous pour toute question ou suggestion'
-    }
-  },
+  // {
+  //   path: '/contact',
+  //   name: 'Contact',
+  //   component: Contact,
+  //   meta: {
+  //     title: 'Contact - NainVert',
+  //     description: 'Contactez-nous pour toute question ou suggestion'
+  //   }
+  // },
   {
     path: '/rho',
     name: 'RealAdmin',
