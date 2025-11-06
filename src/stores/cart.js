@@ -35,7 +35,8 @@ export const useCartStore = defineStore('cart', () => {
         price: product.price,
         image: product.images[0],
         size: size,
-        quantity: 1
+        quantity: 1,
+        designId: product.designId || product.design || null // Ajout du designId pour la gestion du stock
       })
     }
 

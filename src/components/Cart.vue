@@ -86,7 +86,7 @@
               <span class="text-3xl font-black text-[var(--color-neon-green)] drop-shadow-[0_0_10px_var(--color-neon-green)]">{{ cartStore.totalPrice.toFixed(2) }}€</span>
             </div>
             
-            <button class="btn btn-primary w-full">
+            <button class="btn btn-primary w-full" @click="openCheckout">
               Procéder au paiement
             </button>
             
@@ -101,12 +101,22 @@
       </div>
     </div>
   </transition>
+
+  <!-- Checkout Modal -->
+  <CheckoutModal :isOpen="showCheckoutModal" @close="showCheckoutModal = false" />
 </template>
 
 <script setup>
+import { ref } from 'vue'
 import { useCartStore } from '@/stores/cart'
+import CheckoutModal from './CheckoutModal.vue'
 
 const cartStore = useCartStore()
+const showCheckoutModal = ref(false)
+
+const openCheckout = () => {
+  showCheckoutModal.value = true
+}
 </script>
 
 <style scoped>

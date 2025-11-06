@@ -1,6 +1,17 @@
 <template>
   <div v-if="product" class="min-h-screen py-20">
     <div class="container max-w-[1200px] mx-auto px-4 md:px-8">
+      <!-- Back Button -->
+      <router-link 
+        to="/products" 
+        class="back-btn inline-flex items-center gap-3 mb-8 px-6 py-3 bg-transparent border border-[rgba(57,255,20,0.2)] rounded-lg text-[var(--color-text-secondary)] font-semibold text-sm uppercase tracking-wider transition-all duration-300 hover:border-[var(--color-neon-green)] hover:text-[var(--color-neon-green)] hover:bg-[rgba(57,255,20,0.05)] hover:shadow-[0_0_15px_rgba(57,255,20,0.2)]"
+      >
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
+        Retour aux produits
+      </router-link>
+
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20">
         <!-- Image Gallery -->
         <div class="flex flex-col gap-4 lg:sticky lg:top-[100px] h-fit">
@@ -145,6 +156,33 @@ const addToCart = () => {
 </script>
 
 <style scoped>
+/* Back Button */
+.back-btn {
+  position: relative;
+  overflow: hidden;
+}
+
+.back-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(57, 255, 20, 0.1), transparent);
+  transform: translateX(-100%);
+  transition: transform 0.6s ease;
+}
+
+.back-btn:hover::before {
+  transform: translateX(100%);
+}
+
+.back-btn svg {
+  transition: transform 0.3s ease;
+}
+
+.back-btn:hover svg {
+  transform: translateX(-4px);
+}
+
 .thumbnail {
   border-color: rgba(57, 255, 20, 0.2);
 }

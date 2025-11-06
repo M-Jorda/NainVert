@@ -1,7 +1,7 @@
 <template>
   <div class="w-full">
     <!-- Filters -->
-    <div class="flex gap-4 mb-12 flex-wrap justify-center">
+    <div class="flex gap-4 mb-12 flex-wrap justify-center items-center">
       <button 
         :class="['filter-btn', { active: activeFilter === 'all' }]"
         @click="setFilter('all')"
@@ -23,6 +23,11 @@
         PULLS
         <span class="count">{{ hoodieCount }}</span>
       </button>
+      
+      <!-- Cart Icon -->
+      <div class="ml-4">
+        <CartIcon />
+      </div>
     </div>
 
     <!-- Grid responsive - adapté au nombre d'articles -->
@@ -56,6 +61,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import ProductCard from './ProductCard.vue'
+import CartIcon from './CartIcon.vue'
 import { useProducts } from '@/composables/useProducts'
 import { useCartStore } from '@/stores/cart'
 
