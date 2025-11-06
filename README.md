@@ -31,7 +31,14 @@ NainVert/
 │   │   ├── CartIcon.vue
 │   │   ├── ProductCard.vue
 │   │   ├── ProductGrid.vue
-│   │   └── EasterEggModal.vue
+│   │   ├── EasterEggModal.vue
+│   │   └── admin/             # Composants admin
+│   │       ├── ProductsTab.vue
+│   │       ├── ContentTab.vue
+│   │       ├── OrdersTab.vue
+│   │       ├── RefundsTab.vue
+│   │       ├── StockTab.vue   # ✨ Gestion de stock
+│   │       └── SecurityTab.vue
 │   ├── pages/                 # Pages de l'application
 │   │   ├── Home.vue
 │   │   ├── Products.vue
@@ -41,7 +48,10 @@ NainVert/
 │   ├── composables/           # Logique réutilisable
 │   │   ├── useProducts.js     # Gestion produits Firestore
 │   │   ├── useSiteContent.js  # Gestion contenu Firestore
-│   │   └── useEasterEgg.js    # Easter eggs cachés
+│   │   ├── useEasterEgg.js    # Easter eggs cachés
+│   │   ├── useOrders.js       # Gestion commandes
+│   │   ├── useRefunds.js      # Gestion remboursements
+│   │   └── useStock.js        # ✨ Gestion stock par dessin
 │   ├── stores/                # Stores Pinia
 │   │   ├── cart.js            # Panier (localStorage)
 │   │   └── admin.js           # Auth Firebase
@@ -167,9 +177,36 @@ Le site propose 4 produits :
 - **URL** : `/admin`
 - **Connexion** : Email + mot de passe Firebase
 - **Fonctionnalités** :
-  - Modifier les produits (nom, prix, description, images, stock)
-  - Modifier le contenu du site (home, contact)
+  - **Produits** : Modifier nom, prix, description, images, stock, dessin associé
+  - **Contenu** : Modifier le contenu du site (home, contact)
+  - **Commandes** : Gérer les commandes, changer statuts, ajouter tracking
+  - **Remboursements** : Traiter les demandes de remboursement
+  - **Stock** : ✨ Gestion automatique du stock par dessin (voir ci-dessous)
+  - **Sécurité** : Changer mot de passe, voir logs honeypot
   - Tout est sauvegardé automatiquement dans Firestore
+
+### 📦 Système de Gestion de Stock (NOUVEAU)
+
+Le stock se gère **par dessin** et non par produit individuel :
+
+- **2 dessins** avec 100 unités chacun
+- **Décrémentation automatique** quand une commande est livrée
+- **Temps réel** : synchronisation instantanée via Firestore
+- **Interface visuelle** : barres de progression, badges de statut, alertes
+
+**Configuration :**
+1. Aller dans l'onglet "Produits" de l'admin
+2. Associer chaque produit à un dessin (design-1 ou design-2)
+3. Le stock se décrémentera automatiquement lors des livraisons
+
+**Documentation complète** : Voir `STOCK_SYSTEM.md`
+
+**Tester le système :**
+```bash
+node scripts/create-test-order.js
+# Puis dans l'admin, marquez la commande comme "livrée"
+# Le stock se mettra à jour automatiquement
+```
 
 ### Personnaliser les couleurs
 

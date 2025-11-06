@@ -2,6 +2,13 @@
 
 ## Priorité 1 - Essentiel pour la mise en ligne
 
+### 🎨 Configuration Stock (NOUVEAU - À FAIRE EN PREMIER)
+- [ ] **Tester le système de stock** avec `node scripts/create-test-order.js`
+- [ ] **Associer tous les produits** à un dessin (Admin → Produits → designId)
+- [ ] **Renommer les dessins** si nécessaire (Admin → Stock)
+- [ ] **Vérifier que le checkout copie le designId** dans les articles
+- [ ] Lire `STOCK_QUICKSTART.md` et `STOCK_SYSTEM.md`
+
 ### Images Produits
 - [ ] Remplacer les SVG placeholders par de vraies photos
 - [ ] Format recommandé : WebP (meilleure compression)
@@ -111,10 +118,13 @@
 - [ ] Modération avis
 
 ### Stock Management
-- [ ] Gestion stock en temps réel
-- [ ] Alertes rupture de stock
-- [ ] Pré-commandes
+- [x] ✨ Gestion stock par dessin (FAIT)
+- [x] ✨ Décrémentation automatique lors livraison (FAIT)
+- [x] ✨ Interface admin pour gérer le stock (FAIT)
+- [ ] Alertes email quand stock < 10 unités
+- [ ] Pré-commandes pour produits en rupture
 - [ ] Notifications réapprovisionnement
+- [ ] **IMPORTANT** : Associer tous les produits à un dessin avant production
 
 ### Multi-langue
 - [ ] i18n (FR, EN)

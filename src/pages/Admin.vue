@@ -59,13 +59,14 @@
           Remboursements
           <span v-if="refundStats && refundStats.requested > 0" class="intrusion-badge">{{ refundStats.requested }}</span>
         </button>
-        <button :class="['tab-btn', { active: activeTab === 'messages' }]" @click="activeTab = 'messages'">
+        <button :class="['tab-btn', { active: activeTab === 'stock' }]" @click="activeTab = 'stock'">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
-            <polyline points="22,6 12,13 2,6"></polyline>
+            <rect x="1" y="3" width="15" height="13"></rect>
+            <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
+            <circle cx="5.5" cy="18.5" r="2.5"></circle>
+            <circle cx="18.5" cy="18.5" r="2.5"></circle>
           </svg>
-          Messages
-          <span v-if="unreadMessages > 0" class="intrusion-badge">{{ unreadMessages }}</span>
+          Stock
         </button>
         <button :class="['tab-btn', { active: activeTab === 'security' }]" @click="activeTab = 'security'">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -310,6 +311,15 @@
         :easterEggsList="easterEggsList"
         @auto-save="autoSaveContent"
         @update-easter-egg="updateEasterEgg"
+      />
+
+      <!-- Stock Tab -->
+      <StockTab
+        v-if="activeTab === 'stock'"
+        :stockData="stockData"
+        :loading="loadingStock"
+        @update-stock="handleUpdateStock"
+        @update-name="handleUpdateDesignName"
       />
 
       <!-- Security Tab -->
@@ -601,112 +611,6 @@
         </transition>
       </teleport>
 
-      <!-- Messages Tab -->
-      <MessagesTab
-        v-show="activeTab === 'messages'"
-        :contactMessages="contactMessages"
-        :unreadMessages="unreadMessages"
-        :loadingMessages="loadingMessages"
-        @select-message="message => selectedMessage = message"
-        @toggle-message-status="toggleMessageStatus"
-        @delete-message="deleteMessage"
-      />
-
-      <!-- Message Detail Modal -->
-      <teleport to="body">
-        <transition name="modal-fade">
-          <div 
-            v-if="selectedMessage" 
-            class="fixed inset-0 bg-black/95 backdrop-blur-sm z-[9999] flex items-center justify-center p-4"
-            @click="selectedMessage = null"
-          >
-            <div 
-              class="bg-[var(--color-black-light)] border border-[rgba(57,255,20,0.3)] rounded-xl max-w-3xl w-full p-8 max-h-[90vh] overflow-y-auto"
-              @click.stop
-            >
-              <div class="flex items-center justify-between mb-6">
-                <h2 class="text-2xl font-bold text-gradient">
-                  📬 Message de {{ selectedMessage.name }}
-                </h2>
-                <button 
-                  @click="selectedMessage = null"
-                  class="w-10 h-10 flex items-center justify-center border border-[rgba(57,255,20,0.2)] rounded-lg text-[var(--color-text-secondary)] hover:border-[var(--color-neon-green)] hover:text-[var(--color-neon-green)] transition-all"
-                >
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                    <line x1="6" y1="6" x2="18" y2="18"></line>
-                  </svg>
-                </button>
-              </div>
-
-              <!-- Informations du message -->
-              <div class="mb-6 p-6 bg-[rgba(57,255,20,0.05)] border border-[rgba(57,255,20,0.2)] rounded-lg">
-                <div class="flex items-center gap-3 mb-4">
-                  <span 
-                    :class="[
-                      'px-3 py-1 text-xs font-bold rounded',
-                      selectedMessage.status === 'unread' 
-                        ? 'bg-[var(--color-neon-green)] text-black' 
-                        : 'bg-gray-500/20 text-gray-400'
-                    ]"
-                  >
-                    {{ selectedMessage.status === 'unread' ? 'NOUVEAU' : 'Lu' }}
-                  </span>
-                  <span class="px-3 py-1 bg-[rgba(57,255,20,0.1)] text-[var(--color-neon-green)] text-xs font-bold rounded">
-                    {{ selectedMessage.subject }}
-                  </span>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <strong class="text-white">Nom:</strong>
-                    <span class="ml-2 text-[var(--color-text-secondary)]">{{ selectedMessage.name }}</span>
-                  </div>
-                  <div>
-                    <strong class="text-white">Email:</strong>
-                    <a :href="`mailto:${selectedMessage.email}`" class="ml-2 text-[var(--color-neon-green)] hover:underline">{{ selectedMessage.email }}</a>
-                  </div>
-                  <div>
-                    <strong class="text-white">Date:</strong>
-                    <span class="ml-2 text-[var(--color-text-secondary)]">{{ formatOrderDate(selectedMessage.timestamp) }}</span>
-                  </div>
-                  <div>
-                    <strong class="text-white">Source:</strong>
-                    <span class="ml-2 text-[var(--color-text-secondary)] font-mono">{{ selectedMessage.source }}</span>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Contenu du message -->
-              <div class="mb-6 p-6 bg-black/30 rounded-lg">
-                <h3 class="text-lg font-bold text-white mb-3">💬 Message</h3>
-                <p class="text-[var(--color-text-secondary)] whitespace-pre-wrap leading-relaxed">{{ selectedMessage.message }}</p>
-              </div>
-
-              <!-- Actions -->
-              <div class="flex gap-3">
-                <button 
-                  @click="toggleMessageStatus(selectedMessage.id, selectedMessage.status)"
-                  class="btn btn-primary flex-1"
-                >
-                  {{ selectedMessage.status === 'read' ? 'Marquer comme non lu' : 'Marquer comme lu' }}
-                </button>
-                <button 
-                  @click="deleteMessage(selectedMessage.id); selectedMessage = null"
-                  class="btn btn-danger flex-1"
-                >
-                  Supprimer
-                </button>
-                <button 
-                  @click="selectedMessage = null"
-                  class="btn btn-secondary"
-                >
-                  Fermer
-                </button>
-              </div>
-            </div>
-          </div>
-        </transition>
-      </teleport>
     </div>
 
     <!-- Image Upload Modal -->
@@ -853,6 +757,7 @@ import { useSiteContent } from '../composables/useSiteContent'
 import { useEasterEggsFirestore } from '../composables/useEasterEggsFirestore'
 import { useOrders } from '../composables/useOrders'
 import { useRefunds } from '../composables/useRefunds'
+import { useStock } from '../composables/useStock'
 import { collection, query, orderBy, onSnapshot, deleteDoc, doc, getDocs, updateDoc } from 'firebase/firestore'
 import { db } from '@/config/firebase'
 
@@ -861,7 +766,7 @@ import ProductsTab from '../components/admin/ProductsTab.vue'
 import ContentTab from '../components/admin/ContentTab.vue'
 import OrdersTab from '../components/admin/OrdersTab.vue'
 import RefundsTab from '../components/admin/RefundsTab.vue'
-import MessagesTab from '../components/admin/MessagesTab.vue'
+import StockTab from '../components/admin/StockTab.vue'
 import SecurityTab from '../components/admin/SecurityTab.vue'
 
 const adminStore = useAdminStore()
@@ -894,6 +799,16 @@ const {
   deleteRefund,
   refundStats
 } = useRefunds()
+
+// Stock management
+const {
+  stockData,
+  loading: loadingStock,
+  loadStock,
+  updateDesignStock,
+  updateDesignName,
+  getStockPercentage
+} = useStock()
 
 const refundFilter = ref('all')
 const selectedRefund = ref(null)
@@ -987,14 +902,6 @@ const imageUrl = ref('')
 const honeypotLogs = ref([])
 const loadingLogs = ref(false)
 
-// Contact messages
-const contactMessages = ref([])
-const loadingMessages = ref(false)
-const selectedMessage = ref(null)
-const unreadMessages = computed(() => {
-  return contactMessages.value.filter(msg => msg.status === 'unread').length
-})
-
 // Orders management
 const orderFilter = ref('all')
 const selectedOrder = ref(null)
@@ -1087,29 +994,12 @@ onMounted(async () => {
   await loadSiteContent()
   await loadEasterEggs()
   loadHoneypotLogs()
-  loadContactMessages()
   loadOrders()
   loadRefunds()
+  loadStock()
   checkBlockStatus()
   loadFailedAttempts()
 })
-
-// Load contact messages with real-time updates
-const loadContactMessages = () => {
-  loadingMessages.value = true
-  const q = query(collection(db, 'messages'), orderBy('timestamp', 'desc'))
-  
-  onSnapshot(q, (snapshot) => {
-    contactMessages.value = snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    }))
-    loadingMessages.value = false
-  }, (error) => {
-    console.error('Erreur chargement messages:', error)
-    loadingMessages.value = false
-  })
-}
 
 // Load failed attempts from localStorage
 const loadFailedAttempts = () => {
@@ -1308,26 +1198,30 @@ const clearHoneypotLogs = async () => {
   }
 }
 
-// Mark message as read/unread
-const toggleMessageStatus = async (messageId, currentStatus) => {
-  try {
-    const newStatus = currentStatus === 'read' ? 'unread' : 'read'
-    await updateDoc(doc(db, 'messages', messageId), { status: newStatus })
-    console.log(`✅ Message ${newStatus}`)
-  } catch (error) {
-    console.error('Erreur mise à jour statut:', error)
+// Stock handlers
+const handleUpdateStock = async (designId, value, mode) => {
+  let newValue
+  
+  if (mode === 'adjust') {
+    const design = stockData.value.find(d => d.id === designId)
+    if (!design) return
+    newValue = Math.max(0, Math.min(design.totalUnits, design.remainingUnits + value))
+  } else if (mode === 'set') {
+    newValue = value
+  } else {
+    return
+  }
+  
+  const result = await updateDesignStock(designId, newValue)
+  if (!result.success) {
+    alert('Erreur lors de la mise à jour du stock')
   }
 }
 
-// Delete message
-const deleteMessage = async (messageId) => {
-  if (!confirm('Supprimer ce message ?')) return
-  try {
-    await deleteDoc(doc(db, 'messages', messageId))
-    console.log('✅ Message supprimé')
-  } catch (error) {
-    console.error('Erreur suppression message:', error)
-    alert('Erreur lors de la suppression')
+const handleUpdateDesignName = async (designId, newName) => {
+  const result = await updateDesignName(designId, newName)
+  if (!result.success) {
+    alert('Erreur lors de la mise à jour du nom')
   }
 }
 

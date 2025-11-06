@@ -18,6 +18,7 @@
             <th class="p-3 text-left">Nom</th>
             <th class="p-3 text-left">Prix</th>
             <th class="p-3 text-left">Type</th>
+            <th class="p-3 text-left">Dessin</th>
             <th class="p-3 text-left">Stock</th>
             <th class="p-3 text-left">Actions</th>
           </tr>
@@ -35,6 +36,12 @@
             <td class="p-3 font-semibold">{{ product.name }}</td>
             <td class="p-3 font-bold text-[var(--color-neon-green)]">{{ product.price }}€</td>
             <td class="p-3">{{ product.type }}</td>
+            <td class="p-3">
+              <span v-if="product.designId" class="px-2 py-1 text-xs font-bold rounded bg-purple-500/20 text-purple-400 border border-purple-500/40">
+                {{ getDesignLabel(product.designId) }}
+              </span>
+              <span v-else class="text-xs text-[var(--color-text-secondary)]">-</span>
+            </td>
             <td class="p-3">
               <span :class="[
                 'px-2 py-1 text-xs font-bold rounded',
@@ -173,7 +180,7 @@
               </div>
 
               <!-- Informations supplémentaires -->
-              <div class="grid grid-cols-3 gap-4">
+              <div class="grid grid-cols-3 gap-4 mb-4">
                 <div>
                   <label class="block text-sm font-semibold text-white mb-2">Type</label>
                   <div class="px-3 py-2 bg-[rgba(57,255,20,0.1)] border border-[rgba(57,255,20,0.2)] rounded text-[var(--color-neon-green)]">
@@ -192,6 +199,25 @@
                     {{ selectedProduct.images.length }} image{{ selectedProduct.images.length > 1 ? 's' : '' }}
                   </div>
                 </div>
+              </div>
+
+              <!-- Dessin associé (pour gestion du stock) -->
+              <div class="mt-4 p-4 bg-[rgba(57,255,20,0.05)] border border-[rgba(57,255,20,0.2)] rounded-lg">
+                <label class="block text-sm font-semibold text-white mb-2">
+                  🎨 Dessin associé (pour la gestion du stock)
+                </label>
+                <select 
+                  v-model="selectedProduct.designId"
+                  @change="$emit('update-product', selectedProduct.slug, { designId: selectedProduct.designId })"
+                  class="form-input w-full"
+                >
+                  <option :value="undefined">Aucun dessin associé</option>
+                  <option value="design-1">Dessin 1</option>
+                  <option value="design-2">Dessin 2</option>
+                </select>
+                <p class="text-xs text-[var(--color-text-secondary)] mt-2">
+                  ⚠️ Important : Associer un dessin permet de gérer automatiquement le stock lors des livraisons
+                </p>
               </div>
             </div>
           </div>
@@ -225,6 +251,14 @@ function decrementPrice(product) {
     product.price -= 1
     emit('update-product', product.slug, { price: product.price })
   }
+}
+
+function getDesignLabel(designId) {
+  const labels = {
+    'design-1': 'Dessin 1',
+    'design-2': 'Dessin 2'
+  }
+  return labels[designId] || designId
 }
 </script>
 
