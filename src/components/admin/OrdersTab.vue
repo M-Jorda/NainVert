@@ -67,6 +67,12 @@
         >
           Annulées
         </button>
+        <button 
+          @click="$emit('toggle-archived')"
+          :class="['filter-btn', { active: showArchived }]"
+        >
+          {{ showArchived ? '📦 Masquer archivées' : '📦 Voir archivées' }}
+        </button>
       </div>
     </div>
 
@@ -85,15 +91,15 @@
     </div>
 
     <div v-else>
-      <table class="w-full text-sm bg-[var(--color-black-light)] rounded-xl overflow-hidden">
+      <!-- Vue desktop (tableau) -->
+      <table class="hidden md:table w-full table-fixed text-sm bg-[var(--color-black-light)] rounded-xl overflow-hidden">
         <thead>
           <tr class="bg-[rgba(57,255,20,0.05)]">
-            <th class="p-3 text-left">N° Commande</th>
-            <th class="p-3 text-left">Client</th>
-            <th class="p-3 text-left">Date</th>
-            <th class="p-3 text-left">Montant</th>
-            <th class="p-3 text-left">Statut</th>
-            <th class="p-3 text-left">Actions</th>
+            <th class="p-3 text-left" style="width: 20%">N° Commande</th>
+            <th class="p-3 text-left" style="width: 28%">Client</th>
+            <th class="p-3 text-left" style="width: 18%">Date</th>
+            <th class="p-3 text-left" style="width: 12%">Montant</th>
+            <th class="p-3 text-left" style="width: 22%">Statut</th>
           </tr>
         </thead>
         <tbody>
@@ -103,13 +109,75 @@
             class="border-b border-[rgba(57,255,20,0.05)] hover:bg-[rgba(57,255,20,0.03)] cursor-pointer" 
             @click="$emit('select-order', order)"
           >
-            <td class="p-3 font-mono text-[var(--color-neon-green)]">{{ order.orderId }}</td>
-            <td class="p-3">{{ order.customer?.firstName }} {{ order.customer?.lastName }}</td>
-            <td class="p-3">{{ formatOrderDate(order.createdAt) }}</td>
-            <td class="p-3 font-bold text-[var(--color-neon-green)]">{{ order.total?.toFixed(2) }}€</td>
-            <td class="p-3">
+            <td class="p-3 font-mono text-[var(--color-neon-green)] truncate" style="width: 20%">{{ order.orderNumber || order.orderId || '-' }}</td>
+            <td class="p-3" style="width: 28%">
+              <div class="flex items-center gap-2">
+                <span :title="order.customer?.name || order.customer?.firstName + ' ' + order.customer?.lastName || '-'">
+                  {{ truncateName(order.customer?.name || order.customer?.firstName + ' ' + order.customer?.lastName || '-') }}
+                </span>
+                <span 
+                  v-if="order.customer?.tag === 'vip'" 
+                  class="px-1.5 py-0.5 text-xs font-bold rounded bg-yellow-500/20 text-yellow-400 border border-yellow-500/30"
+                  title="Client VIP"
+                >
+                  ⭐
+                </span>
+                <span 
+                  v-else-if="order.customer?.tag === 'watch'" 
+                  class="px-1.5 py-0.5 text-xs font-bold rounded bg-orange-500/20 text-orange-400 border border-orange-500/30"
+                  title="Client à surveiller"
+                >
+                  ⚠️
+                </span>
+                <span 
+                  v-else-if="order.customer?.tag === 'problematic'" 
+                  class="px-1.5 py-0.5 text-xs font-bold rounded bg-red-500/20 text-red-400 border border-red-500/30"
+                  title="Client problématique"
+                >
+                  🚫
+                </span>
+              </div>
+            </td>
+            <td class="p-3 text-sm" style="width: 18%">{{ formatOrderDate(order.createdAt) }}</td>
+            <td class="p-3 font-bold text-[var(--color-neon-green)]" style="width: 12%">{{ order.total?.toFixed(2) }}€</td>
+            <td class="p-3" style="width: 22%">
+              <div class="flex items-center gap-2">
+                <span :class="[
+                  'px-2 py-1 text-xs font-bold rounded',
+                  order.status === 'pending' && 'bg-yellow-500/20 text-yellow-400',
+                  order.status === 'paid' && 'bg-blue-500/20 text-blue-400',
+                  order.status === 'shipped' && 'bg-cyan-500/20 text-cyan-400',
+                  order.status === 'delivered' && 'bg-green-500/20 text-green-400',
+                  order.status === 'cancelled' && 'bg-red-500/20 text-red-400'
+                ]">
+                  {{ getStatusLabel(order.status) }}
+                </span>
+                <span v-if="order.isArchived" class="px-2 py-1 text-xs font-bold rounded bg-orange-500/20 text-orange-400" title="Commande archivée">
+                  📦
+                </span>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Vue mobile/tablette (cartes) -->
+      <div class="md:hidden space-y-3">
+        <div 
+          v-for="order in filteredOrders" 
+          :key="order.id"
+          class="p-4 bg-[rgba(57,255,20,0.05)] border border-[rgba(57,255,20,0.2)] rounded-lg cursor-pointer hover:border-[var(--color-neon-green)] transition-all"
+          @click="$emit('select-order', order)"
+        >
+          <!-- Header de la carte -->
+          <div class="flex items-start justify-between mb-3">
+            <div class="flex-1">
+              <p class="text-xs text-[var(--color-text-muted)] mb-1">N° Commande</p>
+              <p class="font-mono text-sm font-bold text-[var(--color-neon-green)]">{{ order.orderNumber || order.orderId || '-' }}</p>
+            </div>
+            <div class="flex items-center gap-2">
               <span :class="[
-                'px-2 py-1 text-xs font-bold rounded',
+                'px-2 py-1 text-xs font-bold rounded whitespace-nowrap',
                 order.status === 'pending' && 'bg-yellow-500/20 text-yellow-400',
                 order.status === 'paid' && 'bg-blue-500/20 text-blue-400',
                 order.status === 'shipped' && 'bg-cyan-500/20 text-cyan-400',
@@ -118,13 +186,54 @@
               ]">
                 {{ getStatusLabel(order.status) }}
               </span>
-            </td>
-            <td class="p-3">
-              <button @click.stop="$emit('select-order', order)" class="btn btn-xs btn-primary">Détails</button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+              <span v-if="order.isArchived" class="px-2 py-1 text-xs font-bold rounded bg-orange-500/20 text-orange-400" title="Commande archivée">
+                📦
+              </span>
+            </div>
+          </div>
+
+          <!-- Infos client -->
+          <div class="mb-2">
+            <p class="text-xs text-[var(--color-text-muted)] mb-1">Client</p>
+            <div class="flex items-center gap-2">
+              <p class="text-sm font-semibold text-white">{{ order.customer?.name || order.customer?.firstName + ' ' + order.customer?.lastName || '-' }}</p>
+              <span 
+                v-if="order.customer?.tag === 'vip'" 
+                class="px-1.5 py-0.5 text-xs font-bold rounded bg-yellow-500/20 text-yellow-400 border border-yellow-500/30"
+                title="Client VIP"
+              >
+                ⭐
+              </span>
+              <span 
+                v-else-if="order.customer?.tag === 'watch'" 
+                class="px-1.5 py-0.5 text-xs font-bold rounded bg-orange-500/20 text-orange-400 border border-orange-500/30"
+                title="Client à surveiller"
+              >
+                ⚠️
+              </span>
+              <span 
+                v-else-if="order.customer?.tag === 'problematic'" 
+                class="px-1.5 py-0.5 text-xs font-bold rounded bg-red-500/20 text-red-400 border border-red-500/30"
+                title="Client problématique"
+              >
+                🚫
+              </span>
+            </div>
+          </div>
+
+          <!-- Date et montant -->
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-xs text-[var(--color-text-muted)] mb-1">Date</p>
+              <p class="text-sm text-[var(--color-text-secondary)]">{{ formatOrderDate(order.createdAt) }}</p>
+            </div>
+            <div class="text-right">
+              <p class="text-xs text-[var(--color-text-muted)] mb-1">Montant</p>
+              <p class="text-lg font-bold text-[var(--color-neon-green)]">{{ order.total?.toFixed(2) }}€</p>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -146,10 +255,20 @@ const props = defineProps({
   loadingOrders: {
     type: Boolean,
     default: false
+  },
+  showArchived: {
+    type: Boolean,
+    default: false
   }
 })
 
-const emit = defineEmits(['update-filter', 'select-order'])
+const emit = defineEmits(['update-filter', 'select-order', 'toggle-archived'])
+
+function truncateName(name, maxLength = 20) {
+  if (!name) return '-'
+  if (name.length <= maxLength) return name
+  return name.substring(0, maxLength) + '...'
+}
 
 function getStatusLabel(status) {
   const labels = {
@@ -165,13 +284,12 @@ function getStatusLabel(status) {
 function formatOrderDate(timestamp) {
   if (!timestamp) return '-'
   const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp)
-  return new Intl.DateTimeFormat('fr-FR', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  }).format(date)
+  const day = String(date.getDate()).padStart(2, '0')
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const year = date.getFullYear()
+  const hours = String(date.getHours()).padStart(2, '0')
+  const minutes = String(date.getMinutes()).padStart(2, '0')
+  return `${day}/${month}/${year} à ${hours}:${minutes}`
 }
 </script>
 

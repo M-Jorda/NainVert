@@ -1,10 +1,37 @@
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
+
+const STORAGE_KEY = 'nainvert-cart'
 
 export const useCartStore = defineStore('cart', () => {
+  // Charger le panier depuis localStorage au démarrage
+  const loadCartFromStorage = () => {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY)
+      return stored ? JSON.parse(stored) : []
+    } catch (error) {
+      console.error('Erreur lors du chargement du panier:', error)
+      return []
+    }
+  }
+
+  // Sauvegarder le panier dans localStorage
+  const saveCartToStorage = (cartItems) => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(cartItems))
+    } catch (error) {
+      console.error('Erreur lors de la sauvegarde du panier:', error)
+    }
+  }
+
   // State
-  const items = ref([])
+  const items = ref(loadCartFromStorage())
   const isOpen = ref(false)
+
+  // Watcher pour sauvegarder automatiquement le panier
+  watch(items, (newItems) => {
+    saveCartToStorage(newItems)
+  }, { deep: true })
 
   // Getters
   const itemCount = computed(() => {

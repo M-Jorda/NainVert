@@ -9,7 +9,6 @@
       </p>
       
       <div class="space-y-6">
-        <SeedRefunds />
         <SeedMessages />
       </div>
       
@@ -23,6 +22,5 @@
 </template>
 
 <script setup>
-import SeedRefunds from '../components/SeedRefunds.vue'
 import SeedMessages from '../components/SeedMessages.vue'
 </script>

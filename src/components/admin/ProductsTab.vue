@@ -20,7 +20,6 @@
             <th class="p-3 text-left">Type</th>
             <th class="p-3 text-left">Dessin</th>
             <th class="p-3 text-left">Stock</th>
-            <th class="p-3 text-left">Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -49,9 +48,6 @@
               ]">
                 {{ product.inStock ? 'En stock' : 'Rupture' }}
               </span>
-            </td>
-            <td class="p-3">
-              <button @click.stop="selectedProduct = product" class="btn btn-xs btn-primary">Détails</button>
             </td>
           </tr>
         </tbody>

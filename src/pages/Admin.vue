@@ -25,23 +25,14 @@
       </div>
 
       <!-- Tabs Navigation -->
-      <div class="sticky top-20 z-40 bg-[var(--color-background)] py-4 mb-8 border-b border-[rgba(57,255,20,0.2)] backdrop-blur-md bg-opacity-95">
-        <div class="flex gap-2 overflow-x-auto">
+      <div class="sticky top-0 z-40 bg-[var(--color-background)] py-4 mb-8 border-b border-[rgba(57,255,20,0.2)] backdrop-blur-md bg-opacity-95">
+        <!-- Desktop Navigation -->
+        <div class="hidden md:flex gap-2 overflow-x-auto">
         <button :class="['tab-btn', { active: activeTab === 'products' }]" @click="activeTab = 'products'">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
           </svg>
           Produits
-        </button>
-        <button :class="['tab-btn', { active: activeTab === 'content' }]" @click="activeTab = 'content'">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-            <polyline points="14 2 14 8 20 8"></polyline>
-            <line x1="16" y1="13" x2="8" y2="13"></line>
-            <line x1="16" y1="17" x2="8" y2="17"></line>
-            <polyline points="10 9 9 9 8 9"></polyline>
-          </svg>
-          Contenu
         </button>
         <button :class="['tab-btn', { active: activeTab === 'orders' }]" @click="activeTab = 'orders'">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -51,13 +42,6 @@
           </svg>
           Commandes
           <span v-if="orderStats.pending > 0" class="intrusion-badge">{{ orderStats.pending }}</span>
-        </button>
-        <button :class="['tab-btn', { active: activeTab === 'refunds' }]" @click="activeTab = 'refunds'">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M12 19c.88 0 1.75-.39 2.36-1.09l6.36-7.09A2 2 0 0 0 19.36 8H4.64a2 2 0 0 0-1.36 3.82l6.36 7.09A3.001 3.001 0 0 0 12 19z"></path>
-          </svg>
-          Remboursements
-          <span v-if="refundStats && refundStats.requested > 0" class="intrusion-badge">{{ refundStats.requested }}</span>
         </button>
         <button :class="['tab-btn', { active: activeTab === 'stock' }]" @click="activeTab = 'stock'">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -79,222 +63,94 @@
           🍯
         </span>
         </div>
-      </div>
-      
-      <!-- Onglet Remboursements -->
-      <div v-show="activeTab === 'refunds'" class="refunds-tab">
-        <h2 class="text-2xl font-bold mb-6 text-white">Gestion des Remboursements</h2>
-        <!-- Statistiques -->
-        <div class="flex gap-4 mb-6">
-          <div class="stat-card stat-total">
-            <div class="stat-value">{{ refundStats && refundStats.total !== undefined ? refundStats.total : 0 }}</div>
-            <div class="stat-label">Total</div>
-          </div>
-          <div class="stat-card stat-requested">
-            <div class="stat-value">{{ refundStats && refundStats.requested !== undefined ? refundStats.requested : 0 }}</div>
-            <div class="stat-label">Demandés</div>
-          </div>
-          <div class="stat-card stat-approved">
-            <div class="stat-value">{{ refundStats && refundStats.approved !== undefined ? refundStats.approved : 0 }}</div>
-            <div class="stat-label">Approuvés</div>
-          </div>
-          <div class="stat-card stat-rejected">
-            <div class="stat-value">{{ refundStats && refundStats.rejected !== undefined ? refundStats.rejected : 0 }}</div>
-            <div class="stat-label">Rejetés</div>
-          </div>
-          <div class="stat-card stat-processed">
-            <div class="stat-value">{{ refundStats && refundStats.processed !== undefined ? refundStats.processed : 0 }}</div>
-            <div class="stat-label">Traités</div>
-          </div>
-        </div>
-        <!-- Filtres -->
-        <div class="mb-6">
-          <div class="flex gap-2 flex-wrap">
-            <button @click="refundFilter = 'all'" :class="['filter-btn', { active: refundFilter === 'all' }]">Tous</button>
-            <button @click="refundFilter = 'requested'" :class="['filter-btn', { active: refundFilter === 'requested' }]">Demandés</button>
-            <button @click="refundFilter = 'approved'" :class="['filter-btn', { active: refundFilter === 'approved' }]">Approuvés</button>
-            <button @click="refundFilter = 'rejected'" :class="['filter-btn', { active: refundFilter === 'rejected' }]">Rejetés</button>
-            <button @click="refundFilter = 'processed'" :class="['filter-btn', { active: refundFilter === 'processed' }]">Traités</button>
-          </div>
-        </div>
-        <!-- Liste des remboursements -->
-        <div v-if="loadingRefunds" class="text-center py-8 text-[var(--color-text-secondary)]">Chargement des remboursements...</div>
-        <div v-else-if="!filteredRefunds || filteredRefunds.length === 0" class="text-center py-12">
-          <svg class="w-16 h-16 mx-auto mb-4 text-[var(--color-text-secondary)] opacity-50" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M12 19c.88 0 1.75-.39 2.36-1.09l6.36-7.09A2 2 0 0 0 19.36 8H4.64a2 2 0 0 0-1.36 3.82l6.36 7.09A3.001 3.001 0 0 0 12 19z"></path>
-          </svg>
-          <p class="text-[var(--color-text-secondary)]">Aucun remboursement trouvé</p>
-        </div>
-        <div v-else>
-          <table class="w-full text-sm bg-[var(--color-black-light)] rounded-xl overflow-hidden">
-            <thead>
-              <tr class="bg-[rgba(57,255,20,0.05)]">
-                <th class="p-3 text-left">Date</th>
-                <th class="p-3 text-left">Commande</th>
-                <th class="p-3 text-left">Montant</th>
-                <th class="p-3 text-left">Statut</th>
-                <th class="p-3 text-left">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="refund in filteredRefunds" :key="refund.id" class="border-b border-[rgba(57,255,20,0.05)] hover:bg-[rgba(57,255,20,0.03)] cursor-pointer" @click="selectRefund(refund)">
-                <td class="p-3">{{ formatOrderDate(refund.createdAt) }}</td>
-                <td class="p-3">{{ refund.orderId || '-' }}</td>
-                <td class="p-3 font-bold text-[var(--color-neon-green)]">{{ refund.amount ? refund.amount.toFixed(2) : '0.00' }}€</td>
-                <td class="p-3">
-                  <span :class="[
-                    'px-2 py-1 text-xs font-bold rounded',
-                    refund.status === 'requested' && 'bg-yellow-500/20 text-yellow-400',
-                    refund.status === 'approved' && 'bg-green-500/20 text-green-400',
-                    refund.status === 'rejected' && 'bg-red-500/20 text-red-400',
-                    refund.status === 'processed' && 'bg-blue-500/20 text-blue-400'
-                  ]">
-                    {{ getRefundStatusLabel(refund.status) }}
-                  </span>
-                </td>
-                <td class="p-3">
-                  <button @click.stop="selectRefund(refund)" class="btn btn-xs btn-primary">Détails</button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
 
-      <!-- Modal détail remboursement -->
-      <teleport to="body">
-        <transition name="modal-fade">
-          <div 
-            v-if="selectedRefund" 
-            class="fixed inset-0 bg-black/95 backdrop-blur-sm z-[9999] flex items-center justify-center p-4"
-            @click="selectedRefund = null"
-          >
-            <div 
-              class="bg-[var(--color-black-light)] border border-[rgba(57,255,20,0.3)] rounded-xl max-w-4xl w-full p-8 max-h-[90vh] overflow-y-auto"
-              @click.stop
+        <!-- Mobile/Tablet Navigation (Burger Menu) -->
+        <div class="md:hidden">
+          <div class="flex items-center justify-between">
+            <!-- Active Tab Display -->
+            <div class="flex items-center gap-2">
+              <span class="text-lg font-bold text-[var(--color-neon-green)]">
+                {{ getActiveTabLabel() }}
+              </span>
+              <span v-if="activeTab === 'orders' && orderStats.pending > 0" class="intrusion-badge">
+                {{ orderStats.pending }}
+              </span>
+            </div>
+
+            <!-- Burger Button -->
+            <button 
+              @click="mobileMenuOpen = !mobileMenuOpen"
+              class="p-2 border border-[rgba(57,255,20,0.3)] rounded-lg text-[var(--color-neon-green)] hover:bg-[rgba(57,255,20,0.1)] transition-all"
             >
-              <div class="flex items-center justify-between mb-6">
-                <h2 class="text-2xl font-bold text-gradient">
-                  Détail du remboursement
-                </h2>
-                <button 
-                  @click="selectedRefund = null"
-                  class="w-10 h-10 flex items-center justify-center border border-[rgba(57,255,20,0.2)] rounded-lg text-[var(--color-text-secondary)] hover:border-[var(--color-neon-green)] hover:text-[var(--color-neon-green)] transition-all"
-                >
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                    <line x1="6" y1="6" x2="18" y2="18"></line>
-                  </svg>
-                </button>
-              </div>
+              <svg v-if="!mobileMenuOpen" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="3" y1="18" x2="21" y2="18"></line>
+              </svg>
+              <svg v-else width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+          </div>
 
-              <!-- Informations du remboursement -->
-              <div class="mb-6 p-6 bg-[rgba(57,255,20,0.05)] border border-[rgba(57,255,20,0.2)] rounded-lg">
-                <h3 class="text-lg font-bold text-white mb-4">💰 Informations</h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <strong class="text-white">ID:</strong>
-                    <span class="ml-2 text-[var(--color-text-secondary)]">{{ selectedRefund.id }}</span>
+          <!-- Mobile Menu Dropdown -->
+          <transition name="mobile-menu">
+            <div v-if="mobileMenuOpen" class="absolute left-0 right-0 mt-4 mx-4 bg-[var(--color-black-light)] border border-[rgba(57,255,20,0.3)] rounded-lg shadow-lg overflow-hidden">
+              <button 
+                :class="['mobile-tab-btn', { active: activeTab === 'products' }]" 
+                @click="activeTab = 'products'; mobileMenuOpen = false"
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                </svg>
+                Produits
+              </button>
+              <button 
+                :class="['mobile-tab-btn', { active: activeTab === 'orders' }]" 
+                @click="activeTab = 'orders'; mobileMenuOpen = false"
+              >
+                <div class="flex items-center justify-between w-full">
+                  <div class="flex items-center gap-2">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <circle cx="9" cy="21" r="1"></circle>
+                      <circle cx="20" cy="21" r="1"></circle>
+                      <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                    </svg>
+                    Commandes
                   </div>
-                  <div>
-                    <strong class="text-white">Statut:</strong>
-                    <span :class="[
-                      'ml-2 px-2 py-1 text-xs font-bold rounded',
-                      selectedRefund.status === 'requested' && 'bg-yellow-500/20 text-yellow-400',
-                      selectedRefund.status === 'approved' && 'bg-green-500/20 text-green-400',
-                      selectedRefund.status === 'rejected' && 'bg-red-500/20 text-red-400',
-                      selectedRefund.status === 'processed' && 'bg-blue-500/20 text-blue-400'
-                    ]">
-                      {{ getRefundStatusLabel(selectedRefund.status) }}
-                    </span>
-                  </div>
-                  <div>
-                    <strong class="text-white">Montant:</strong>
-                    <span class="ml-2 text-[var(--color-neon-green)] font-bold">{{ selectedRefund.amount ? selectedRefund.amount.toFixed(2) : '-' }}€</span>
-                  </div>
-                  <div>
-                    <strong class="text-white">Date:</strong>
-                    <span class="ml-2 text-[var(--color-text-secondary)]">{{ formatOrderDate(selectedRefund.createdAt) }}</span>
-                  </div>
+                  <span v-if="orderStats.pending > 0" class="intrusion-badge">{{ orderStats.pending }}</span>
                 </div>
-              </div>
-
-              <!-- Commande liée -->
-              <div v-if="linkedOrder || selectedRefund.orderId" class="mb-6 p-6 bg-[rgba(57,255,20,0.05)] border border-[rgba(57,255,20,0.2)] rounded-lg">
-                <h3 class="text-lg font-bold text-white mb-4">📦 Commande liée</h3>
-                <div v-if="linkedOrder" class="space-y-2 text-sm">
-                  <div>
-                    <strong class="text-white">N° Commande:</strong>
-                    <span class="ml-2 text-[var(--color-neon-green)]">#{{ linkedOrder.orderId }}</span>
-                  </div>
-                  <div>
-                    <strong class="text-white">Client:</strong>
-                    <span class="ml-2 text-[var(--color-text-secondary)]">{{ linkedOrder.customer?.firstName }} {{ linkedOrder.customer?.lastName }}</span>
-                  </div>
-                  <div>
-                    <strong class="text-white">Email:</strong>
-                    <span class="ml-2 text-[var(--color-text-secondary)]">{{ linkedOrder.customer?.email }}</span>
-                  </div>
-                  <div>
-                    <strong class="text-white">Montant commande:</strong>
-                    <span class="ml-2 text-[var(--color-neon-green)]">{{ linkedOrder.total ? linkedOrder.total.toFixed(2) : '-' }}€</span>
-                  </div>
-                  <div>
-                    <strong class="text-white">Statut commande:</strong>
-                    <span class="ml-2 text-[var(--color-text-secondary)]">{{ getStatusLabel(linkedOrder.status) }}</span>
-                  </div>
-                </div>
-                <div v-else class="text-sm text-[var(--color-text-secondary)]">
-                  Commande #{{ selectedRefund.orderId }} (détails non disponibles)
-                </div>
-              </div>
-
-              <!-- Motif et note -->
-              <div class="mb-6 p-6 bg-[rgba(57,255,20,0.05)] border border-[rgba(57,255,20,0.2)] rounded-lg">
-                <h3 class="text-lg font-bold text-white mb-4">📝 Détails</h3>
-                <div class="mb-4">
-                  <strong class="text-white">Motif:</strong>
-                  <p class="mt-2 p-3 bg-black/30 rounded text-[var(--color-text-secondary)]">{{ selectedRefund.reason || '-' }}</p>
-                </div>
-                <div>
-                  <label class="block text-sm font-semibold text-white mb-2">Note admin:</label>
-                  <textarea v-model="refundNoteInput" class="form-textarea w-full" rows="3"></textarea>
-                  <button class="btn btn-primary mt-2" @click="handleUpdateRefundNote(selectedRefund.id, refundNoteInput)">Enregistrer la note</button>
-                </div>
-              </div>
-
-              <!-- Actions admin -->
-              <div class="p-6 bg-[rgba(57,255,20,0.05)] border border-[rgba(57,255,20,0.2)] rounded-lg">
-                <h3 class="text-lg font-bold text-white mb-4">⚙️ Actions</h3>
-                <div class="mb-4">
-                  <label class="block text-sm font-semibold text-white mb-2">Changer le statut</label>
-                  <div class="flex gap-2">
-                    <select v-model="refundStatusInput" class="form-input flex-1">
-                      <option value="requested">Demandé</option>
-                      <option value="approved">Approuvé</option>
-                      <option value="rejected">Rejeté</option>
-                      <option value="processed">Traité</option>
-                    </select>
-                    <button class="btn btn-primary" @click="handleUpdateRefundStatus(selectedRefund.id, refundStatusInput)">Mettre à jour</button>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Danger zone -->
-              <div class="mt-6 p-6 bg-red-500/10 border border-red-500/30 rounded-lg">
-                <h3 class="text-lg font-bold text-red-400 mb-4">⚠️ Zone dangereuse</h3>
-                <button 
-                  @click="handleDeleteRefund(selectedRefund.id); selectedRefund = null"
-                  class="btn btn-danger"
-                >
-                  Supprimer le remboursement
-                </button>
-                <p class="text-xs text-red-400 mt-2">Cette action est irréversible !</p>
+              </button>
+              <button 
+                :class="['mobile-tab-btn', { active: activeTab === 'stock' }]" 
+                @click="activeTab = 'stock'; mobileMenuOpen = false"
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="1" y="3" width="15" height="13"></rect>
+                  <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
+                  <circle cx="5.5" cy="18.5" r="2.5"></circle>
+                  <circle cx="18.5" cy="18.5" r="2.5"></circle>
+                </svg>
+                Stock
+              </button>
+              <button 
+                :class="['mobile-tab-btn', { active: activeTab === 'security' }]" 
+                @click="activeTab = 'security'; mobileMenuOpen = false"
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                </svg>
+                Sécurité
+              </button>
+              <div v-if="honeypotLogs.length > 0" class="p-3 border-t border-[rgba(57,255,20,0.2)] text-center text-red-500">
+                🍯 Tentatives d'intrusion détectées
               </div>
             </div>
-          </div>
-        </transition>
-      </teleport>
+          </transition>
+        </div>
+      </div>
 
       <!-- Products Tab -->
       <ProductsTab 
@@ -302,15 +158,6 @@
         :products="products"
         @update-product="updateProduct"
         @open-image-modal="openImageModal"
-      />
-
-      <!-- Content Tab -->
-      <ContentTab
-        v-if="activeTab === 'content' && siteContent"
-        :siteContent="siteContent"
-        :easterEggsList="easterEggsList"
-        @auto-save="autoSaveContent"
-        @update-easter-egg="updateEasterEgg"
       />
 
       <!-- Stock Tab -->
@@ -448,8 +295,10 @@
         :orderFilter="orderFilter"
         :filteredOrders="filteredOrders"
         :loadingOrders="loadingOrders"
+        :showArchived="showArchived"
         @update-filter="value => orderFilter = value"
         @select-order="order => selectedOrder = order"
+        @toggle-archived="showArchived = !showArchived"
       />
 
       <!-- Order Detail Modal -->
@@ -457,17 +306,22 @@
         <transition name="modal-fade">
           <div 
             v-if="selectedOrder" 
-            class="fixed inset-0 bg-black/95 backdrop-blur-sm z-[9999] flex items-center justify-center p-4"
+            class="fixed inset-0 bg-black/95 backdrop-blur-sm z-[9999] flex items-center justify-center p-4 overflow-y-auto"
             @click="selectedOrder = null"
           >
             <div 
-              class="bg-[var(--color-black-light)] border border-[rgba(57,255,20,0.3)] rounded-xl max-w-4xl w-full p-8 max-h-[90vh] overflow-y-auto"
+              class="bg-[var(--color-black-light)] border border-[rgba(57,255,20,0.3)] rounded-xl max-w-7xl w-full p-8 max-h-[90vh] overflow-y-auto"
               @click.stop
             >
               <div class="flex items-center justify-between mb-6">
-                <h2 class="text-2xl font-bold text-gradient">
-                  Commande {{ selectedOrder.orderId }}
-                </h2>
+                <div class="flex items-center gap-3">
+                  <h2 class="text-2xl font-bold text-gradient">
+                    Commande {{ selectedOrder.orderNumber || selectedOrder.orderId || '-' }}
+                  </h2>
+                  <span v-if="selectedOrder.isArchived" class="px-3 py-1 text-sm font-bold rounded-lg bg-orange-500/20 text-orange-400 border border-orange-500/30">
+                    📦 Archivée
+                  </span>
+                </div>
                 <button 
                   @click="selectedOrder = null"
                   class="w-10 h-10 flex items-center justify-center border border-[rgba(57,255,20,0.2)] rounded-lg text-[var(--color-text-secondary)] hover:border-[var(--color-neon-green)] hover:text-[var(--color-neon-green)] transition-all"
@@ -484,7 +338,7 @@
                 <div class="p-6 bg-[rgba(57,255,20,0.05)] border border-[rgba(57,255,20,0.2)] rounded-lg">
                   <h3 class="text-lg font-bold text-white mb-4">👤 Client</h3>
                   <div class="space-y-2 text-sm">
-                    <p><strong>Nom:</strong> {{ selectedOrder.customer?.firstName }} {{ selectedOrder.customer?.lastName }}</p>
+                    <p><strong>Nom:</strong> {{ selectedOrder.customer?.name || (selectedOrder.customer?.firstName + ' ' + selectedOrder.customer?.lastName) || '-' }}</p>
                     <p><strong>Email:</strong> {{ selectedOrder.customer?.email }}</p>
                     <p><strong>Téléphone:</strong> {{ selectedOrder.customer?.phone || '-' }}</p>
                   </div>
@@ -494,9 +348,10 @@
                 <div class="p-6 bg-[rgba(57,255,20,0.05)] border border-[rgba(57,255,20,0.2)] rounded-lg">
                   <h3 class="text-lg font-bold text-white mb-4">📦 Livraison</h3>
                   <div class="space-y-2 text-sm">
-                    <p><strong>Adresse:</strong> {{ selectedOrder.shipping?.address }}</p>
-                    <p><strong>Ville:</strong> {{ selectedOrder.shipping?.city }} {{ selectedOrder.shipping?.postalCode }}</p>
-                    <p><strong>Pays:</strong> {{ selectedOrder.shipping?.country }}</p>
+                    <p><strong>Adresse:</strong> {{ selectedOrder.shipping?.address?.street || selectedOrder.shipping?.address }}</p>
+                    <p><strong>Code postal:</strong> {{ selectedOrder.shipping?.address?.postalCode || selectedOrder.shipping?.postalCode || '-' }}</p>
+                    <p><strong>Ville:</strong> {{ selectedOrder.shipping?.address?.city || selectedOrder.shipping?.city || '-' }}</p>
+                    <p><strong>Pays:</strong> {{ selectedOrder.shipping?.address?.country || selectedOrder.shipping?.country || '-' }}</p>
                     <p><strong>Méthode:</strong> {{ selectedOrder.shipping?.method }}</p>
                     <p v-if="selectedOrder.shipping?.trackingNumber">
                       <strong>Tracking:</strong> {{ selectedOrder.shipping.trackingNumber }}
@@ -566,20 +421,21 @@
                 <!-- Ajouter tracking -->
                 <div v-if="selectedOrder.status === 'shipped' || selectedOrder.status === 'delivered'" class="mb-4">
                   <label class="block text-sm font-semibold text-white mb-2">Numéro de suivi</label>
-                  <div class="flex gap-2">
-                    <input 
-                      v-model="trackingInput"
-                      type="text"
-                      placeholder="FR123456789"
-                      class="form-input flex-1"
-                    >
-                    <button 
-                      @click="handleAddTracking(selectedOrder.id)"
-                      class="btn btn-primary"
-                    >
-                      Ajouter
-                    </button>
-                  </div>
+                  <input 
+                    v-model="selectedOrder.shipping.trackingNumber"
+                    @blur="selectedOrder.status === 'shipped' ? handleUpdateTracking(selectedOrder.id, selectedOrder.shipping.trackingNumber) : null"
+                    :disabled="selectedOrder.status === 'delivered'"
+                    type="text"
+                    placeholder="FR123456789"
+                    :class="[
+                      'form-input w-full',
+                      selectedOrder.status === 'delivered' && 'opacity-60 cursor-not-allowed bg-gray-800'
+                    ]"
+                  >
+                  <p class="text-xs text-[var(--color-text-muted)] mt-1">
+                    <span v-if="selectedOrder.status === 'shipped'">💡 Sauvegarde automatique lors de la perte de focus</span>
+                    <span v-else>🔒 Commande livrée - Numéro de suivi verrouillé</span>
+                  </p>
                 </div>
 
                 <!-- Notes internes -->
@@ -592,19 +448,81 @@
                     placeholder="Notes pour l'équipe..."
                     class="form-input w-full"
                   ></textarea>
+                  <p class="text-xs text-[var(--color-text-muted)] mt-1">
+                    💡 Sauvegarde automatique lors de la perte de focus
+                  </p>
                 </div>
               </div>
 
-              <!-- Danger zone -->
-              <div class="mt-6 p-6 bg-red-500/10 border border-red-500/30 rounded-lg">
-                <h3 class="text-lg font-bold text-red-400 mb-4">⚠️ Zone dangereuse</h3>
+              <!-- Notes client (si client existant avec commandes) -->
+              <div v-if="customerOrderCount(selectedOrder.customer?.email) > 0" class="mt-6 p-6 bg-[rgba(57,255,20,0.05)] border border-[rgba(57,255,20,0.2)] rounded-lg">
+                <h3 class="text-lg font-bold text-white mb-4">👤 Informations Client</h3>
+                
+                <!-- Statistiques client -->
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                  <div class="p-3 bg-black/30 rounded">
+                    <p class="text-xs text-[var(--color-text-muted)]">Commandes totales</p>
+                    <p class="text-lg font-bold text-[var(--color-neon-green)]">{{ customerOrderCount(selectedOrder.customer?.email) }}</p>
+                  </div>
+                  <div class="p-3 bg-black/30 rounded">
+                    <p class="text-xs text-[var(--color-text-muted)]">CA total</p>
+                    <p class="text-lg font-bold text-[var(--color-neon-green)]">{{ customerTotalSpent(selectedOrder.customer?.email) }}€</p>
+                  </div>
+                </div>
+
+                <!-- Tag client -->
+                <div class="mb-4">
+                  <label class="block text-sm font-semibold text-white mb-2">🏷️ Tag client</label>
+                  <select 
+                    v-model="selectedOrder.customer.tag"
+                    @change="handleUpdateCustomerTag(selectedOrder.id, selectedOrder.customer.tag)"
+                    class="form-input w-full"
+                  >
+                    <option value="">Aucun tag</option>
+                    <option value="vip">⭐ VIP - Client premium</option>
+                    <option value="good">👍 Bon client</option>
+                    <option value="neutral">😐 Neutre</option>
+                    <option value="watch">⚠️ À surveiller</option>
+                    <option value="problematic">🚫 Problématique</option>
+                  </select>
+                </div>
+
+                <!-- Note privée sur le client -->
+                <div>
+                  <label class="block text-sm font-semibold text-white mb-2">📝 Note privée client</label>
+                  <textarea 
+                    v-model="selectedOrder.customer.privateNote"
+                    @blur="handleUpdateCustomerNote(selectedOrder.id, selectedOrder.customer.privateNote)"
+                    rows="3"
+                    placeholder="Notes privées sur ce client (historique, préférences, incidents...)&#10;Exemple: 'Client fidèle, préfère livraison express'"
+                    class="form-input w-full"
+                  ></textarea>
+                  <p class="text-xs text-[var(--color-text-muted)] mt-1">
+                    💡 Ces informations sont privées et visibles uniquement par l'équipe
+                  </p>
+                </div>
+              </div>
+
+              <!-- Actions -->
+              <div class="mt-6 p-6 bg-orange-500/10 border border-orange-500/30 rounded-lg">
+                <h3 class="text-lg font-bold text-orange-400 mb-4">📦 Actions</h3>
                 <button 
-                  @click="handleDeleteOrder(selectedOrder.id)"
-                  class="btn btn-danger"
+                  @click="handleToggleArchive(selectedOrder.id, selectedOrder.isArchived)"
+                  :class="[
+                    'btn w-full',
+                    selectedOrder.isArchived 
+                      ? 'bg-green-500/20 hover:bg-green-500/30 border-green-500/40 text-green-300'
+                      : 'bg-orange-500/20 hover:bg-orange-500/30 border-orange-500/40 text-orange-300'
+                  ]"
                 >
-                  Supprimer la commande
+                  {{ selectedOrder.isArchived ? '♻️ Désarchiver la commande' : '📦 Archiver la commande' }}
                 </button>
-                <p class="text-xs text-red-400 mt-2">Cette action est irréversible !</p>
+                <p class="text-xs text-orange-400 mt-2">
+                  {{ selectedOrder.isArchived 
+                    ? 'La commande réapparaîtra dans la liste principale.' 
+                    : 'La commande sera masquée de la liste principale mais conservée en base de données.' 
+                  }}
+                </p>
               </div>
             </div>
           </div>
@@ -744,34 +662,23 @@
 </template>
 
 <script setup>
-// Sauvegarde automatique champ par champ pour le contenu home/contact
-function autoSaveContent(section, key, value) {
-  const data = {}
-  data[section] = { ...siteContent.value[section], [key]: value }
-  updateSiteContent(data)
-}
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useAdminStore } from '../stores/admin'
 import { useProducts } from '../composables/useProducts'
-import { useSiteContent } from '../composables/useSiteContent'
 import { useEasterEggsFirestore } from '../composables/useEasterEggsFirestore'
 import { useOrders } from '../composables/useOrders'
-import { useRefunds } from '../composables/useRefunds'
 import { useStock } from '../composables/useStock'
-import { collection, query, orderBy, onSnapshot, deleteDoc, doc, getDocs, updateDoc } from 'firebase/firestore'
+import { collection, query, orderBy, onSnapshot, deleteDoc, doc, getDocs, updateDoc, serverTimestamp } from 'firebase/firestore'
 import { db } from '@/config/firebase'
 
 // Composants admin tabs
 import ProductsTab from '../components/admin/ProductsTab.vue'
-import ContentTab from '../components/admin/ContentTab.vue'
 import OrdersTab from '../components/admin/OrdersTab.vue'
-import RefundsTab from '../components/admin/RefundsTab.vue'
 import StockTab from '../components/admin/StockTab.vue'
 import SecurityTab from '../components/admin/SecurityTab.vue'
 
 const adminStore = useAdminStore()
 const { products, loadProducts, updateProduct } = useProducts()
-const { siteContent, loadSiteContent, updateSiteContent } = useSiteContent()
 
 // Easter Eggs from Firestore
 const { easterEggs, loadEasterEggs, updateEasterEgg } = useEasterEggsFirestore()
@@ -789,17 +696,6 @@ const {
   orderStats 
 } = useOrders()
 
-// Refunds management from Firestore
-const {
-  refunds,
-  loading: loadingRefunds,
-  loadRefunds,
-  updateRefundStatus,
-  addRefundNote,
-  deleteRefund,
-  refundStats
-} = useRefunds()
-
 // Stock management
 const {
   stockData,
@@ -810,67 +706,11 @@ const {
   getStockPercentage
 } = useStock()
 
-const refundFilter = ref('all')
-const selectedRefund = ref(null)
-const refundNoteInput = ref('')
-const refundStatusInput = ref('requested')
-const linkedOrder = ref(null)
-
-const filteredRefunds = computed(() => {
-  if (!refunds.value) return []
-  if (refundFilter.value === 'all') return refunds.value
-  return refunds.value.filter(r => r.status === refundFilter.value)
-})
-
-const getRefundStatusLabel = (status) => {
-  const labels = {
-    requested: 'Demandé',
-    approved: 'Approuvé',
-    rejected: 'Rejeté',
-    processed: 'Traité'
-  }
-  return labels[status] || status
-}
-
-const selectRefund = (refund) => {
-  selectedRefund.value = refund
-  refundNoteInput.value = refund.notes || ''
-  refundStatusInput.value = refund.status
-  if (refund.orderId) {
-    linkedOrder.value = orders.value.find(o => o.id === refund.orderId) || null
-  } else {
-    linkedOrder.value = null
-  }
-}
-
-const handleUpdateRefundStatus = async (refundId, newStatus) => {
-  const result = await updateRefundStatus(refundId, newStatus)
-  if (result.success) {
-    selectedRefund.value.status = newStatus
-  } else {
-    alert('Erreur lors de la mise à jour du statut')
-  }
-}
-
-const handleUpdateRefundNote = async (refundId, note) => {
-  const result = await addRefundNote(refundId, note)
-  if (!result.success) {
-    alert('Erreur lors de la mise à jour de la note')
-  }
-}
-
-const handleDeleteRefund = async (refundId) => {
-  if (!confirm('Supprimer ce remboursement ?')) return
-  const result = await deleteRefund(refundId)
-  if (!result.success) {
-    alert('Erreur lors de la suppression')
-  }
-}
-
 const email = ref('')
 const password = ref('')
 const loginError = ref(false)
 const activeTab = ref(adminStore.isAuthenticated ? 'products' : 'security')
+const mobileMenuOpen = ref(false)
 
 // Password change form
 const passwordForm = ref({
@@ -898,6 +738,24 @@ const newImagePreview = ref(null)
 const newImageFile = ref(null)
 const imageUrl = ref('')
 
+// Bloquer le scroll quand le modal d'images est ouvert
+watch(showImageModal, (newVal) => {
+  if (newVal) {
+    document.body.style.overflow = 'hidden'
+  } else {
+    document.body.style.overflow = ''
+  }
+})
+
+// Fermer le menu mobile lors du changement de tab et bloquer le scroll
+watch(mobileMenuOpen, (newVal) => {
+  if (newVal) {
+    document.body.style.overflow = 'hidden'
+  } else {
+    document.body.style.overflow = ''
+  }
+})
+
 // Honeypot logs
 const honeypotLogs = ref([])
 const loadingLogs = ref(false)
@@ -905,13 +763,31 @@ const loadingLogs = ref(false)
 // Orders management
 const orderFilter = ref('all')
 const selectedOrder = ref(null)
-const trackingInput = ref('')
+const showArchived = ref(false)
+
+// Bloquer le scroll quand le détail de commande est ouvert
+watch(selectedOrder, (newVal) => {
+  if (newVal) {
+    document.body.style.overflow = 'hidden'
+  } else {
+    document.body.style.overflow = ''
+  }
+})
 
 const filteredOrders = computed(() => {
-  if (orderFilter.value === 'all') {
-    return orders.value
+  let filtered = orders.value
+  
+  // Masquer les commandes archivées par défaut
+  if (!showArchived.value) {
+    filtered = filtered.filter(order => !order.isArchived)
   }
-  return orders.value.filter(order => order.status === orderFilter.value)
+  
+  // Filtrer par statut si nécessaire
+  if (orderFilter.value !== 'all') {
+    filtered = filtered.filter(order => order.status === orderFilter.value)
+  }
+  
+  return filtered
 })
 
 const getStatusLabel = (status) => {
@@ -941,25 +817,33 @@ const handleStatusChange = async (orderId, newStatus) => {
   const result = await updateOrderStatus(orderId, newStatus)
   if (result.success) {
     console.log('✅ Statut mis à jour')
+    
+    // Initialiser trackingNumber si le statut passe à "shipped" et qu'il n'existe pas
+    if (newStatus === 'shipped' && selectedOrder.value) {
+      if (!selectedOrder.value.shipping) {
+        selectedOrder.value.shipping = {}
+      }
+      if (!selectedOrder.value.shipping.trackingNumber) {
+        selectedOrder.value.shipping.trackingNumber = ''
+      }
+    }
   } else {
     console.error('❌ Erreur mise à jour statut:', result.error)
     alert('Erreur lors de la mise à jour du statut')
   }
 }
 
-const handleAddTracking = async (orderId) => {
-  if (!trackingInput.value.trim()) {
-    alert('Veuillez entrer un numéro de suivi')
-    return
+const handleUpdateTracking = async (orderId, trackingNumber) => {
+  if (!trackingNumber || !trackingNumber.trim()) {
+    return // Ne rien faire si vide
   }
   
-  const result = await addTrackingNumber(orderId, trackingInput.value.trim())
+  const result = await addTrackingNumber(orderId, trackingNumber.trim())
   if (result.success) {
-    console.log('✅ Tracking ajouté')
-    trackingInput.value = ''
+    console.log('✅ Numéro de suivi mis à jour')
   } else {
-    console.error('❌ Erreur ajout tracking:', result.error)
-    alert('Erreur lors de l\'ajout du numéro de suivi')
+    console.error('❌ Erreur mise à jour tracking:', result.error)
+    alert('Erreur lors de la mise à jour du numéro de suivi')
   }
 }
 
@@ -970,19 +854,92 @@ const handleUpdateNote = async (orderId, note) => {
   }
 }
 
-const handleDeleteOrder = async (orderId) => {
-  if (!confirm('⚠️ Êtes-vous sûr de vouloir supprimer cette commande ? Cette action est irréversible !')) {
+// Fonctions pour les informations client
+const customerOrderCount = (email) => {
+  if (!email) return 0
+  return orders.value.filter(order => order.customer?.email === email).length
+}
+
+const customerTotalSpent = (email) => {
+  if (!email) return 0
+  return orders.value
+    .filter(order => order.customer?.email === email && order.status !== 'cancelled')
+    .reduce((sum, order) => sum + (order.total || 0), 0)
+    .toFixed(2)
+}
+
+const handleUpdateCustomerTag = async (orderId, tag) => {
+  try {
+    const orderRef = doc(db, 'orders', orderId)
+    await updateDoc(orderRef, {
+      'customer.tag': tag,
+      updatedAt: serverTimestamp()
+    })
+    console.log('✅ Tag client mis à jour')
+  } catch (error) {
+    console.error('❌ Erreur mise à jour tag:', error)
+    alert('Erreur lors de la mise à jour du tag')
+  }
+}
+
+const handleUpdateCustomerNote = async (orderId, note) => {
+  try {
+    const orderRef = doc(db, 'orders', orderId)
+    await updateDoc(orderRef, {
+      'customer.privateNote': note,
+      updatedAt: serverTimestamp()
+    })
+    console.log('✅ Note client mise à jour')
+  } catch (error) {
+    console.error('❌ Erreur mise à jour note client:', error)
+  }
+}
+
+const handleToggleArchive = async (orderId, isCurrentlyArchived) => {
+  const action = isCurrentlyArchived ? 'désarchiver' : 'archiver'
+  const emoji = isCurrentlyArchived ? '♻️' : '📦'
+  
+  if (!confirm(`${emoji} ${action.charAt(0).toUpperCase() + action.slice(1)} cette commande ?\n\n${
+    isCurrentlyArchived 
+      ? 'Elle réapparaîtra dans la liste principale.' 
+      : 'Elle sera masquée de la liste principale mais conservée en base de données.'
+  }`)) {
     return
   }
   
-  const result = await deleteOrder(orderId)
-  if (result.success) {
-    console.log('✅ Commande supprimée')
+  try {
+    const orderRef = doc(db, 'orders', orderId)
+    const updateData = {
+      isArchived: !isCurrentlyArchived,
+      updatedAt: serverTimestamp()
+    }
+    
+    if (!isCurrentlyArchived) {
+      // Si on archive, ajouter la date d'archivage
+      updateData.archivedAt = serverTimestamp()
+    } else {
+      // Si on désarchive, retirer la date d'archivage
+      updateData.archivedAt = null
+    }
+    
+    await updateDoc(orderRef, updateData)
+    console.log(`✅ Commande ${isCurrentlyArchived ? 'désarchivée' : 'archivée'}`)
     selectedOrder.value = null
-  } else {
-    console.error('❌ Erreur suppression:', result.error)
-    alert('Erreur lors de la suppression de la commande')
+  } catch (error) {
+    console.error(`❌ Erreur ${action}:`, error)
+    alert(`Erreur lors de l'${action} de la commande`)
   }
+}
+
+// Get active tab label for mobile menu
+const getActiveTabLabel = () => {
+  const labels = {
+    products: '📦 Produits',
+    orders: '🛒 Commandes',
+    stock: '📊 Stock',
+    security: '🔒 Sécurité'
+  }
+  return labels[activeTab.value] || activeTab.value
 }
 
 onMounted(async () => {
@@ -991,11 +948,9 @@ onMounted(async () => {
     activeTab.value = 'security'
   }
   await loadProducts()
-  await loadSiteContent()
   await loadEasterEggs()
   loadHoneypotLogs()
   loadOrders()
-  loadRefunds()
   loadStock()
   checkBlockStatus()
   loadFailedAttempts()
@@ -1791,5 +1746,55 @@ input[type="number"] {
   background: rgba(57, 255, 20, 0.25);
   border-color: var(--color-neon-green);
   box-shadow: 0 0 10px rgba(57, 255, 20, 0.3);
+}
+
+/* Mobile Menu Styles */
+.mobile-tab-btn {
+  width: 100%;
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid rgba(57, 255, 20, 0.1);
+  color: var(--color-text-secondary);
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-align: left;
+}
+
+.mobile-tab-btn:last-child {
+  border-bottom: none;
+}
+
+.mobile-tab-btn:hover {
+  background: rgba(57, 255, 20, 0.05);
+  color: var(--color-neon-green);
+}
+
+.mobile-tab-btn.active {
+  background: rgba(57, 255, 20, 0.1);
+  color: var(--color-neon-green);
+  font-weight: 700;
+  border-left: 3px solid var(--color-neon-green);
+}
+
+.mobile-tab-btn svg {
+  flex-shrink: 0;
+}
+
+/* Mobile Menu Transition */
+.mobile-menu-enter-active,
+.mobile-menu-leave-active {
+  transition: all 0.3s ease;
+}
+
+.mobile-menu-enter-from,
+.mobile-menu-leave-to {
+  opacity: 0;
+  transform: translateY(-10px);
 }
 </style>
