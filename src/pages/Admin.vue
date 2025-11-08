@@ -28,6 +28,14 @@
       <div class="sticky top-0 z-40 bg-[var(--color-background)] py-4 mb-8 border-b border-[rgba(57,255,20,0.2)] backdrop-blur-md bg-opacity-95">
         <!-- Desktop Navigation -->
         <div class="hidden md:flex gap-2 overflow-x-auto">
+        <button :class="['tab-btn', { active: activeTab === 'designs' }]" @click="activeTab = 'designs'">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
+            <polyline points="2 17 12 22 22 17"></polyline>
+            <polyline points="2 12 12 17 22 12"></polyline>
+          </svg>
+          Designs
+        </button>
         <button :class="['tab-btn', { active: activeTab === 'products' }]" @click="activeTab = 'products'">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
@@ -98,6 +106,17 @@
           <transition name="mobile-menu">
             <div v-if="mobileMenuOpen" class="absolute left-0 right-0 mt-4 mx-4 bg-[var(--color-black-light)] border border-[rgba(57,255,20,0.3)] rounded-lg shadow-lg overflow-hidden">
               <button 
+                :class="['mobile-tab-btn', { active: activeTab === 'designs' }]" 
+                @click="activeTab = 'designs'; mobileMenuOpen = false"
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
+                  <polyline points="2 17 12 22 22 17"></polyline>
+                  <polyline points="2 12 12 17 22 12"></polyline>
+                </svg>
+                Designs
+              </button>
+              <button 
                 :class="['mobile-tab-btn', { active: activeTab === 'products' }]" 
                 @click="activeTab = 'products'; mobileMenuOpen = false"
               >
@@ -151,6 +170,9 @@
           </transition>
         </div>
       </div>
+
+      <!-- Designs Tab -->
+      <DesignsTab v-if="activeTab === 'designs'" />
 
       <!-- Products Tab -->
       <ProductsTab 
@@ -672,6 +694,7 @@ import { collection, query, orderBy, onSnapshot, deleteDoc, doc, getDocs, update
 import { db } from '@/config/firebase'
 
 // Composants admin tabs
+import DesignsTab from '../components/admin/DesignsTab.vue'
 import ProductsTab from '../components/admin/ProductsTab.vue'
 import OrdersTab from '../components/admin/OrdersTab.vue'
 import StockTab from '../components/admin/StockTab.vue'
@@ -934,6 +957,7 @@ const handleToggleArchive = async (orderId, isCurrentlyArchived) => {
 // Get active tab label for mobile menu
 const getActiveTabLabel = () => {
   const labels = {
+    designs: '🎨 Designs',
     products: '📦 Produits',
     orders: '🛒 Commandes',
     stock: '📊 Stock',
