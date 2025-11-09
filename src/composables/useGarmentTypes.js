@@ -1,3 +1,5 @@
+import { ref } from 'vue'
+
 export const garmentTypes = {
   tshirt: {
     id: 'tshirt',
@@ -64,7 +66,7 @@ export function useGarmentTypes() {
   }
 
   return {
-    garmentTypes,
+    garmentTypes: ref(garmentTypes), // Retourner comme ref pour la réactivité
     getTypeById,
     getAllTypes,
     getTypeLabel,

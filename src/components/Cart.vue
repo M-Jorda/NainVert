@@ -1,16 +1,24 @@
 <template>
   <transition name="cart-slide">
-    <div v-if="cartStore.isOpen" class="fixed inset-0 bg-black/80 backdrop-blur-[5px] z-[2000] flex justify-end" @click="cartStore.closeCart">
+    <div v-if="cartStore.isOpen" class="fixed inset-0 bg-black/80 backdrop-blur-[5px] z-[2000] flex justify-end" @click="handleOverlayClick">
       <div class="w-full max-w-[450px] h-screen bg-[var(--color-black)] border-l border-[rgba(57,255,20,0.2)] flex flex-col overflow-hidden" @click.stop>
         <!-- Header -->
-        <div class="flex items-center justify-between p-6 border-b border-[rgba(57,255,20,0.2)]">
-          <h2 class="text-2xl font-bold m-0 text-[var(--color-neon-green)]">Mon Panier</h2>
+        <div class="flex items-center justify-between p-4 border-b border-[rgba(57,255,20,0.2)]">
+          <div class="flex items-center gap-3">
+            <h2 class="text-xl font-bold m-0 text-[var(--color-neon-green)]">Mon Panier</h2>
+            <button 
+              @click="cartStore.clearCart" 
+              class="btn btn-ghost text-xs px-2 py-1"
+            >
+              🗑️ Vider
+            </button>
+          </div>
           <button 
-            class="flex items-center justify-center w-9 h-9 bg-[rgba(57,255,20,0.05)] border-none rounded-lg text-[var(--color-text-secondary)] cursor-pointer transition-all duration-200 hover:bg-[var(--color-neon-green)] hover:text-black" 
-            @click="cartStore.closeCart"
+            class="flex items-center justify-center w-8 h-8 bg-[rgba(57,255,20,0.05)] border-none rounded-lg text-[var(--color-text-secondary)] cursor-pointer transition-all duration-200 hover:bg-[var(--color-neon-green)] hover:text-black" 
+            @click="closeAndGoToDesigns"
             aria-label="Fermer le panier"
           >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <line x1="18" y1="6" x2="6" y2="18"></line>
               <line x1="6" y1="6" x2="18" y2="18"></line>
             </svg>
@@ -32,34 +40,34 @@
 
         <!-- Cart Items -->
         <div v-else class="flex-1 flex flex-col overflow-hidden">
-          <div class="cart-items flex-1 overflow-y-auto p-6 flex flex-col gap-4">
+          <div class="cart-items flex-1 overflow-y-auto p-4 flex flex-col gap-2">
             <div 
               v-for="item in cartStore.items" 
               :key="`${item.id}-${item.size}`"
-              class="flex gap-4 p-4 bg-[var(--color-black-light)] rounded-xl border border-[rgba(57,255,20,0.2)]"
+              class="flex gap-3 p-2 bg-[var(--color-black-light)] rounded-lg border border-[rgba(57,255,20,0.2)]"
             >
-              <div class="w-20 h-20 rounded-lg overflow-hidden bg-[rgba(57,255,20,0.05)] flex-shrink-0">
+              <div class="w-12 h-12 rounded overflow-hidden bg-[rgba(57,255,20,0.05)] flex-shrink-0">
                 <img :src="item.image" :alt="item.name" class="w-full h-full object-cover" />
               </div>
               
-              <div class="flex-1 flex flex-col gap-1">
-                <h3 class="text-base font-semibold m-0 text-white">{{ item.name }}</h3>
-                <p class="text-[0.85rem] text-[var(--color-text-muted)] m-0">Taille: {{ item.size }}</p>
-                <p class="text-base font-bold text-[var(--color-neon-green)] m-0">{{ item.price }}€</p>
+              <div class="flex-1 flex flex-col justify-center">
+                <h3 class="text-sm font-semibold m-0 text-white leading-tight">{{ item.designName || item.name }}</h3>
+                <p class="text-xs text-[var(--color-text-muted)] m-0">{{ item.type === 'tshirt' ? 'T-Shirt' : 'Hoodie' }} • {{ item.size }}</p>
+                <p class="text-sm font-bold text-[var(--color-neon-green)] m-0">{{ item.price }}€</p>
               </div>
 
-              <div class="flex flex-col gap-3 items-end">
-                <div class="flex items-center gap-2 bg-[rgba(57,255,20,0.05)] rounded-lg p-1 backdrop-blur-sm">
+              <div class="flex flex-col gap-2 items-end justify-center">
+                <div class="flex items-center gap-1 bg-[rgba(57,255,20,0.05)] rounded px-1">
                   <button 
                     @click="cartStore.decrementQuantity(item.id, item.size)"
-                    class="qty-btn"
+                    class="qty-btn-small"
                   >
                     -
                   </button>
-                  <span class="min-w-[30px] text-center font-semibold text-white">{{ item.quantity }}</span>
+                  <span class="min-w-[20px] text-center text-xs font-semibold text-white">{{ item.quantity }}</span>
                   <button 
                     @click="cartStore.incrementQuantity(item.id, item.size)"
-                    class="qty-btn"
+                    class="qty-btn-small"
                   >
                     +
                   </button>
@@ -67,10 +75,10 @@
                 
                 <button 
                   @click="cartStore.removeItem(item.id, item.size)"
-                  class="remove-btn"
+                  class="remove-btn-small"
                   aria-label="Supprimer"
                 >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <polyline points="3 6 5 6 21 6"></polyline>
                     <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
                   </svg>
@@ -80,22 +88,24 @@
           </div>
 
           <!-- Footer with Total & Checkout -->
-          <div class="p-6 border-t border-[rgba(57,255,20,0.2)] bg-[var(--color-black-light)] flex flex-col gap-4">
-            <div class="flex justify-between items-center py-4">
-              <span class="text-xl font-semibold text-white uppercase tracking-wider">Total</span>
-              <span class="text-3xl font-black text-[var(--color-neon-green)] drop-shadow-[0_0_10px_var(--color-neon-green)]">{{ cartStore.totalPrice.toFixed(2) }}€</span>
+          <div class="p-4 border-t border-[rgba(57,255,20,0.2)] bg-[var(--color-black-light)] flex flex-col gap-3">
+            <div class="flex justify-between items-center">
+              <span class="text-base font-semibold text-white">Total</span>
+              <span class="text-xl font-black text-[var(--color-neon-green)]">{{ cartStore.totalPrice.toFixed(2) }}€</span>
             </div>
             
-            <button class="btn btn-primary w-full" @click="openCheckout">
-              Procéder au paiement
-            </button>
-            
-            <button 
-              @click="cartStore.clearCart" 
-              class="btn btn-ghost w-full"
-            >
-              Vider le panier
-            </button>
+            <div class="grid grid-cols-2 gap-2">
+              <button class="btn btn-primary text-sm py-2" @click="openCheckout">
+                Procéder au paiement
+              </button>
+              
+              <button 
+                @click="continueAndGoToDesigns" 
+                class="btn btn-ghost text-sm py-2"
+              >
+                Retour aux designs
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -108,14 +118,31 @@
 
 <script setup>
 import { ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { useCartStore } from '@/stores/cart'
 import CheckoutModal from './CheckoutModal.vue'
 
 const cartStore = useCartStore()
+const router = useRouter()
 const showCheckoutModal = ref(false)
 
 const openCheckout = () => {
   showCheckoutModal.value = true
+}
+
+const continueAndGoToDesigns = () => {
+  cartStore.closeCart()
+  router.push('/designs')
+}
+
+const closeAndGoToDesigns = () => {
+  cartStore.closeCart()
+  router.push('/designs')
+}
+
+const handleOverlayClick = () => {
+  cartStore.closeCart()
+  router.push('/designs')
 }
 </script>
 
@@ -155,7 +182,49 @@ const openCheckout = () => {
   border-radius: 3px;
 }
 
-/* Boutons quantité - Style futuriste */
+/* Boutons quantité - Style compact */
+.qty-btn-small {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  background: transparent;
+  border: 1px solid rgba(57, 255, 20, 0.3);
+  border-radius: 4px;
+  color: var(--color-neon-green);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.qty-btn-small:hover {
+  background: rgba(57, 255, 20, 0.15);
+  border-color: var(--color-neon-green);
+}
+
+/* Bouton supprimer - Style compact */
+.remove-btn-small {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background: rgba(255, 59, 48, 0.1);
+  border: 1px solid rgba(255, 59, 48, 0.3);
+  border-radius: 4px;
+  color: #ff3b30;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.remove-btn-small:hover {
+  background: rgba(255, 59, 48, 0.2);
+  border-color: #ff3b30;
+}
+
+/* Anciens boutons conservés pour compatibilité */
 .qty-btn {
   display: flex;
   align-items: center;

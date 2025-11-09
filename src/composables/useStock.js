@@ -1,5 +1,5 @@
 import { ref } from 'vue'
-import { collection, doc, getDoc, setDoc, updateDoc, onSnapshot } from 'firebase/firestore'
+import { collection, doc, getDoc, getDocs, setDoc, updateDoc, onSnapshot, query } from 'firebase/firestore'
 import { db } from '@/config/firebase'
 
 const stockData = ref([])
@@ -10,16 +10,13 @@ export function useStock() {
   const loadStock = () => {
     loading.value = true
     
-    const stockRef = doc(db, 'settings', 'stock')
+    const stockCollectionRef = collection(db, 'stock')
     
-    const unsubscribe = onSnapshot(stockRef, (docSnap) => {
-      if (docSnap.exists()) {
-        const data = docSnap.data()
-        stockData.value = data.designs || []
-      } else {
-        console.log('📦 Initialisation du stock...')
-        initializeStock()
-      }
+    const unsubscribe = onSnapshot(query(stockCollectionRef), (snapshot) => {
+      stockData.value = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }))
       loading.value = false
     }, (error) => {
       console.error('❌ Erreur chargement stock:', error)
@@ -29,123 +26,52 @@ export function useStock() {
     return unsubscribe
   }
 
-  const initializeStock = async () => {
-    const initialStock = {
-      designs: [
-        {
-          id: 'design-1',
-          name: 'Dessin 1',
-          totalUnits: 100,
-          remainingUnits: 100,
-          products: []
-        },
-        {
-          id: 'design-2',
-          name: 'Dessin 2',
-          totalUnits: 100,
-          remainingUnits: 100,
-          products: []
-        }
-      ],
-      lastUpdated: new Date()
-    }
-
+  const updateDesignStock = async (designId, stockUpdate) => {
     try {
-      await setDoc(doc(db, 'settings', 'stock'), initialStock)
-      console.log('✅ Stock initialisé')
-      stockData.value = initialStock.designs
-    } catch (error) {
-      console.error('❌ Erreur initialisation stock:', error)
-    }
-  }
-
-  const updateDesignStock = async (designId, newRemainingUnits) => {
-    try {
-      const stockRef = doc(db, 'settings', 'stock')
-      const docSnap = await getDoc(stockRef)
+      const stockRef = doc(db, 'stock', designId)
       
-      if (docSnap.exists()) {
-        const data = docSnap.data()
-        const designs = data.designs || []
-        const designIndex = designs.findIndex(d => d.id === designId)
-        
-        if (designIndex !== -1) {
-          designs[designIndex].remainingUnits = newRemainingUnits
-          
-          await updateDoc(stockRef, {
-            designs: designs,
-            lastUpdated: new Date()
-          })
-          
-          console.log('✅ Stock mis à jour pour', designId)
-          return { success: true }
-        }
-      }
+      await setDoc(stockRef, {
+        quantity: stockUpdate.quantity || 0,
+        lastUpdated: new Date()
+      }, { merge: true })
       
-      return { success: false, error: 'Dessin non trouvé' }
+      console.log('✅ Stock mis à jour pour', designId)
+      return { success: true }
     } catch (error) {
       console.error('❌ Erreur mise à jour stock:', error)
       return { success: false, error: error.message }
     }
   }
 
-  const updateDesignName = async (designId, newName) => {
+  const decrementStock = async (designId, quantity = 1, garmentType = null) => {
     try {
-      const stockRef = doc(db, 'settings', 'stock')
+      const stockRef = doc(db, 'stock', designId)
       const docSnap = await getDoc(stockRef)
       
       if (docSnap.exists()) {
         const data = docSnap.data()
-        const designs = data.designs || []
-        const designIndex = designs.findIndex(d => d.id === designId)
+        const currentQuantity = data.quantity || 0
+        const salesStats = data.salesStats || { tshirt: 0, hoodie: 0, total: 0 }
         
-        if (designIndex !== -1) {
-          designs[designIndex].name = newName
-          
-          await updateDoc(stockRef, {
-            designs: designs,
-            lastUpdated: new Date()
-          })
-          
-          console.log('✅ Nom mis à jour pour', designId)
-          return { success: true }
+        const newQuantity = Math.max(0, currentQuantity - quantity)
+        
+        // Mettre à jour les stats de ventes
+        if (garmentType === 'tshirt' || garmentType === 'hoodie') {
+          salesStats[garmentType] = (salesStats[garmentType] || 0) + quantity
         }
+        salesStats.total = (salesStats.total || 0) + quantity
+        
+        await updateDoc(stockRef, {
+          quantity: newQuantity,
+          salesStats: salesStats,
+          lastUpdated: new Date()
+        })
+        
+        console.log(`✅ Stock décrémenté: ${designId} (-${quantity})`)
+        return { success: true, newQuantity }
       }
       
-      return { success: false, error: 'Dessin non trouvé' }
-    } catch (error) {
-      console.error('❌ Erreur mise à jour nom:', error)
-      return { success: false, error: error.message }
-    }
-  }
-
-  const decrementStock = async (designId, quantity = 1) => {
-    try {
-      const stockRef = doc(db, 'settings', 'stock')
-      const docSnap = await getDoc(stockRef)
-      
-      if (docSnap.exists()) {
-        const data = docSnap.data()
-        const designs = data.designs || []
-        const designIndex = designs.findIndex(d => d.id === designId)
-        
-        if (designIndex !== -1) {
-          const currentRemaining = designs[designIndex].remainingUnits
-          const newRemaining = Math.max(0, currentRemaining - quantity)
-          
-          designs[designIndex].remainingUnits = newRemaining
-          
-          await updateDoc(stockRef, {
-            designs: designs,
-            lastUpdated: new Date()
-          })
-          
-          console.log(`✅ Stock décrémenté: ${designId} (-${quantity})`)
-          return { success: true, newRemaining }
-        }
-      }
-      
-      return { success: false, error: 'Dessin non trouvé' }
+      return { success: false, error: 'Stock non trouvé' }
     } catch (error) {
       console.error('❌ Erreur décrémentation stock:', error)
       return { success: false, error: error.message }
@@ -153,61 +79,34 @@ export function useStock() {
   }
 
   const checkStockAvailable = (designId, quantity = 1) => {
-    const design = stockData.value.find(d => d.id === designId)
-    if (!design) return false
-    return design.remainingUnits >= quantity
+    const stock = stockData.value.find(s => s.id === designId)
+    if (!stock) return false
+    return (stock.quantity || 0) >= quantity
   }
 
-  const getStockPercentage = (designId) => {
-    const design = stockData.value.find(d => d.id === designId)
-    if (!design || design.totalUnits === 0) return 0
-    return Math.round((design.remainingUnits / design.totalUnits) * 100)
+  const getStockQuantity = (designId) => {
+    const stock = stockData.value.find(s => s.id === designId)
+    return stock?.quantity || 0
   }
 
   const decrementStockForOrder = async (orderItems) => {
     try {
-      const stockRef = doc(db, 'settings', 'stock')
-      const docSnap = await getDoc(stockRef)
-      
-      if (!docSnap.exists()) {
-        console.warn('⚠️ Stock non initialisé')
-        return { success: false, error: 'Stock non initialisé' }
-      }
-
-      const data = docSnap.data()
-      const designs = data.designs || []
-      let updated = false
+      const updates = []
 
       for (const item of orderItems) {
-        if (item.designId) {
-          const designIndex = designs.findIndex(d => d.id === item.designId)
+        if (item.designSlug || item.designId) {
+          const designId = item.designSlug || item.designId
+          const quantity = item.quantity || 1
+          const garmentType = item.type // 'tshirt' ou 'hoodie'
           
-          if (designIndex !== -1) {
-            const quantity = item.quantity || 1
-            const currentRemaining = designs[designIndex].remainingUnits
-            const newRemaining = Math.max(0, currentRemaining - quantity)
-            
-            designs[designIndex].remainingUnits = newRemaining
-            updated = true
-            
-            console.log(`📦 Stock décrémenté: ${item.designId} (-${quantity}) -> ${newRemaining} unités restantes`)
-          } else {
-            console.warn(`⚠️ Dessin non trouvé: ${item.designId}`)
-          }
+          updates.push(decrementStock(designId, quantity, garmentType))
         }
       }
 
-      if (updated) {
-        await updateDoc(stockRef, {
-          designs: designs,
-          lastUpdated: new Date()
-        })
-        
-        console.log('✅ Stock mis à jour suite à livraison')
-        return { success: true }
-      }
-
-      return { success: false, error: 'Aucun article avec designId trouvé' }
+      await Promise.all(updates)
+      
+      console.log('✅ Stock mis à jour suite à livraison')
+      return { success: true }
     } catch (error) {
       console.error('❌ Erreur décrémentation stock pour commande:', error)
       return { success: false, error: error.message }
@@ -218,12 +117,10 @@ export function useStock() {
     stockData,
     loading,
     loadStock,
-    initializeStock,
     updateDesignStock,
-    updateDesignName,
     decrementStock,
     checkStockAvailable,
-    getStockPercentage,
+    getStockQuantity,
     decrementStockForOrder
   }
 }

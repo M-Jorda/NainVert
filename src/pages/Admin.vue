@@ -1,8 +1,8 @@
 <template>
-  <div class="min-h-screen py-20">
+  <div class="min-h-screen">
     <!-- Admin Dashboard -->
     <div v-if="adminStore.isAuthenticated || activeTab === 'security'" class="container max-w-7xl mx-auto px-4">
-      <div class="flex items-center justify-between mb-8">
+      <div class="flex items-center justify-between mb-8 pt-4">
         <h1 class="text-4xl font-bold">
           <span class="text-gradient">Admin Panel</span>
         </h1>
@@ -25,7 +25,7 @@
       </div>
 
       <!-- Tabs Navigation -->
-      <div class="sticky top-0 z-40 bg-[var(--color-background)] py-4 mb-8 border-b border-[rgba(57,255,20,0.2)] backdrop-blur-md bg-opacity-95">
+      <div class="sticky top-0 z-40 bg-[var(--color-background)] pt-4 pb-4 mb-8 border-b border-[rgba(57,255,20,0.2)] backdrop-blur-md bg-opacity-95">
         <!-- Desktop Navigation -->
         <div class="hidden md:flex gap-2 overflow-x-auto">
         <button :class="['tab-btn', { active: activeTab === 'designs' }]" @click="activeTab = 'designs'">
@@ -35,6 +35,13 @@
             <polyline points="2 12 12 17 22 12"></polyline>
           </svg>
           Designs
+        </button>
+        <button :class="['tab-btn', { active: activeTab === 'garments' }]" @click="activeTab = 'garments'">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="6" y="2" width="12" height="20" rx="2"></rect>
+            <line x1="6" y1="6" x2="18" y2="6"></line>
+          </svg>
+          Vêtements
         </button>
         <button :class="['tab-btn', { active: activeTab === 'orders' }]" @click="activeTab = 'orders'">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -111,6 +118,16 @@
                 Designs
               </button>
               <button 
+                :class="['mobile-tab-btn', { active: activeTab === 'garments' }]" 
+                @click="activeTab = 'garments'; mobileMenuOpen = false"
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="6" y="2" width="12" height="20" rx="2"></rect>
+                  <line x1="6" y1="6" x2="18" y2="6"></line>
+                </svg>
+                Vêtements
+              </button>
+              <button 
                 :class="['mobile-tab-btn', { active: activeTab === 'orders' }]" 
                 @click="activeTab = 'orders'; mobileMenuOpen = false"
               >
@@ -158,6 +175,9 @@
 
       <!-- Designs Tab -->
       <DesignsTab v-if="activeTab === 'designs'" />
+
+      <!-- Garments Tab -->
+      <GarmentsTab v-if="activeTab === 'garments'" />
 
       <!-- Stock Tab -->
       <StockTab
@@ -366,17 +386,34 @@
                   <div 
                     v-for="(item, index) in selectedOrder.items" 
                     :key="index"
-                    class="flex justify-between items-center p-3 bg-black/30 rounded"
+                    class="flex items-center gap-4 p-3 bg-black/30 rounded"
                   >
-                    <div>
-                      <p class="font-semibold text-white">{{ item.name }}</p>
+                    <!-- Miniature du design -->
+                    <img 
+                      v-if="item.image" 
+                      :src="item.image" 
+                      :alt="item.name"
+                      class="w-16 h-16 object-cover rounded border border-[rgba(57,255,20,0.2)]"
+                    >
+                    <div 
+                      v-else 
+                      class="w-16 h-16 bg-[rgba(57,255,20,0.1)] border border-[rgba(57,255,20,0.2)] rounded flex items-center justify-center text-2xl"
+                    >
+                      🎨
+                    </div>
+                    
+                    <!-- Informations -->
+                    <div class="flex-1">
+                      <p class="font-semibold text-white">{{ item.designName || item.name }}</p>
                       <p class="text-sm text-[var(--color-text-secondary)]">
-                        Taille: {{ item.size }} | Quantité: {{ item.quantity }}
+                        {{ item.type === 'tshirt' ? 'T-Shirt' : 'Hoodie' }} | Taille: {{ item.size }} | Quantité: {{ item.quantity }}
                       </p>
                     </div>
+                    
+                    <!-- Prix -->
                     <div class="text-right">
-                      <p class="font-bold text-[var(--color-neon-green)]">{{ item.total?.toFixed(2) }}€</p>
-                      <p class="text-xs text-[var(--color-text-secondary)]">{{ item.price?.toFixed(2) }}€ / unité</p>
+                      <p class="font-bold text-[var(--color-neon-green)]">{{ (Number(item.total) || Number(item.price) * item.quantity || 0).toFixed(2) }}€</p>
+                      <p class="text-xs text-[var(--color-text-secondary)]">{{ (Number(item.price) || 0).toFixed(2) }}€ / unité</p>
                     </div>
                   </div>
                 </div>
@@ -384,15 +421,15 @@
                 <div class="mt-4 pt-4 border-t border-[rgba(57,255,20,0.2)] space-y-2">
                   <div class="flex justify-between text-sm">
                     <span>Sous-total:</span>
-                    <span>{{ selectedOrder.subtotal?.toFixed(2) }}€</span>
+                    <span>{{ (Number(selectedOrder.subtotal) || 0).toFixed(2) }}€</span>
                   </div>
                   <div class="flex justify-between text-sm">
                     <span>Livraison:</span>
-                    <span>{{ selectedOrder.shippingCost?.toFixed(2) }}€</span>
+                    <span>{{ (Number(selectedOrder.shippingCost) || 0).toFixed(2) }}€</span>
                   </div>
                   <div class="flex justify-between text-lg font-bold text-[var(--color-neon-green)]">
                     <span>Total:</span>
-                    <span>{{ selectedOrder.total?.toFixed(2) }}€</span>
+                    <span>{{ (Number(selectedOrder.total) || 0).toFixed(2) }}€</span>
                   </div>
                 </div>
               </div>
@@ -543,6 +580,7 @@ import { db } from '@/config/firebase'
 
 // Composants admin tabs
 import DesignsTab from '../components/admin/DesignsTab.vue'
+import GarmentsTab from '../components/admin/GarmentsTab.vue'
 import OrdersTab from '../components/admin/OrdersTab.vue'
 import StockTab from '../components/admin/StockTab.vue'
 import SecurityTab from '../components/admin/SecurityTab.vue'
@@ -789,6 +827,7 @@ const handleToggleArchive = async (orderId, isCurrentlyArchived) => {
 const getActiveTabLabel = () => {
   const labels = {
     designs: '🎨 Designs',
+    garments: '👕 Vêtements',
     orders: '🛒 Commandes',
     stock: '📊 Stock',
     security: '🔒 Sécurité'

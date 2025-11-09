@@ -88,7 +88,21 @@ export function useDesigns() {
       
       designs.value.push({ id: designData.slug, ...designData })
       
+      // Initialiser le stock à 100
+      const stockRef = doc(db, 'stock', designData.slug)
+      await setDoc(stockRef, {
+        quantity: 100,
+        salesStats: {
+          tshirt: 0,
+          hoodie: 0,
+          total: 0
+        },
+        lastUpdated: new Date(),
+        createdAt: new Date()
+      })
+      
       console.log('✅ Design créé:', designData.slug)
+      console.log('📦 Stock initialisé: 100 unités')
       return { success: true }
     } catch (err) {
       console.error('❌ Erreur lors de la création du design:', err)

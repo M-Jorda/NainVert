@@ -1,7 +1,7 @@
 <template>
   <header class="fixed top-0 left-0 right-0 z-[1000] bg-[rgba(10,10,10,0.95)] backdrop-blur-[10px] border-b border-[var(--color-black)]">
     <div class="max-w-[1200px] mx-auto px-4 md:px-8">
-      <nav class="flex items-center justify-between h-20 gap-8">
+      <nav class="flex items-center justify-between h-16 gap-8">
         <!-- Logo -->
         <div class="logo flex items-center gap-1 text-2xl font-black no-underline tracking-[0.1em]">
           <router-link to="/" class="text-white transition-all duration-200 hover:text-[var(--color-neon-green)]">NAIN</router-link>
@@ -143,7 +143,7 @@ const closeMobileMenu = () => {
 
   .nav-links {
     position: fixed;
-    top: 80px;
+    top: 64px;
     left: 0;
     right: 0;
     flex-direction: column;

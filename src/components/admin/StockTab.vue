@@ -1,373 +1,639 @@
 <template>
   <div class="stock-tab">
     <div class="flex items-center justify-between mb-6">
-      <h2 class="text-2xl font-bold text-white">Gestion des Stocks</h2>
-      <div class="text-sm text-[var(--color-text-secondary)]">
-        Gestion par dessin • 100 unités par dessin
+      <h2 class="text-3xl font-bold text-gradient">📦 Gestion des Stocks</h2>
+    </div>
+
+    <div v-if="loading" class="text-center py-20">
+      <div class="animate-spin rounded-full h-16 w-16 border-b-2 border-[var(--color-neon-green)] mx-auto mb-4"></div>
+      <p class="text-[var(--color-text-secondary)]">Chargement des stocks...</p>
+    </div>
+
+    <div v-else>
+      <div class="flex items-center justify-between mb-4">
+        <div class="flex gap-2">
+          <div class="stat-card-mini">
+            <span class="stat-icon-mini">🎨</span>
+            <span class="stat-value-mini">{{ designs.length }}</span>
+          </div>
+          <div class="stat-card-mini">
+            <span class="stat-icon-mini">✅</span>
+            <span class="stat-value-mini">{{ designsInStock }}</span>
+          </div>
+          <div class="stat-card-mini">
+            <span class="stat-icon-mini">⚠️</span>
+            <span class="stat-value-mini">{{ designsLowStock }}</span>
+          </div>
+        </div>
+        
+        <button 
+          @click="showArchived = !showArchived"
+          :class="[
+            'btn text-sm py-2 px-4',
+            showArchived ? 'btn-primary' : 'btn-ghost'
+          ]"
+        >
+          {{ showArchived ? '👁️ Afficher actifs' : '📦 Afficher archivés' }}
+        </button>
+      </div>
+
+      <div class="overflow-hidden border border-[rgba(57,255,20,0.2)] rounded-xl">
+        <table class="stock-table">
+          <thead>
+            <tr>
+              <th>Design</th>
+              <th>Stock</th>
+              <th>Statut</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              v-for="design in filteredDesigns"
+              :key="design.id"
+              class="hover:bg-[rgba(57,255,20,0.05)]"
+            >
+              <td @click="openDesignStock(design)" class="cursor-pointer">
+                <div class="flex items-center gap-3">
+                  <img
+                    v-if="design.images && design.images[0]"
+                    :src="design.images[0]"
+                    :alt="design.name"
+                    class="w-12 h-12 rounded object-cover border border-[rgba(57,255,20,0.2)]"
+                  >
+                  <div>
+                    <div class="font-bold text-white">{{ design.name }}</div>
+                    <div class="text-xs text-[var(--color-text-secondary)]">{{ design.slug }}</div>
+                  </div>
+                </div>
+              </td>
+              <td @click="openDesignStock(design)" class="cursor-pointer">
+                <div class="text-center">
+                  <div class="font-bold text-white text-2xl">{{ getDesignStock(design) }}</div>
+                  <div class="text-xs text-[var(--color-text-secondary)]">unités</div>
+                </div>
+              </td>
+              <td @click="openDesignStock(design)" class="cursor-pointer">
+                <span :class="['status-badge', getStockStatusClass(design)]">
+                  {{ getStockStatusLabel(design) }}
+                </span>
+              </td>
+              <td>
+                <button
+                  @click="toggleArchiveDesign(design)"
+                  :class="[
+                    'btn text-xs py-1 px-3',
+                    design.archived ? 'btn-primary' : 'btn-ghost'
+                  ]"
+                >
+                  {{ design.archived ? '📂 Désarchiver' : '📦 Archiver' }}
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
 
-    <!-- Loading State -->
-    <div v-if="loading" class="text-center py-12">
-      <div class="inline-block w-8 h-8 border-4 border-[var(--color-neon-green)] border-t-transparent rounded-full animate-spin"></div>
-      <p class="mt-4 text-[var(--color-text-secondary)]">Chargement des stocks...</p>
-    </div>
-
-    <!-- Stock Cards -->
-    <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <div 
-        v-for="design in stockData" 
-        :key="design.id"
-        class="stock-card"
-      >
-        <!-- Header with Design Name -->
-        <div class="mb-6">
-          <div class="flex items-center gap-3 mb-2">
-            <input 
-              v-model="design.name"
-              @blur="handleUpdateName(design.id, design.name)"
-              class="text-2xl font-bold bg-transparent border-b-2 border-transparent hover:border-[var(--color-neon-green)] focus:border-[var(--color-neon-green)] outline-none transition-colors text-white flex-1"
-              placeholder="Nom du dessin"
-            >
-            <span 
-              :class="[
-                'px-3 py-1 rounded-lg text-sm font-bold',
-                getStockStatus(design).class
-              ]"
-            >
-              {{ getStockStatus(design).label }}
-            </span>
-          </div>
-          <p class="text-xs text-[var(--color-text-secondary)]">ID: {{ design.id }}</p>
-        </div>
-
-        <!-- Stock Progress Bar -->
-        <div class="mb-6">
-          <div class="flex justify-between items-center mb-2">
-            <span class="text-sm font-semibold text-white">Stock disponible</span>
-            <span class="text-sm text-[var(--color-text-secondary)]">
-              {{ design.remainingUnits }} / {{ design.totalUnits }} unités
-            </span>
-          </div>
-          <div class="h-4 bg-black/40 rounded-full overflow-hidden border border-[rgba(57,255,20,0.2)]">
-            <div 
-              class="h-full transition-all duration-500 rounded-full"
-              :style="{
-                width: `${getStockPercentage(design)}%`,
-                background: getProgressBarColor(design)
-              }"
-            ></div>
-          </div>
-          <div class="text-center mt-2">
-            <span class="text-3xl font-bold text-[var(--color-neon-green)]">
-              {{ getStockPercentage(design) }}%
-            </span>
-          </div>
-        </div>
-
-        <!-- Stock Controls -->
-        <div class="space-y-4">
-          <!-- Quick Actions -->
-          <div>
-            <label class="block text-sm font-semibold text-white mb-2">Actions rapides</label>
-            <div class="grid grid-cols-3 gap-2">
-              <button 
-                @click="adjustStock(design.id, -1)"
-                :disabled="design.remainingUnits <= 0"
-                class="stock-btn stock-btn-danger"
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-                  <line x1="5" y1="12" x2="19" y2="12"></line>
-                </svg>
-                -1
-              </button>
-              <button 
-                @click="adjustStock(design.id, -10)"
-                :disabled="design.remainingUnits < 10"
-                class="stock-btn stock-btn-danger"
-              >
-                -10
-              </button>
-              <button 
-                @click="adjustStock(design.id, -50)"
-                :disabled="design.remainingUnits < 50"
-                class="stock-btn stock-btn-danger"
-              >
-                -50
+    <teleport to="body">
+      <transition name="modal-fade">
+        <div
+          v-if="selectedDesign"
+          class="fixed inset-0 bg-black/95 backdrop-blur-sm z-[9999] flex items-center justify-center p-4 overflow-hidden"
+          @click="closeModal"
+        >
+          <div
+            class="bg-[var(--color-black-light)] border-2 border-[var(--color-neon-green)] rounded-2xl max-w-5xl w-full max-h-[85vh] overflow-y-auto p-6"
+            @click.stop
+          >
+            <div class="flex items-start justify-between mb-6">
+              <div class="flex items-center gap-4">
+                <img
+                  v-if="selectedDesign.images && selectedDesign.images[0]"
+                  :src="selectedDesign.images[0]"
+                  :alt="selectedDesign.name"
+                  class="w-16 h-16 rounded-lg object-cover border-2 border-[rgba(57,255,20,0.2)]"
+                >
+                <div>
+                  <h2 class="text-xl font-bold text-white mb-1">{{ selectedDesign.name }}</h2>
+                  <p class="text-xs text-[var(--color-text-secondary)]">{{ selectedDesign.slug }}</p>
+                </div>
+              </div>
+              <button @click="closeModal" class="text-[var(--color-text-secondary)] hover:text-white text-2xl leading-none">
+                ×
               </button>
             </div>
-          </div>
 
-          <!-- Manual Adjustment -->
-          <div>
-            <label class="block text-sm font-semibold text-white mb-2">Ajustement manuel</label>
-            <div class="flex gap-2">
-              <input 
-                v-model.number="manualAdjustment[design.id]"
-                type="number"
-                min="0"
-                :max="design.totalUnits"
-                class="form-input flex-1"
-                :placeholder="`0 - ${design.totalUnits}`"
-              >
-              <button 
-                @click="setStock(design.id, manualAdjustment[design.id])"
-                :disabled="!isValidAdjustment(design, manualAdjustment[design.id])"
-                class="btn btn-primary whitespace-nowrap"
-              >
-                Définir
-              </button>
+            <!-- Layout 2 colonnes -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              
+              <!-- COLONNE GAUCHE: Gestion du stock -->
+              <div class="stock-control-section">
+                <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                  📦 Gestion du stock
+                </h3>
+                
+                <div class="current-stock-display mb-4">
+                  <span class="text-sm text-[var(--color-text-secondary)]">Stock actuel</span>
+                  <span class="text-4xl font-bold text-[var(--color-neon-green)]">{{ currentStock }}</span>
+                  <span class="text-sm text-[var(--color-text-secondary)]">unités</span>
+                </div>
+                
+                <div class="stock-input-group mb-4">
+                  <button @click="adjustStock(-10)" class="stock-btn stock-btn-danger-lg">−10</button>
+                  <button @click="adjustStock(-1)" class="stock-btn stock-btn-danger">−1</button>
+                  <input
+                    v-model.number="currentStock"
+                    type="number"
+                    min="0"
+                    class="stock-input-lg"
+                    placeholder="0"
+                  >
+                  <button @click="adjustStock(1)" class="stock-btn stock-btn-success">+1</button>
+                  <button @click="adjustStock(10)" class="stock-btn stock-btn-success-lg">+10</button>
+                </div>
+
+                <div class="stock-status-preview">
+                  <span class="text-sm">Statut :</span>
+                  <span :class="['status-badge-lg', getStockStatusClassByValue(currentStock)]">
+                    {{ getStockStatusLabelByValue(currentStock) }}
+                  </span>
+                </div>
+              </div>
+
+              <!-- COLONNE DROITE: Statistiques de ventes -->
+              <div class="sales-stats-section">
+                <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                  📊 Statistiques de ventes
+                </h3>
+                
+                <div class="grid grid-cols-3 gap-2 mb-4">
+                  <div class="stat-card-compact">
+                    <div class="text-2xl">👕</div>
+                    <div class="text-xl font-bold text-white">{{ getSalesStats().tshirt }}</div>
+                    <div class="text-xs text-[var(--color-text-secondary)]">T-Shirts</div>
+                  </div>
+                  <div class="stat-card-compact">
+                    <div class="text-2xl">🧥</div>
+                    <div class="text-xl font-bold text-white">{{ getSalesStats().hoodie }}</div>
+                    <div class="text-xs text-[var(--color-text-secondary)]">Hoodies</div>
+                  </div>
+                  <div class="stat-card-compact">
+                    <div class="text-2xl">📦</div>
+                    <div class="text-xl font-bold text-[var(--color-neon-green)]">{{ getSalesStats().total }}</div>
+                    <div class="text-xs text-[var(--color-text-secondary)]">Total</div>
+                  </div>
+                </div>
+                
+                <div class="space-y-2">
+                  <div class="stock-info-item-compact">
+                    <span class="stock-info-label">Stock initial</span>
+                    <span class="stock-info-value">100</span>
+                  </div>
+                  <div class="stock-info-item-compact">
+                    <span class="stock-info-label">Créé le</span>
+                    <span class="stock-info-value">{{ formatDate(getStockCreatedAt()) }}</span>
+                  </div>
+                  <div class="stock-info-item-compact">
+                    <span class="stock-info-label">Dernière MAJ</span>
+                    <span class="stock-info-value">{{ formatDate(getStockLastUpdated()) }}</span>
+                  </div>
+                </div>
+              </div>
+
             </div>
-            <p class="text-xs text-[var(--color-text-secondary)] mt-1">
-              Entrez un nombre entre 0 et {{ design.totalUnits }}
-            </p>
-          </div>
 
-          <!-- Reset to Full Stock -->
-          <div class="pt-4 border-t border-[rgba(57,255,20,0.2)]">
-            <button 
-              @click="resetStock(design.id)"
-              :disabled="design.remainingUnits === design.totalUnits"
-              class="w-full btn btn-secondary"
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="inline-block mr-2">
-                <polyline points="23 4 23 10 17 10"></polyline>
-                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
-              </svg>
-              Réinitialiser à 100 unités
-            </button>
-          </div>
-        </div>
-
-        <!-- Stock History Info -->
-        <div class="mt-6 p-4 bg-[rgba(57,255,20,0.05)] border border-[rgba(57,255,20,0.2)] rounded-lg">
-          <div class="flex items-start gap-2">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="flex-shrink-0 mt-0.5">
-              <circle cx="12" cy="12" r="10"></circle>
-              <line x1="12" y1="16" x2="12" y2="12"></line>
-              <line x1="12" y1="8" x2="12.01" y2="8"></line>
-            </svg>
-            <div class="text-xs text-[var(--color-text-secondary)]">
-              <p class="font-semibold text-white mb-1">À propos du stock</p>
-              <p>Le stock se gère par dessin, pas par produit individuel.</p>
-              <p class="mt-1">Unités vendues : <span class="font-bold text-[var(--color-neon-green)]">{{ design.totalUnits - design.remainingUnits }}</span></p>
+            <div class="flex gap-4 mt-6 pt-4 border-t border-[rgba(57,255,20,0.2)]">
+              <button @click="closeModal" class="btn btn-ghost flex-1">Annuler</button>
+              <button @click="saveStock" class="btn btn-primary flex-1">💾 Sauvegarder</button>
             </div>
           </div>
         </div>
-      </div>
-    </div>
-
-    <!-- Global Stats -->
-    <div v-if="!loading && stockData.length > 0" class="mt-8 p-6 bg-[rgba(57,255,20,0.05)] border border-[rgba(57,255,20,0.2)] rounded-xl">
-      <h3 class="text-lg font-bold text-white mb-4">📊 Statistiques globales</h3>
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div class="text-center">
-          <div class="text-2xl font-bold text-[var(--color-neon-green)]">{{ totalStock }}</div>
-          <div class="text-xs text-[var(--color-text-secondary)]">Stock total</div>
-        </div>
-        <div class="text-center">
-          <div class="text-2xl font-bold text-[var(--color-neon-green)]">{{ remainingStock }}</div>
-          <div class="text-xs text-[var(--color-text-secondary)]">Unités disponibles</div>
-        </div>
-        <div class="text-center">
-          <div class="text-2xl font-bold text-orange-400">{{ soldUnits }}</div>
-          <div class="text-xs text-[var(--color-text-secondary)]">Unités vendues</div>
-        </div>
-        <div class="text-center">
-          <div class="text-2xl font-bold text-blue-400">{{ globalPercentage }}%</div>
-          <div class="text-xs text-[var(--color-text-secondary)]">Stock global restant</div>
-        </div>
-      </div>
-    </div>
+      </transition>
+    </teleport>
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { useDesigns } from '@/composables/useDesigns'
+import { useStock } from '@/composables/useStock'
 
-const props = defineProps({
-  stockData: {
-    type: Array,
-    required: true
-  },
-  loading: {
-    type: Boolean,
-    default: false
-  }
+const { designs, loading: loadingDesigns, loadDesigns } = useDesigns()
+const { stockData, loading: loadingStock, loadStock, updateDesignStock } = useStock()
+
+const loading = computed(() => loadingDesigns.value || loadingStock.value)
+const selectedDesign = ref(null)
+const currentStock = ref(0)
+const showArchived = ref(false)
+
+onMounted(async () => {
+  await loadDesigns()
+  await loadStock()
 })
 
-const emit = defineEmits(['update-stock', 'update-name'])
+const filteredDesigns = computed(() => {
+  return designs.value.filter(d => {
+    if (showArchived.value) {
+      return d.archived === true
+    }
+    return !d.archived
+  })
+})
 
-const manualAdjustment = ref({})
+const designsInStock = computed(() => {
+  return designs.value.filter(d => {
+    const stock = getDesignStock(d)
+    return stock > 10
+  }).length
+})
 
-const getStockPercentage = (design) => {
-  if (!design || design.totalUnits === 0) return 0
-  return Math.round((design.remainingUnits / design.totalUnits) * 100)
+const designsLowStock = computed(() => {
+  return designs.value.filter(d => {
+    const stock = getDesignStock(d)
+    return stock > 0 && stock <= 10
+  }).length
+})
+
+const getDesignStock = (design) => {
+  const stock = stockData.value.find(s => s.id === design.id)
+  return stock?.quantity || 0
 }
 
-const getStockStatus = (design) => {
-  const percentage = getStockPercentage(design)
+const getStockStatusLabel = (design) => {
+  const stock = getDesignStock(design)
+  if (stock === 0) return 'Rupture'
+  if (stock <= 10) return 'Faible'
+  return 'Disponible'
+}
+
+const getStockStatusClass = (design) => {
+  const stock = getDesignStock(design)
+  if (stock === 0) return 'status-out'
+  if (stock <= 10) return 'status-low'
+  return 'status-ok'
+}
+
+const getStockStatusLabelByValue = (value) => {
+  if (value === 0) return 'Rupture'
+  if (value <= 10) return 'Faible'
+  return 'Disponible'
+}
+
+const getStockStatusClassByValue = (value) => {
+  if (value === 0) return 'status-out'
+  if (value <= 10) return 'status-low'
+  return 'status-ok'
+}
+
+const openDesignStock = (design) => {
+  selectedDesign.value = design
+  currentStock.value = getDesignStock(design)
+  // Désactiver le scroll en arrière-plan
+  document.body.style.overflow = 'hidden'
+}
+
+const closeModal = () => {
+  selectedDesign.value = null
+  currentStock.value = 0
+  // Réactiver le scroll
+  document.body.style.overflow = ''
+}
+
+const adjustStock = (amount) => {
+  currentStock.value = Math.max(0, currentStock.value + amount)
+}
+
+const getSalesStats = () => {
+  if (!selectedDesign.value) return { tshirt: 0, hoodie: 0, total: 0 }
+  const stock = stockData.value.find(s => s.id === selectedDesign.value.id)
+  return stock?.salesStats || { tshirt: 0, hoodie: 0, total: 0 }
+}
+
+const getStockCreatedAt = () => {
+  if (!selectedDesign.value) return null
+  const stock = stockData.value.find(s => s.id === selectedDesign.value.id)
+  return stock?.createdAt?.toDate ? stock.createdAt.toDate() : stock?.createdAt
+}
+
+const getStockLastUpdated = () => {
+  if (!selectedDesign.value) return null
+  const stock = stockData.value.find(s => s.id === selectedDesign.value.id)
+  return stock?.lastUpdated?.toDate ? stock.lastUpdated.toDate() : stock?.lastUpdated
+}
+
+const formatDate = (date) => {
+  if (!date) return 'N/A'
+  const d = date instanceof Date ? date : new Date(date)
+  return d.toLocaleDateString('fr-FR', { 
+    year: 'numeric', 
+    month: 'long', 
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
+}
+
+const saveStock = async () => {
+  if (!selectedDesign.value) return
   
-  if (percentage === 0) {
-    return { label: 'ÉPUISÉ', class: 'bg-red-500/20 text-red-400 border border-red-500/40' }
-  } else if (percentage <= 10) {
-    return { label: 'CRITIQUE', class: 'bg-red-500/20 text-red-400 border border-red-500/40 animate-pulse' }
-  } else if (percentage <= 25) {
-    return { label: 'FAIBLE', class: 'bg-orange-500/20 text-orange-400 border border-orange-500/40' }
-  } else if (percentage <= 50) {
-    return { label: 'MOYEN', class: 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/40' }
-  } else {
-    return { label: 'BON', class: 'bg-green-500/20 text-green-400 border border-green-500/40' }
-  }
-}
-
-const getProgressBarColor = (design) => {
-  const percentage = getStockPercentage(design)
+  const result = await updateDesignStock(selectedDesign.value.id, { quantity: currentStock.value })
   
-  if (percentage === 0) {
-    return 'linear-gradient(90deg, #dc2626, #991b1b)'
-  } else if (percentage <= 10) {
-    return 'linear-gradient(90deg, #dc2626, #ea580c)'
-  } else if (percentage <= 25) {
-    return 'linear-gradient(90deg, #f59e0b, #ea580c)'
-  } else if (percentage <= 50) {
-    return 'linear-gradient(90deg, #eab308, #f59e0b)'
+  if (result.success) {
+    alert('Stock mis à jour avec succès !')
+    closeModal()
   } else {
-    return 'linear-gradient(90deg, #39ff14, #00ff88)'
+    alert('Erreur lors de la mise à jour: ' + result.error)
   }
 }
 
-const isValidAdjustment = (design, value) => {
-  if (value === undefined || value === null || value === '') return false
-  const num = Number(value)
-  return !isNaN(num) && num >= 0 && num <= design.totalUnits
-}
-
-const adjustStock = (designId, amount) => {
-  emit('update-stock', designId, amount, 'adjust')
-}
-
-const setStock = (designId, value) => {
-  if (!isValidAdjustment(props.stockData.find(d => d.id === designId), value)) {
-    return
-  }
-  emit('update-stock', designId, value, 'set')
-  manualAdjustment.value[designId] = ''
-}
-
-const resetStock = (designId) => {
-  if (confirm('Réinitialiser le stock à 100 unités ?')) {
-    emit('update-stock', designId, 100, 'set')
+const toggleArchiveDesign = async (design) => {
+  const { updateDesign } = useDesigns()
+  const newArchivedState = !design.archived
+  
+  const result = await updateDesign(design.slug, { archived: newArchivedState })
+  
+  if (result.success) {
+    await loadDesigns()
+  } else {
+    alert('Erreur lors de l\'archivage')
   }
 }
 
-const handleUpdateName = (designId, newName) => {
-  if (newName && newName.trim()) {
-    emit('update-name', designId, newName.trim())
-  }
-}
-
-// Global stats
-const totalStock = computed(() => {
-  return props.stockData.reduce((sum, design) => sum + design.totalUnits, 0)
-})
-
-const remainingStock = computed(() => {
-  return props.stockData.reduce((sum, design) => sum + design.remainingUnits, 0)
-})
-
-const soldUnits = computed(() => {
-  return totalStock.value - remainingStock.value
-})
-
-const globalPercentage = computed(() => {
-  if (totalStock.value === 0) return 0
-  return Math.round((remainingStock.value / totalStock.value) * 100)
-})
 </script>
 
 <style scoped>
-.stock-card {
-  padding: 2rem;
-  background: linear-gradient(145deg, rgba(26, 26, 26, 0.9), rgba(42, 42, 42, 0.7));
-  border: 1px solid rgba(57, 255, 20, 0.3);
-  border-radius: 16px;
-  transition: all 0.3s ease;
-  position: relative;
-  overflow: hidden;
+.text-gradient {
+  background: linear-gradient(135deg, var(--color-neon-green), var(--color-neon-purple));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
-
-.stock-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 4px;
-  background: linear-gradient(90deg, var(--color-neon-green), #00ff88);
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-.stock-card:hover {
-  border-color: var(--color-neon-green);
-  box-shadow: 0 0 20px rgba(57, 255, 20, 0.2);
-}
-
-.stock-card:hover::before {
-  opacity: 1;
-}
-
-.stock-btn {
+.stat-card {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 4px;
-  padding: 0.5rem;
-  border-radius: 8px;
+  gap: 1rem;
+  padding: 1.5rem;
+  background: rgba(26, 26, 26, 0.5);
+  border: 1px solid rgba(57, 255, 20, 0.2);
+  border-radius: 1rem;
+}
+.stat-icon {
+  font-size: 2.5rem;
+}
+.stat-value {
+  font-size: 2rem;
+  font-weight: bold;
+  color: var(--color-neon-green);
+}
+.stat-label {
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+}
+.stock-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.stock-table thead {
+  background: rgba(26, 26, 26, 0.8);
+}
+.stock-table th {
+  padding: 1rem;
+  text-align: left;
   font-size: 0.875rem;
   font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  border: 1px solid transparent;
-}
-
-.stock-btn:disabled {
-  opacity: 0.3;
-  cursor: not-allowed;
-}
-
-.stock-btn-danger {
-  background: rgba(239, 68, 68, 0.15);
-  color: #ef4444;
-  border-color: rgba(239, 68, 68, 0.3);
-}
-
-.stock-btn-danger:hover:not(:disabled) {
-  background: rgba(239, 68, 68, 0.25);
-  border-color: #ef4444;
-  box-shadow: 0 0 10px rgba(239, 68, 68, 0.3);
-}
-
-.stock-btn-success {
-  background: rgba(57, 255, 20, 0.15);
   color: var(--color-neon-green);
-  border-color: rgba(57, 255, 20, 0.3);
+  border-bottom: 2px solid rgba(57, 255, 20, 0.3);
 }
-
-.stock-btn-success:hover:not(:disabled) {
-  background: rgba(57, 255, 20, 0.25);
+.stock-table td {
+  padding: 1rem;
+  border-bottom: 1px solid rgba(57, 255, 20, 0.1);
+}
+.stock-table tbody tr {
+  transition: all 0.2s;
+}
+.status-badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+.status-ok {
+  background: rgba(34, 197, 94, 0.2);
+  color: #22c55e;
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+.status-low {
+  background: rgba(234, 179, 8, 0.2);
+  color: #eab308;
+  border: 1px solid rgba(234, 179, 8, 0.3);
+}
+.status-out {
+  background: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+.stock-section {
+  padding: 1.5rem;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(57, 255, 20, 0.2);
+  border-radius: 1rem;
+}
+.stock-control-section {
+  padding: 1.5rem;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(57, 255, 20, 0.2);
+  border-radius: 1rem;
+}
+.current-stock-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 0.75rem;
+  text-align: center;
+}
+.stock-control-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(57, 255, 20, 0.2);
+}
+.current-stock {
+  display: flex;
+  align-items: center;
+}
+.stock-input-group {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+.stock-input-lg {
+  width: 100px;
+  padding: 0.75rem;
+  text-align: center;
+  background: rgba(0, 0, 0, 0.5);
+  border: 2px solid rgba(57, 255, 20, 0.3);
+  border-radius: 0.75rem;
+  color: white;
+  font-weight: 700;
+  font-size: 1.25rem;
+}
+.stock-input-lg:focus {
+  outline: none;
   border-color: var(--color-neon-green);
-  box-shadow: 0 0 10px rgba(57, 255, 20, 0.3);
+  box-shadow: 0 0 0 3px rgba(57, 255, 20, 0.2);
 }
-
-/* Remove number input arrows */
+.stock-btn {
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  font-weight: bold;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-width: 50px;
+}
+.stock-btn-danger,
+.stock-btn-danger-lg {
+  background: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.4);
+}
+.stock-btn-danger:hover,
+.stock-btn-danger-lg:hover {
+  background: rgba(239, 68, 68, 0.3);
+  border-color: #ef4444;
+  transform: scale(1.05);
+}
+.stock-btn-success,
+.stock-btn-success-lg {
+  background: rgba(57, 255, 20, 0.2);
+  color: var(--color-neon-green);
+  border-color: rgba(57, 255, 20, 0.4);
+}
+.stock-btn-success:hover,
+.stock-btn-success-lg:hover {
+  background: rgba(57, 255, 20, 0.3);
+  border-color: var(--color-neon-green);
+  transform: scale(1.05);
+}
+.stock-status-preview {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+}
+.sales-stats-section {
+  padding: 1.5rem;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(57, 255, 20, 0.1);
+  border-radius: 1rem;
+}
+.stat-card-mini {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.5rem;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(57, 255, 20, 0.2);
+  border-radius: 0.375rem;
+}
+.stat-icon-mini {
+  font-size: 1rem;
+}
+.stat-value-mini {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-neon-green);
+  line-height: 1;
+}
+.stat-card-compact {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(57, 255, 20, 0.2);
+  border-radius: 0.5rem;
+}
+.stat-icon-compact {
+  font-size: 1.25rem;
+}
+.stat-value-compact {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--color-neon-green);
+  line-height: 1;
+}
+.stat-label-compact {
+  font-size: 0.7rem;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.stock-info-item-compact {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0.75rem;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 0.5rem;
+  border: 1px solid rgba(57, 255, 20, 0.1);
+  font-size: 0.8rem;
+}
+.stock-info-item-compact {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0.75rem;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 0.5rem;
+  border: 1px solid rgba(57, 255, 20, 0.1);
+  font-size: 0.8rem;
+}
+.status-badge-lg {
+  display: inline-block;
+  padding: 0.375rem 0.75rem;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+.stock-info-label {
+  font-size: 0.8rem;
+  color: var(--color-text-secondary);
+}
+.stock-info-value {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: white;
+}
+.modal-fade-enter-active,
+.modal-fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+.modal-fade-enter-from,
+.modal-fade-leave-to {
+  opacity: 0;
+}
 input[type="number"]::-webkit-inner-spin-button,
 input[type="number"]::-webkit-outer-spin-button {
   -webkit-appearance: none;
   margin: 0;
 }
-
 input[type="number"] {
   -moz-appearance: textfield;
   appearance: textfield;

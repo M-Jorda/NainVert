@@ -1,9 +1,9 @@
 <template>
   <transition name="modal-fade">
     <div v-if="isOpen" class="modal-overlay fixed inset-0 bg-black/90 backdrop-blur-sm z-[3000] flex items-center justify-center p-4">
-      <div class="modal-content w-full max-w-4xl bg-[var(--color-black)] border-2 border-[var(--color-neon-green)] rounded-2xl overflow-hidden shadow-[0_0_40px_rgba(57,255,20,0.3)]" @click.stop>
+      <div class="modal-content w-full max-w-7xl h-[90vh] bg-[var(--color-black)] border-2 border-[var(--color-neon-green)] rounded-2xl overflow-hidden shadow-[0_0_40px_rgba(57,255,20,0.3)] flex flex-col" @click.stop>
         <!-- Header -->
-        <div class="modal-header p-6 border-b border-[rgba(57,255,20,0.2)] flex items-center justify-between">
+        <div class="modal-header p-6 border-b border-[rgba(57,255,20,0.2)] flex items-center justify-between flex-shrink-0">
           <h2 class="text-2xl font-bold text-[var(--color-neon-green)] m-0">Finaliser la commande</h2>
           <button 
             class="w-9 h-9 flex items-center justify-center bg-[rgba(57,255,20,0.05)] border-none rounded-lg text-[var(--color-text-secondary)] cursor-pointer transition-all duration-200 hover:bg-[var(--color-neon-green)] hover:text-black"
@@ -18,7 +18,7 @@
         </div>
 
         <!-- Body -->
-        <div class="modal-body p-6 overflow-y-auto max-h-[75vh]">
+        <div class="modal-body p-6 flex-1 overflow-y-auto">
           <!-- Success Message -->
           <div v-if="orderCreated" class="text-center py-8">
             <div class="w-20 h-20 mx-auto mb-6 rounded-full bg-[rgba(57,255,20,0.1)] border-2 border-[var(--color-neon-green)] flex items-center justify-center">
@@ -38,9 +38,9 @@
           </div>
 
           <!-- Form -->
-          <form v-else @submit.prevent="submitOrder" class="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:items-start">
+          <form v-else @submit.prevent="submitOrder" class="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full">
             <!-- Colonne gauche : Formulaire client -->
-            <div class="flex flex-col gap-3 checkout-left-column pt-8">
+            <div class="flex flex-col gap-4 checkout-left-column justify-between">
               <h3 class="text-lg font-bold text-[var(--color-neon-green)] uppercase tracking-wider mb-1">Informations client</h3>
               
               <!-- Nom -->
@@ -149,6 +149,9 @@
                 </div>
               </div>
 
+              <!-- Spacer pour pousser le bouton vers le bas -->
+              <div class="flex-1"></div>
+
               <!-- Error Message -->
               <div v-if="errorMessage" class="bg-red-500/10 border border-red-500/30 rounded-lg p-4 text-red-400 text-sm">
                 {{ errorMessage }}
@@ -157,7 +160,7 @@
               <!-- Submit Button -->
               <button 
                 type="submit" 
-                class="btn btn-primary w-full" 
+                class="btn btn-primary w-full py-4 text-lg" 
                 :disabled="processing || !isFormValid"
               >
                 <span v-if="processing">Création en cours...</span>
@@ -170,22 +173,36 @@
             </div>
 
             <!-- Colonne droite : Résumé financier -->
-            <div class="flex flex-col gap-3 lg:sticky lg:top-0">
-              <h3 class="text-lg font-bold text-[var(--color-neon-green)] uppercase tracking-wider mb-1">Résumé de la commande</h3>
+            <div class="flex flex-col gap-3 h-full">
+              <h3 class="text-lg font-bold text-[var(--color-neon-green)] uppercase tracking-wider mb-1 flex-shrink-0">Résumé de la commande</h3>
               
               <!-- Résumé financier -->
-              <div class="bg-[rgba(57,255,20,0.05)] border border-[rgba(57,255,20,0.2)] rounded-lg p-4 flex flex-col checkout-summary">
+              <div class="bg-[rgba(57,255,20,0.05)] border border-[rgba(57,255,20,0.2)] rounded-lg p-4 flex flex-col checkout-summary flex-1">
                 <h4 class="text-sm font-bold text-white uppercase tracking-wider mb-3 flex-shrink-0">Articles ({{ cartStore.itemCount }})</h4>
-                <div class="space-y-2 mb-4 overflow-y-auto pr-2 custom-scrollbar checkout-items-list">
+                <div class="space-y-3 mb-4 overflow-y-auto pr-2 custom-scrollbar checkout-items-list max-h-[120px]">
                   <div 
                     v-for="item in cartStore.items" 
                     :key="item.id" 
-                    class="flex justify-between text-sm flex-shrink-0"
+                    class="flex gap-3 p-2 bg-[var(--color-black-light)] border border-[rgba(57,255,20,0.1)] rounded-lg flex-shrink-0"
                   >
-                    <span class="text-[var(--color-text-secondary)]">
-                      {{ item.name }} ({{ item.size }}) x{{ item.quantity }}
-                    </span>
-                    <span class="text-white font-semibold">{{ (item.price * item.quantity).toFixed(2) }}€</span>
+                    <!-- Image miniature -->
+                    <div class="w-12 h-12 rounded overflow-hidden bg-[rgba(57,255,20,0.05)] flex-shrink-0">
+                      <img :src="item.image" :alt="item.designName" class="w-full h-full object-cover" />
+                    </div>
+                    
+                    <!-- Infos -->
+                    <div class="flex-1 flex flex-col justify-center min-w-0">
+                      <div class="text-white font-semibold text-sm leading-tight truncate">{{ item.designName }}</div>
+                      <div class="text-[var(--color-text-secondary)] text-xs">
+                        {{ item.type === 'tshirt' ? 'T-Shirt' : 'Hoodie' }} • Taille {{ item.size }}
+                      </div>
+                    </div>
+                    
+                    <!-- Quantité et prix -->
+                    <div class="flex flex-col items-end justify-center flex-shrink-0">
+                      <div class="text-white font-bold text-sm">{{ (item.price * item.quantity).toFixed(2) }}€</div>
+                      <div class="text-[var(--color-text-muted)] text-xs">Qté: {{ item.quantity }}</div>
+                    </div>
                   </div>
                 </div>
                 
@@ -474,7 +491,7 @@ const resetForm = () => {
   }
   
   .checkout-items-list {
-    max-height: 200px;
+    max-height: 250px;
     overflow-y: auto;
   }
 }

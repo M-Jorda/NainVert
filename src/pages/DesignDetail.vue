@@ -1,5 +1,5 @@
 <template>
-  <div class="design-detail min-h-screen bg-black pt-24 pb-16">
+  <div class="design-detail h-screen bg-black pt-12 pb-3 overflow-hidden">
     <!-- Loading -->
     <div v-if="loading" class="text-center py-20">
       <div class="animate-spin rounded-full h-16 w-16 border-b-2 border-[var(--color-neon-green)] mx-auto mb-4"></div>
@@ -16,119 +16,125 @@
     </div>
 
     <!-- Design content -->
-    <div v-else class="max-w-7xl mx-auto px-4">
-      <!-- Breadcrumb -->
-      <nav class="mb-8 text-sm">
-        <router-link to="/" class="text-[var(--color-text-secondary)] hover:text-[var(--color-neon-green)]">
-          Accueil
+    <div v-else class="max-w-7xl mx-auto px-4 h-full flex flex-col">
+      <!-- Back button -->
+      <div class="mb-2">
+        <router-link to="/designs" class="inline-flex items-center gap-2 text-[var(--color-neon-green)] hover:text-white transition-colors text-sm font-semibold">
+          <span>←</span> Retour aux designs
         </router-link>
-        <span class="text-[var(--color-text-secondary)] mx-2">/</span>
-        <router-link to="/designs" class="text-[var(--color-text-secondary)] hover:text-[var(--color-neon-green)]">
-          Designs
-        </router-link>
-        <span class="text-[var(--color-text-secondary)] mx-2">/</span>
-        <span class="text-white">{{ design.name }}</span>
-      </nav>
+      </div>
 
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
-        <!-- Colonne gauche : Images -->
-        <div>
-          <!-- Image principale -->
-          <div class="aspect-square mb-4 rounded-xl overflow-hidden border-2 border-[rgba(57,255,20,0.2)]">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 flex-1">
+        <!-- Colonne gauche : Images avec loupe qui suit la souris -->
+        <div class="flex flex-col items-center justify-center gap-3">
+          <!-- Image principale avec effet loupe suivant la souris -->
+          <div 
+            class="w-[60%] aspect-square rounded-lg border-2 border-[rgba(57,255,20,0.2)] relative overflow-hidden"
+            @mousemove="handleMouseMove"
+            @mouseleave="resetZoom"
+          >
             <img 
-              :src="selectedImage" 
+              :src="mainImage" 
               :alt="design.name"
-              class="w-full h-full object-cover"
+              class="w-full h-full object-cover cursor-zoom-in"
+              :style="zoomStyle"
+              ref="zoomImage"
             >
           </div>
-
-          <!-- Miniatures -->
-          <div class="grid grid-cols-4 gap-4">
+          
+          <!-- Miniatures (seulement si un type est sélectionné ET que le type a des images) -->
+          <div v-if="selectedType && garmentImages.length > 0" class="flex gap-2">
             <button
-              v-for="(image, index) in design.images"
+              v-for="(img, index) in garmentImages"
               :key="index"
-              @click="selectedImage = image"
+              @click="selectedImageIndex = index"
               :class="[
-                'aspect-square rounded-lg overflow-hidden border-2 transition-all',
-                selectedImage === image 
-                  ? 'border-[var(--color-neon-green)] scale-105' 
+                'w-16 h-16 rounded border-2 overflow-hidden transition-all',
+                selectedImageIndex === index 
+                  ? 'border-[var(--color-neon-green)]' 
                   : 'border-[rgba(57,255,20,0.2)] hover:border-[var(--color-neon-green)]'
               ]"
             >
-              <img 
-                :src="image" 
-                :alt="`${design.name} - Vue ${index + 1}`"
-                class="w-full h-full object-cover"
-              >
+              <img :src="img" :alt="`Photo ${index + 1}`" class="w-full h-full object-cover">
             </button>
           </div>
         </div>
 
         <!-- Colonne droite : Infos et sélection -->
-        <div>
+        <div class="flex flex-col justify-center">
           <!-- Nom et tagline -->
-          <h1 class="text-4xl md:text-5xl font-bold text-gradient mb-4">
+          <h1 class="text-3xl font-bold text-gradient mb-2">
             {{ design.name }}
           </h1>
-          <p class="text-xl text-[var(--color-text-secondary)] mb-8">
+          <p class="text-base text-[var(--color-text-secondary)] mb-2">
             {{ design.tagline }}
           </p>
 
           <!-- Description -->
-          <div class="mb-8 p-6 bg-[var(--color-black-light)] border border-[rgba(57,255,20,0.2)] rounded-xl">
-            <p class="text-[var(--color-text-secondary)] leading-relaxed">
+          <div class="mb-2 p-2 bg-[var(--color-black-light)] border border-[rgba(57,255,20,0.2)] rounded-lg">
+            <p class="text-sm text-[var(--color-text-secondary)] leading-relaxed">
               {{ design.description }}
             </p>
           </div>
 
           <!-- Histoire -->
-          <div v-if="design.story" class="mb-8 p-6 bg-[var(--color-black-light)] border border-[rgba(57,255,20,0.2)] rounded-xl">
-            <h3 class="text-lg font-bold text-white mb-3 flex items-center gap-2">
+          <div v-if="design.story" class="mb-2 p-2 bg-[var(--color-black-light)] border border-[rgba(57,255,20,0.2)] rounded-lg">
+            <h3 class="text-sm font-bold text-white mb-2 flex items-center gap-2">
               <span>📖</span> L'histoire
             </h3>
-            <p class="text-[var(--color-text-secondary)] leading-relaxed">
+            <p class="text-sm text-[var(--color-text-secondary)] leading-relaxed">
               {{ design.story }}
             </p>
           </div>
 
-          <!-- Sélecteur de type de vêtement -->
-          <div class="mb-8">
-            <h3 class="text-lg font-bold text-white mb-4">Choisis ton style</h3>
-            <div class="grid grid-cols-2 gap-4">
-              <button
-                @click="selectedType = 'tshirt'"
+          <!-- Sélecteur de type de vêtement (Radio - Horizontal) -->
+          <div class="mb-2">
+            <h3 class="text-base font-bold text-white mb-2">Choisis ton style</h3>
+            <div class="grid grid-cols-2 gap-2">
+              <label
                 :class="[
-                  'p-6 rounded-xl border-2 transition-all',
+                  'flex flex-col items-center justify-center gap-1 p-3 rounded-lg border-2 transition-all cursor-pointer',
                   selectedType === 'tshirt'
                     ? 'border-[var(--color-neon-green)] bg-[var(--color-neon-green)]/10'
                     : 'border-[rgba(57,255,20,0.2)] hover:border-[var(--color-neon-green)]'
                 ]"
               >
-                <div class="text-4xl mb-2">👕</div>
-                <div class="font-bold text-white mb-1">T-Shirt</div>
-                <div class="text-2xl font-bold text-[var(--color-neon-green)]">{{ calculatePrice('tshirt') }}€</div>
-              </button>
+                <input
+                  type="radio"
+                  name="garmentType"
+                  value="tshirt"
+                  v-model="selectedType"
+                  class="w-4 h-4 accent-[var(--color-neon-green)]"
+                >
+                <div class="font-bold text-white text-sm">T-Shirt</div>
+                <div class="text-[var(--color-neon-green)] font-bold text-lg">{{ calculatePrice('tshirt').toFixed(2) }}€</div>
+              </label>
 
-              <button
-                @click="selectedType = 'hoodie'"
+              <label
                 :class="[
-                  'p-6 rounded-xl border-2 transition-all',
+                  'flex flex-col items-center justify-center gap-1 p-3 rounded-lg border-2 transition-all cursor-pointer',
                   selectedType === 'hoodie'
                     ? 'border-[var(--color-neon-green)] bg-[var(--color-neon-green)]/10'
                     : 'border-[rgba(57,255,20,0.2)] hover:border-[var(--color-neon-green)]'
                 ]"
               >
-                <div class="text-4xl mb-2">🧥</div>
-                <div class="font-bold text-white mb-1">Hoodie</div>
-                <div class="text-2xl font-bold text-[var(--color-neon-green)]">{{ calculatePrice('hoodie') }}€</div>
-              </button>
+                <input
+                  type="radio"
+                  name="garmentType"
+                  value="hoodie"
+                  v-model="selectedType"
+                  class="w-4 h-4 accent-[var(--color-neon-green)]"
+                >
+                <div class="font-bold text-white text-sm">Hoodie</div>
+                <div class="text-[var(--color-neon-green)] font-bold text-lg">{{ calculatePrice('hoodie').toFixed(2) }}€</div>
+              </label>
             </div>
           </div>
 
           <!-- Détails du vêtement sélectionné -->
-          <div v-if="selectedType" class="mb-8 p-6 bg-[var(--color-black-light)] border border-[rgba(57,255,20,0.2)] rounded-xl">
-            <h3 class="text-lg font-bold text-white mb-4">Caractéristiques</h3>
-            <div class="space-y-2 text-sm text-[var(--color-text-secondary)]">
+          <div v-if="selectedType" class="mb-2 p-2 bg-[var(--color-black-light)] border border-[rgba(57,255,20,0.2)] rounded-lg">
+            <h3 class="text-sm font-bold text-white mb-2">Caractéristiques</h3>
+            <div class="space-y-1 text-xs text-[var(--color-text-secondary)]">
               <div class="flex items-start gap-2">
                 <span class="text-[var(--color-neon-green)]">✓</span>
                 <span>{{ garmentDetails.material }}</span>
@@ -150,16 +156,17 @@
 
           <!-- Bouton choisir la taille -->
           <button 
-            @click="openSizeSelector"
-            :disabled="!selectedType"
+            @click.prevent="openSizeSelector"
+            :disabled="!selectedType || !design"
             :class="[
-              'btn w-full py-4 text-lg font-bold transition-all',
-              selectedType 
+              'btn w-full py-3 text-base font-bold transition-all relative z-10',
+              selectedType && design
                 ? 'btn-primary hover:scale-105' 
                 : 'bg-gray-700 text-gray-400 cursor-not-allowed'
             ]"
+            style="position: relative; z-index: 10; pointer-events: auto;"
           >
-            {{ selectedType ? 'Choisir ma taille →' : 'Sélectionne un type de vêtement' }}
+            {{ selectedType && design ? 'Choisir ma taille →' : 'Sélectionne un type de vêtement' }}
           </button>
         </div>
       </div>
@@ -178,56 +185,106 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useDesigns } from '@/composables/useDesigns'
+import { useGarments } from '@/composables/useGarments'
 import { useGarmentTypes } from '@/composables/useGarmentTypes'
 import SizeSelector from '@/components/shop/SizeSelector.vue'
 
 const route = useRoute()
 const { getDesignBySlug } = useDesigns()
+const { garments, loadGarments, getGarmentByType } = useGarments()
 const { garmentTypes } = useGarmentTypes()
 
 const design = ref(null)
 const loading = ref(true)
-const selectedImage = ref(null)
-const selectedType = ref(null)
+const selectedType = ref('tshirt') // Par défaut T-shirt sélectionné
 const showSizeSelector = ref(false)
+const selectedImageIndex = ref(0)
+const zoomImage = ref(null)
+const zoomStyle = ref({})
 
-// Calcul du prix total (design + vêtement)
+// Images du vêtement sélectionné depuis la BDD
+const garmentImages = computed(() => {
+  if (!selectedType.value) return []
+  
+  const garment = getGarmentByType(selectedType.value)
+  if (!garment || !garment.photos) return []
+  
+  // Retourner les photos 0 et 1
+  return [garment.photos[0], garment.photos[1]].filter(Boolean)
+})
+
+// Image principale affichée
+const mainImage = computed(() => {
+  if (selectedType.value && garmentImages.value.length > 0) {
+    return garmentImages.value[selectedImageIndex.value]
+  }
+  return design.value?.images?.[0] || ''
+})
+
+// Réinitialiser l'index quand on change de type
+watch(selectedType, () => {
+  selectedImageIndex.value = 0
+})
+
+// Calcul du prix (uniquement le vêtement, le design est gratuit)
 const calculatePrice = (type) => {
   if (!design.value) return 0
-  const garmentPrice = garmentTypes[type].basePrice
-  return (design.value.designPrice + garmentPrice).toFixed(2)
+  const garment = getGarmentByType(type)
+  const garmentPrice = garment?.basePrice || garmentTypes.value[type]?.basePrice || 0
+  return Number(garmentPrice.toFixed(2))
 }
 
 // Détails du vêtement sélectionné
 const garmentDetails = computed(() => {
   if (!selectedType.value) return {}
-  return garmentTypes[selectedType.value].details
+  const garment = getGarmentByType(selectedType.value)
+  return garment?.details || garmentTypes.value[selectedType.value]?.details || {}
 })
+
+// Effet loupe qui suit la souris
+const handleMouseMove = (e) => {
+  const rect = e.currentTarget.getBoundingClientRect()
+  const x = ((e.clientX - rect.left) / rect.width) * 100
+  const y = ((e.clientY - rect.top) / rect.height) * 100
+  
+  zoomStyle.value = {
+    transform: 'scale(2)',
+    transformOrigin: `${x}% ${y}%`,
+    transition: 'transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)'
+  }
+}
+
+const resetZoom = () => {
+  zoomStyle.value = {
+    transform: 'scale(1)',
+    transition: 'transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)'
+  }
+}
 
 onMounted(async () => {
   loading.value = true
+  
+  // Charger les garments depuis la BDD
+  await loadGarments()
+  
+  // Charger le design
   const slug = route.params.slug
   design.value = await getDesignBySlug(slug)
-  
-  if (design.value && design.value.images && design.value.images.length > 0) {
-    selectedImage.value = design.value.images[0]
-  }
   
   loading.value = false
 })
 
 const openSizeSelector = () => {
-  if (selectedType.value) {
+  if (selectedType.value && design.value) {
     showSizeSelector.value = true
   }
 }
 
 const handleAddToCart = (item) => {
   showSizeSelector.value = false
-  // La logique d'ajout au panier sera dans SizeSelector
 }
 </script>
 

@@ -69,5 +69,21 @@ service cloud.firestore {
       allow read: if true; // Tout le monde peut lire les settings (stock, etc.)
       allow write: if request.auth != null; // Seuls admins peuvent modifier
     }
+    
+    // Collection garments (types de vêtements : T-shirt, Hoodie) :
+    // - Lecture publique (pour afficher sur le site)
+    // - Écriture admin seulement
+    match /garments/{garmentId} {
+      allow read: if true; // Tout le monde peut lire les vêtements
+      allow write: if request.auth != null; // Seuls admins peuvent créer/modifier
+    }
+    
+    // Collection stock (stocks par design) :
+    // - Lecture publique (pour afficher les stocks disponibles)
+    // - Écriture admin seulement
+    match /stock/{stockId} {
+      allow read: if true; // Tout le monde peut lire les stocks
+      allow write: if request.auth != null; // Seuls admins peuvent modifier
+    }
   }
 }
