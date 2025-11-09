@@ -10,7 +10,7 @@
 
     <!-- Bouton Champignon -->
     <div class="mushroom-button-container">
-      <router-link to="/products" class="mushroom-button" title="Découvrir la collection">
+      <router-link to="/designs" class="mushroom-button" title="Découvrir les designs">
         <svg class="mushroom-svg" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
           <!-- Chapeau du champignon -->
           <ellipse cx="100" cy="80" rx="80" ry="50" fill="#FF6B6B" class="mushroom-cap"/>

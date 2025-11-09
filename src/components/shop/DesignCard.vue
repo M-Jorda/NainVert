@@ -32,11 +32,11 @@
         <div class="flex gap-4 text-sm">
           <div class="flex items-center gap-1">
             <span class="text-[var(--color-text-secondary)]">👕</span>
-            <span class="text-[var(--color-neon-green)] font-bold">{{ design.tshirtPrice }}€</span>
+            <span class="text-[var(--color-neon-green)] font-bold">{{ (design.designPrice + 20).toFixed(2) }}€</span>
           </div>
           <div class="flex items-center gap-1">
             <span class="text-[var(--color-text-secondary)]">🧥</span>
-            <span class="text-[var(--color-neon-green)] font-bold">{{ design.hoodiePrice }}€</span>
+            <span class="text-[var(--color-neon-green)] font-bold">{{ (design.designPrice + 55).toFixed(2) }}€</span>
           </div>
         </div>
       </div>

@@ -4,12 +4,13 @@ export const garmentTypes = {
     name: 'T-Shirt',
     namePlural: 'T-Shirts',
     icon: '👕',
+    basePrice: 20, // Prix de base du T-shirt
     sizes: ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'],
     details: {
-      material: '100% Coton*',
-      weight: '180-220g/m²',
-      fit: 'Coupe régulière ou oversize',
-      care: 'Lavage machine à 30°C, séchage à l\'air libre'
+      material: '100% Coton bio certifié',
+      weight: '180-220 g/m²',
+      fit: 'Coupe régulière unisexe',
+      care: 'Lavage machine 30°C, séchage air libre'
     },
     description: 'T-shirt premium en coton avec impression haute qualité. Confortable et durable.',
     features: [
@@ -21,15 +22,16 @@ export const garmentTypes = {
   },
   hoodie: {
     id: 'hoodie',
-    name: 'Pull / Hoodie',
-    namePlural: 'Pulls / Hoodies',
+    name: 'Hoodie',
+    namePlural: 'Hoodies',
     icon: '🧥',
+    basePrice: 55, // Prix de base du Hoodie
     sizes: ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'],
     details: {
       material: '80% Coton, 20% Polyester',
-      weight: '300-320g/m²',
-      fit: 'Coupe régulière',
-      care: 'Lavage machine à 30°C, séchage à l\'air libre'
+      weight: '300-320 g/m²',
+      fit: 'Coupe régulière avec capuche',
+      care: 'Lavage machine 30°C, séchage air libre'
     },
     description: 'Pull à capuche premium avec doublure douce. Parfait pour les saisons fraîches.',
     features: [

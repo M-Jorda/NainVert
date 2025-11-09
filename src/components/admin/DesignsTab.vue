@@ -70,14 +70,12 @@
           </p>
 
           <!-- Prix -->
-          <div class="flex gap-3 mb-3 text-sm">
-            <div class="flex items-center gap-1">
-              <span class="text-[var(--color-text-secondary)]">👕</span>
-              <span class="text-[var(--color-neon-green)] font-bold">{{ design.tshirtPrice }}€</span>
+          <div class="mb-3 text-sm">
+            <div class="text-[var(--color-text-secondary)]">Prix design: 
+              <span class="text-[var(--color-neon-green)] font-bold">{{ design.designPrice }}€</span>
             </div>
-            <div class="flex items-center gap-1">
-              <span class="text-[var(--color-text-secondary)]">🧥</span>
-              <span class="text-[var(--color-neon-green)] font-bold">{{ design.hoodiePrice }}€</span>
+            <div class="text-xs text-[var(--color-text-muted)] mt-1">
+              T-shirt: {{ (design.designPrice + 20).toFixed(2) }}€ • Hoodie: {{ (design.designPrice + 55).toFixed(2) }}€
             </div>
           </div>
 
@@ -193,32 +191,21 @@
                 ></textarea>
               </div>
 
-              <!-- Prix par type de vêtement -->
-              <div class="grid grid-cols-2 gap-4">
-                <div>
-                  <label class="block text-sm font-semibold text-white mb-2">Prix T-Shirt (€) *</label>
-                  <input 
-                    v-model.number="formData.tshirtPrice" 
-                    type="number" 
-                    min="0"
-                    step="0.01"
-                    required
-                    class="form-input w-full"
-                    placeholder="35.00"
-                  >
-                </div>
-                <div>
-                  <label class="block text-sm font-semibold text-white mb-2">Prix Hoodie (€) *</label>
-                  <input 
-                    v-model.number="formData.hoodiePrice" 
-                    type="number" 
-                    min="0"
-                    step="0.01"
-                    required
-                    class="form-input w-full"
-                    placeholder="75.00"
-                  >
-                </div>
+              <!-- Prix du design -->
+              <div>
+                <label class="block text-sm font-semibold text-white mb-2">Prix du design (€) *</label>
+                <input 
+                  v-model.number="formData.designPrice" 
+                  type="number" 
+                  min="0"
+                  step="0.01"
+                  required
+                  class="form-input w-full"
+                  placeholder="15.00"
+                >
+                <p class="text-xs text-[var(--color-text-muted)] mt-1">
+                  💡 Le prix final = Prix design + Prix vêtement (T-shirt: 20€, Hoodie: 55€)
+                </p>
               </div>
 
           <!-- Upload Images -->
@@ -332,8 +319,7 @@ const formData = ref({
   tagline: '',
   description: '',
   story: '',
-  tshirtPrice: 35,
-  hoodiePrice: 75,
+  designPrice: 15,
   featured: true, // Toujours en vedette
   inStock: true,  // Toujours en stock
   images: []
@@ -361,8 +347,7 @@ const openCreateModal = () => {
     tagline: '',
     description: '',
     story: '',
-    tshirtPrice: 35,
-    hoodiePrice: 75,
+    designPrice: 15,
     featured: true,
     inStock: true,
     images: []

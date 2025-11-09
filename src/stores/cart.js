@@ -47,7 +47,28 @@ export const useCartStore = defineStore('cart', () => {
   const isEmpty = computed(() => items.value.length === 0)
 
   // Actions
-  function addItem(product, size) {
+  function addItem(itemOrProduct, size = null) {
+    // Nouveau format : si c'est déjà un objet item complet (depuis SizeSelector)
+    if (itemOrProduct.designId && itemOrProduct.type) {
+      const existingItem = items.value.find(
+        item => item.id === itemOrProduct.id
+      )
+
+      if (existingItem) {
+        existingItem.quantity++
+      } else {
+        items.value.push({
+          ...itemOrProduct,
+          quantity: itemOrProduct.quantity || 1
+        })
+      }
+
+      console.log(`${itemOrProduct.designName} - ${itemOrProduct.type === 'tshirt' ? 'T-Shirt' : 'Hoodie'} (${itemOrProduct.size}) ajouté au panier`)
+      return
+    }
+
+    // Ancien format : product + size (rétrocompatibilité)
+    const product = itemOrProduct
     const existingItem = items.value.find(
       item => item.id === product.id && item.size === size
     )
@@ -63,11 +84,10 @@ export const useCartStore = defineStore('cart', () => {
         image: product.images[0],
         size: size,
         quantity: 1,
-        designId: product.designId || product.design || null // Ajout du designId pour la gestion du stock
+        designId: product.designId || product.design || null
       })
     }
 
-    // Notification de succès (peut être remplacé par un toast)
     console.log(`${product.name} ajouté au panier`)
   }
 
@@ -157,3 +177,6 @@ export const useCartStore = defineStore('cart', () => {
     closeCart
   }
 })
+
+// Alias pour compatibilité
+export const useCart = useCartStore

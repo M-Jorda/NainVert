@@ -42,8 +42,9 @@ export function useCheckout() {
         // Articles
         items: items.map(item => ({
           id: item.id,
-          name: item.name,
-          slug: item.slug,
+          name: item.designName || item.name, // Support ancien et nouveau format
+          slug: item.designSlug || item.slug, // Support ancien et nouveau format
+          type: item.type || null, // Type de vêtement (tshirt, hoodie)
           price: item.price,
           size: item.size,
           quantity: item.quantity,
