@@ -53,5 +53,21 @@ service cloud.firestore {
       allow create: if true; // Tout le monde peut demander un remboursement
       allow read, update, delete: if request.auth != null; // Seuls admins
     }
+    
+    // Collection designs (nouveaux designs) :
+    // - Lecture publique (pour afficher sur le site)
+    // - Écriture admin seulement
+    match /designs/{designId} {
+      allow read: if true; // Tout le monde peut lire les designs
+      allow write: if request.auth != null; // Seuls admins peuvent créer/modifier
+    }
+    
+    // Collection settings (paramètres et stock) :
+    // - Lecture publique (pour afficher les stocks)
+    // - Écriture admin seulement
+    match /settings/{settingId} {
+      allow read: if true; // Tout le monde peut lire les settings (stock, etc.)
+      allow write: if request.auth != null; // Seuls admins peuvent modifier
+    }
   }
 }

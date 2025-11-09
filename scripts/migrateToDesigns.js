@@ -26,14 +26,8 @@ const designs = [
       '/products/tshirt-1-back.jpg',
       '/products/tshirt-1-detail.jpg'
     ],
-    availableOn: ['tshirt'],
-    prices: {
-      tshirt: 35,
-      hoodie: 75
-    },
     featured: true,
     inStock: true,
-    colors: ['Noir'],
     createdAt: new Date()
   },
   {
@@ -48,14 +42,8 @@ const designs = [
       '/products/tshirt-2-back.jpg',
       '/products/tshirt-2-detail.jpg'
     ],
-    availableOn: ['tshirt'],
-    prices: {
-      tshirt: 38,
-      hoodie: 75
-    },
     featured: true,
     inStock: true,
-    colors: ['Noir'],
     createdAt: new Date()
   },
   {
@@ -70,36 +58,24 @@ const designs = [
       '/products/hoodie-1-back.jpg',
       '/products/hoodie-1-detail.jpg'
     ],
-    availableOn: ['hoodie'],
-    prices: {
-      tshirt: 35,
-      hoodie: 75
-    },
     featured: true,
     inStock: true,
-    colors: ['Noir', 'Vert foncé'],
     createdAt: new Date()
   },
   {
     id: 'cyber-trip',
     slug: 'cyber-trip',
     name: 'Cyber Trip',
-    tagline: 'Voyage cybernétique',
-    description: 'Design cyberpunk avec broderie 3D psychédélique. Un voyage dans un futur alternatif.',
-    story: 'Cyber Trip vous transporte dans une dimension parallèle où la technologie et la conscience se rencontrent. Un design parfait pour les explorateurs de nouveaux horizons.',
+    tagline: 'Le voyage cybernétique',
+    description: 'Design futuriste avec éléments cybernétiques et effets psychédéliques pour un look avant-gardiste.',
+    story: 'Cyber Trip nous transporte dans un futur dystopique où la technologie et la conscience fusionnent. Un design pour les visionnaires qui embrassent l\'avenir.',
     images: [
       '/products/hoodie-2-front.jpg',
       '/products/hoodie-2-back.jpg',
       '/products/hoodie-2-detail.jpg'
     ],
-    availableOn: ['hoodie'],
-    prices: {
-      tshirt: 35,
-      hoodie: 65
-    },
     featured: false,
     inStock: true,
-    colors: ['Noir'],
     createdAt: new Date()
   }
 ]

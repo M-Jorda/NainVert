@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import Home from '@/pages/Home.vue'
 import Products from '@/pages/Products.vue'
 import ProductDetail from '@/pages/ProductDetail.vue'
+import Designs from '@/pages/Designs.vue'
 // import Contact from '@/pages/Contact.vue'
 import Admin from '@/pages/Admin.vue'
 import Honeypot from '@/pages/Honeypot.vue'
@@ -37,6 +38,15 @@ const routes = [
     component: ProductDetail,
     meta: {
       title: 'Produit - NainVert'
+    }
+  },
+  {
+    path: '/designs',
+    name: 'Designs',
+    component: Designs,
+    meta: {
+      title: 'Nos Designs - NainVert',
+      description: 'Découvrez notre collection exclusive de designs psychédéliques'
     }
   },
   // {

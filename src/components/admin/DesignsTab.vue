@@ -69,33 +69,21 @@
             {{ design.tagline || design.description }}
           </p>
 
-          <!-- Disponibilité -->
-          <div class="flex gap-2 mb-3">
-            <span 
-              v-for="type in design.availableOn" 
-              :key="type"
-              class="px-2 py-1 text-xs bg-[rgba(57,255,20,0.1)] border border-[rgba(57,255,20,0.2)] rounded text-[var(--color-neon-green)]"
-            >
-              {{ type === 'tshirt' ? '👕 T-Shirt' : '🧥 Hoodie' }}
-            </span>
-            <span 
-              v-if="design.featured"
-              class="px-2 py-1 text-xs bg-yellow-500/20 border border-yellow-500/40 rounded text-yellow-400"
-            >
-              ⭐ Featured
-            </span>
+          <!-- Prix -->
+          <div class="flex gap-3 mb-3 text-sm">
+            <div class="flex items-center gap-1">
+              <span class="text-[var(--color-text-secondary)]">👕</span>
+              <span class="text-[var(--color-neon-green)] font-bold">{{ design.tshirtPrice }}€</span>
+            </div>
+            <div class="flex items-center gap-1">
+              <span class="text-[var(--color-text-secondary)]">🧥</span>
+              <span class="text-[var(--color-neon-green)] font-bold">{{ design.hoodiePrice }}€</span>
+            </div>
           </div>
 
-          <!-- Prix -->
-          <div class="flex gap-3 mb-4 text-sm">
-            <div v-if="design.availableOn.includes('tshirt')">
-              <span class="text-[var(--color-text-secondary)]">T-shirt:</span>
-              <span class="text-[var(--color-neon-green)] font-bold ml-1">{{ design.prices.tshirt }}€</span>
-            </div>
-            <div v-if="design.availableOn.includes('hoodie')">
-              <span class="text-[var(--color-text-secondary)]">Hoodie:</span>
-              <span class="text-[var(--color-neon-green)] font-bold ml-1">{{ design.prices.hoodie }}€</span>
-            </div>
+          <!-- Nombre d'images -->
+          <div class="mb-4 text-sm text-[var(--color-text-secondary)]">
+            📸 {{ design.images.length }} image{{ design.images.length > 1 ? 's' : '' }}
           </div>
 
           <!-- Actions -->
@@ -205,89 +193,102 @@
                 ></textarea>
               </div>
 
-              <!-- Disponibilité & Prix -->
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <!-- Prix par type de vêtement -->
+              <div class="grid grid-cols-2 gap-4">
                 <div>
-                  <label class="block text-sm font-semibold text-white mb-2">Disponible sur *</label>
-                  <div class="space-y-2">
-                    <label class="flex items-center gap-2 cursor-pointer">
-                      <input 
-                        type="checkbox" 
-                        value="tshirt"
-                        v-model="formData.availableOn"
-                        class="form-checkbox"
-                      >
-                      <span>👕 T-Shirt</span>
-                    </label>
-                    <label class="flex items-center gap-2 cursor-pointer">
-                      <input 
-                        type="checkbox" 
-                        value="hoodie"
-                        v-model="formData.availableOn"
-                        class="form-checkbox"
-                      >
-                      <span>🧥 Hoodie</span>
-                    </label>
-                  </div>
+                  <label class="block text-sm font-semibold text-white mb-2">Prix T-Shirt (€) *</label>
+                  <input 
+                    v-model.number="formData.tshirtPrice" 
+                    type="number" 
+                    min="0"
+                    step="0.01"
+                    required
+                    class="form-input w-full"
+                    placeholder="35.00"
+                  >
                 </div>
-
-                <div class="space-y-3">
-                  <div v-if="formData.availableOn.includes('tshirt')">
-                    <label class="block text-sm font-semibold text-white mb-2">Prix T-Shirt (€)</label>
-                    <input 
-                      v-model.number="formData.prices.tshirt" 
-                      type="number" 
-                      min="0"
-                      class="form-input w-full"
-                    >
-                  </div>
-                  <div v-if="formData.availableOn.includes('hoodie')">
-                    <label class="block text-sm font-semibold text-white mb-2">Prix Hoodie (€)</label>
-                    <input 
-                      v-model.number="formData.prices.hoodie" 
-                      type="number" 
-                      min="0"
-                      class="form-input w-full"
-                    >
-                  </div>
+                <div>
+                  <label class="block text-sm font-semibold text-white mb-2">Prix Hoodie (€) *</label>
+                  <input 
+                    v-model.number="formData.hoodiePrice" 
+                    type="number" 
+                    min="0"
+                    step="0.01"
+                    required
+                    class="form-input w-full"
+                    placeholder="75.00"
+                  >
                 </div>
               </div>
 
-              <!-- Options -->
-              <div class="flex gap-4">
-                <label class="flex items-center gap-2 cursor-pointer">
-                  <input 
-                    type="checkbox" 
-                    v-model="formData.featured"
-                    class="form-checkbox"
-                  >
-                  <span>⭐ Design en vedette</span>
-                </label>
-                <label class="flex items-center gap-2 cursor-pointer">
-                  <input 
-                    type="checkbox" 
-                    v-model="formData.inStock"
-                    class="form-checkbox"
-                  >
-                  <span>🟢 En stock</span>
-                </label>
-              </div>
+          <!-- Upload Images -->
+          <div>
+            <label class="block text-sm font-semibold text-white mb-2">Images du design *</label>
+            
+            <!-- Zone d'upload -->
+            <div class="border-2 border-dashed border-[rgba(57,255,20,0.3)] rounded-xl p-6 text-center hover:border-[var(--color-neon-green)] transition-colors">
+              <input 
+                ref="fileInput"
+                type="file"
+                accept="image/*"
+                multiple
+                @change="handleImageUpload"
+                class="hidden"
+              >
+              <button 
+                type="button"
+                @click="$refs.fileInput.click()"
+                class="btn btn-secondary mb-3"
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="17 8 12 3 7 8"></polyline>
+                  <line x1="12" y1="3" x2="12" y2="15"></line>
+                </svg>
+                📱 Choisir des images
+              </button>
+              <p class="text-sm text-[var(--color-text-secondary)]">
+                Formats acceptés : JPG, PNG, WebP
+              </p>
+              <p class="text-xs text-[var(--color-text-muted)] mt-1">
+                💡 Sélectionnez plusieurs images depuis votre téléphone ou PC
+              </p>
+            </div>
 
-              <!-- Images -->
-              <div>
-                <label class="block text-sm font-semibold text-white mb-2">Images (URLs séparées par des virgules)</label>
-                <textarea 
-                  v-model="imageUrls" 
-                  rows="3"
-                  class="form-input w-full"
-                  placeholder="/products/design-1.jpg, /products/design-2.jpg"
-                ></textarea>
-                <p class="text-xs text-[var(--color-text-muted)] mt-1">
-                  💡 Entrez les URLs des images séparées par des virgules
-                </p>
+            <!-- Aperçu des images -->
+            <div v-if="uploadedImages.length > 0" class="mt-4 grid grid-cols-3 gap-3">
+              <div 
+                v-for="(img, idx) in uploadedImages" 
+                :key="idx"
+                class="relative aspect-square rounded-lg overflow-hidden border-2 group"
+                :class="img.error ? 'border-yellow-500/60' : 'border-[rgba(57,255,20,0.2)]'"
+              >
+                <img 
+                  :src="img.preview" 
+                  :alt="`Image ${idx + 1}`"
+                  class="w-full h-full object-cover"
+                >
+                <button 
+                  type="button"
+                  @click="removeUploadedImage(idx)"
+                  class="absolute top-2 right-2 w-8 h-8 bg-red-500/90 hover:bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                >
+                  ×
+                </button>
+                
+                <!-- Indicateur d'upload en cours -->
+                <div v-if="img.uploading" class="absolute inset-0 bg-black/80 flex flex-col items-center justify-center">
+                  <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--color-neon-green)] mb-2"></div>
+                  <div class="text-white text-xs">Upload...</div>
+                </div>
+                
+                <!-- Indicateur d'erreur / URL temporaire -->
+                <div v-if="img.error && !img.uploading" class="absolute bottom-0 left-0 right-0 bg-yellow-500/90 text-black text-xs py-1 px-2 text-center">
+                  ⚠️ URL temporaire
+                </div>
               </div>
-
-              <!-- Actions -->
+            </div>
+          </div>              <!-- Actions -->
               <div class="flex gap-3 pt-4 border-t border-[rgba(57,255,20,0.2)]">
                 <button type="submit" class="btn btn-primary flex-1">
                   {{ isEditMode ? '💾 Sauvegarder' : '✅ Créer le design' }}
@@ -313,15 +314,17 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useDesigns } from '@/composables/useDesigns'
+import { uploadToCloudinary } from '@/services/cloudinary'
 
 const { designs, loading, loadDesigns, updateDesign, createDesign, deleteDesign } = useDesigns()
 
 const showModal = ref(false)
 const isEditMode = ref(false)
 const currentDesign = ref(null)
-const imageUrls = ref('')
+const uploadedImages = ref([])
+const fileInput = ref(null)
 
 const formData = ref({
   name: '',
@@ -329,15 +332,11 @@ const formData = ref({
   tagline: '',
   description: '',
   story: '',
-  availableOn: ['tshirt'],
-  prices: {
-    tshirt: 35,
-    hoodie: 75
-  },
-  featured: false,
-  inStock: true,
-  images: [],
-  colors: ['Noir']
+  tshirtPrice: 35,
+  hoodiePrice: 75,
+  featured: true, // Toujours en vedette
+  inStock: true,  // Toujours en stock
+  images: []
 })
 
 onMounted(async () => {
@@ -362,14 +361,13 @@ const openCreateModal = () => {
     tagline: '',
     description: '',
     story: '',
-    availableOn: ['tshirt'],
-    prices: { tshirt: 35, hoodie: 75 },
-    featured: false,
+    tshirtPrice: 35,
+    hoodiePrice: 75,
+    featured: true,
     inStock: true,
-    images: [],
-    colors: ['Noir']
+    images: []
   }
-  imageUrls.value = ''
+  uploadedImages.value = []
   showModal.value = true
 }
 
@@ -378,11 +376,14 @@ const editDesign = (design) => {
   currentDesign.value = design
   formData.value = {
     ...design,
-    availableOn: [...design.availableOn],
-    prices: { ...design.prices },
     images: [...design.images]
   }
-  imageUrls.value = design.images.join(', ')
+  // Reconstruire uploadedImages depuis les URLs existantes
+  uploadedImages.value = design.images.map((url, idx) => ({
+    preview: url,
+    url: url,
+    uploading: false
+  }))
   showModal.value = true
 }
 
@@ -390,15 +391,129 @@ const closeModal = () => {
   showModal.value = false
 }
 
-const saveDesign = async () => {
-  const images = imageUrls.value
-    .split(',')
-    .map(url => url.trim())
-    .filter(url => url)
+const handleImageUpload = async (event) => {
+  const files = Array.from(event.target.files)
+  const isDev = import.meta.env.DEV
   
+  for (const file of files) {
+    // Vérifier la taille du fichier
+    const fileSizeKB = (file.size / 1024).toFixed(2)
+    if (isDev) console.log(`📦 Fichier: ${file.name} (${fileSizeKB} KB)`)
+    
+    // Créer aperçu local
+    const preview = URL.createObjectURL(file)
+    
+    // Ajouter l'image au tableau réactif
+    const imageIndex = uploadedImages.value.length
+    uploadedImages.value.push({
+      file,
+      preview,
+      uploading: true,
+      url: null,
+      error: false
+    })
+
+    try {
+      if (isDev) console.log('⏳ Début upload...')
+      const startTime = Date.now()
+      
+      // Upload vers Cloudinary
+      const url = await uploadImageToStorage(file)
+      
+      const duration = ((Date.now() - startTime) / 1000).toFixed(2)
+      if (isDev) console.log(`✅ Upload terminé en ${duration}s`)
+      
+      // IMPORTANT: Mettre à jour directement dans le tableau réactif
+      uploadedImages.value[imageIndex].url = url
+      uploadedImages.value[imageIndex].uploading = false
+      uploadedImages.value[imageIndex].error = false
+      
+      if (isDev) console.log('🎯 Image state updated:', uploadedImages.value[imageIndex])
+      
+      // Ajouter l'URL au formData
+      formData.value.images.push(url)
+    } catch (error) {
+      console.error('❌ Erreur upload:', error)
+      
+      // Mettre à jour l'état d'erreur
+      uploadedImages.value[imageIndex].uploading = false
+      uploadedImages.value[imageIndex].error = true
+      
+      // Afficher un message d'erreur clair
+      let errorMsg = 'Erreur lors de l\'upload de l\'image.'
+      
+      if (error.message.includes('Upload preset')) {
+        errorMsg = '⚠️ Configuration Cloudinary incomplète.\n\n' +
+          'Tu dois créer un "Upload Preset" dans Cloudinary :\n' +
+          '1. Va sur : https://console.cloudinary.com/settings/upload\n' +
+          '2. Clique "Add upload preset"\n' +
+          '3. Nom : nainvert_designs\n' +
+          '4. Signing Mode : Unsigned\n' +
+          '5. Folder : designs\n' +
+          '6. Save'
+      } else {
+        errorMsg = `Erreur : ${error.message}`
+      }
+      
+      alert(errorMsg)
+      
+      // Retirer l'image en cas d'erreur
+      uploadedImages.value.splice(imageIndex, 1)
+    }
+  }
+  
+  // Réinitialiser l'input pour permettre de re-sélectionner le même fichier
+  event.target.value = ''
+}
+
+const removeUploadedImage = (idx) => {
+  const img = uploadedImages.value[idx]
+  URL.revokeObjectURL(img.preview)
+  
+  // Retirer du tableau d'aperçu
+  uploadedImages.value.splice(idx, 1)
+  
+  // Retirer du formData
+  if (img.url) {
+    const urlIdx = formData.value.images.indexOf(img.url)
+    if (urlIdx > -1) {
+      formData.value.images.splice(urlIdx, 1)
+    }
+  }
+}
+
+const uploadImageToStorage = async (file) => {
+  const isDev = import.meta.env.DEV
+  
+  try {
+    if (isDev) console.log('📤 Upload vers Cloudinary...')
+    if (isDev) console.log('📊 Taille:', (file.size / 1024).toFixed(2), 'KB')
+    
+    const startTime = Date.now()
+    
+    // Upload vers Cloudinary
+    const url = await uploadToCloudinary(file)
+    
+    const duration = ((Date.now() - startTime) / 1000).toFixed(2)
+    if (isDev) console.log(`✅ Upload terminé en ${duration}s`)
+    if (isDev) console.log('🔗 URL:', url)
+    
+    return url
+  } catch (error) {
+    console.error('❌ Erreur lors de l\'upload:', error)
+    
+    // Message d'erreur spécifique
+    if (error.message.includes('Upload preset')) {
+      throw new Error('Upload preset non configuré. Voir les instructions ci-dessous.')
+    }
+    
+    throw error
+  }
+}
+
+const saveDesign = async () => {
   const designData = {
     ...formData.value,
-    images,
     createdAt: isEditMode.value ? currentDesign.value.createdAt : new Date()
   }
 
