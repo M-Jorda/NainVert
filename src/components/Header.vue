@@ -22,8 +22,8 @@
           <router-link to="/" class="nav-link relative text-gray-400 font-semibold text-sm uppercase tracking-wider transition-colors duration-200" @click="closeMobileMenu">
             Accueil
           </router-link>
-          <router-link to="/products" class="nav-link relative text-gray-400 font-semibold text-sm uppercase tracking-wider transition-colors duration-200" @click="closeMobileMenu">
-            Articles
+          <router-link to="/designs" class="nav-link relative text-gray-400 font-semibold text-sm uppercase tracking-wider transition-colors duration-200" @click="closeMobileMenu">
+            Designs
           </router-link>
           <router-link to="/contact" class="nav-link relative text-gray-400 font-semibold text-sm uppercase tracking-wider transition-colors duration-200" @click="closeMobileMenu">
             Contact

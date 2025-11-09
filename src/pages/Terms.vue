@@ -19,7 +19,7 @@
           <p>Toute commande suppose l'adhésion sans réserve aux présentes CGV. Toute commande validée est considérée comme ferme et définitive.</p>
           <p>Le processus de commande se déroule comme suit :</p>
           <ul>
-            <li>Sélection des produits</li>
+            <li>Sélection des articles</li>
             <li>Validation du panier</li>
             <li>Saisie des informations de livraison</li>
             <li>Validation des informations</li>

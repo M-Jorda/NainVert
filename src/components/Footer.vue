@@ -63,7 +63,7 @@
           <h4 class="text-white text-base font-bold uppercase tracking-wider mb-2">Navigation</h4>
           <ul class="list-none flex flex-col gap-2">
             <li><router-link to="/" class="text-[var(--color-text-secondary)] text-[0.95rem] transition-all duration-200 hover:text-[var(--color-neon-green)] hover:pl-2">Accueil</router-link></li>
-            <li><router-link to="/products" class="text-[var(--color-text-secondary)] text-[0.95rem] transition-all duration-200 hover:text-[var(--color-neon-green)] hover:pl-2">Articles</router-link></li>
+            <li><router-link to="/designs" class="text-[var(--color-text-secondary)] text-[0.95rem] transition-all duration-200 hover:text-[var(--color-neon-green)] hover:pl-2">Designs</router-link></li>
           </ul>
         </div>
 

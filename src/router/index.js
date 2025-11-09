@@ -1,7 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import Home from '@/pages/Home.vue'
-import Products from '@/pages/Products.vue'
-import ProductDetail from '@/pages/ProductDetail.vue'
 import Designs from '@/pages/Designs.vue'
 import DesignDetail from '@/pages/DesignDetail.vue'
 // import Contact from '@/pages/Contact.vue'
@@ -22,23 +20,6 @@ const routes = [
     meta: {
       title: 'NainVert - Streetwear Psychédélique',
       description: 'Découvrez notre collection exclusive de vêtements streetwear psychédéliques'
-    }
-  },
-  {
-    path: '/products',
-    name: 'Products',
-    component: Products,
-    meta: {
-      title: 'Nos Articles - NainVert',
-      description: 'Parcourez notre collection de t-shirts et pulls psychédéliques'
-    }
-  },
-  {
-    path: '/products/:slug',
-    name: 'ProductDetail',
-    component: ProductDetail,
-    meta: {
-      title: 'Produit - NainVert'
     }
   },
   {

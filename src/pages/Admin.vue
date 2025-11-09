@@ -36,12 +36,6 @@
           </svg>
           Designs
         </button>
-        <button :class="['tab-btn', { active: activeTab === 'products' }]" @click="activeTab = 'products'">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
-          </svg>
-          Produits
-        </button>
         <button :class="['tab-btn', { active: activeTab === 'orders' }]" @click="activeTab = 'orders'">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <circle cx="9" cy="21" r="1"></circle>
@@ -117,15 +111,6 @@
                 Designs
               </button>
               <button 
-                :class="['mobile-tab-btn', { active: activeTab === 'products' }]" 
-                @click="activeTab = 'products'; mobileMenuOpen = false"
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
-                </svg>
-                Produits
-              </button>
-              <button 
                 :class="['mobile-tab-btn', { active: activeTab === 'orders' }]" 
                 @click="activeTab = 'orders'; mobileMenuOpen = false"
               >
@@ -173,14 +158,6 @@
 
       <!-- Designs Tab -->
       <DesignsTab v-if="activeTab === 'designs'" />
-
-      <!-- Products Tab -->
-      <ProductsTab 
-        v-if="activeTab === 'products'" 
-        :products="products"
-        @update-product="updateProduct"
-        @open-image-modal="openImageModal"
-      />
 
       <!-- Stock Tab -->
       <StockTab
@@ -382,9 +359,9 @@
                 </div>
               </div>
 
-              <!-- Produits commandés -->
+              <!-- Articles commandés -->
               <div class="mb-6 p-6 bg-[rgba(57,255,20,0.05)] border border-[rgba(57,255,20,0.2)] rounded-lg">
-                <h3 class="text-lg font-bold text-white mb-4">🛍️ Produits</h3>
+                <h3 class="text-lg font-bold text-white mb-4">🛍️ Articles</h3>
                 <div class="space-y-3">
                   <div 
                     v-for="(item, index) in selectedOrder.items" 
@@ -552,141 +529,12 @@
       </teleport>
 
     </div>
-
-    <!-- Image Upload Modal -->
-    <teleport to="body">
-      <transition name="modal-fade">
-        <div 
-          v-if="showImageModal" 
-          class="fixed inset-0 bg-black/95 backdrop-blur-sm z-[9999] flex items-center justify-center p-4"
-          @click="closeImageModal"
-        >
-          <div 
-            class="bg-[var(--color-black-light)] border border-[rgba(57,255,20,0.3)] rounded-xl max-w-2xl w-full p-8 max-h-[90vh] overflow-y-auto"
-            @click.stop
-          >
-            <div class="flex items-center justify-between mb-6">
-              <h2 class="text-2xl font-bold text-gradient">
-                Modifier les images - {{ selectedProduct?.name }}
-              </h2>
-              <button 
-                @click="closeImageModal"
-                class="w-10 h-10 flex items-center justify-center border border-[rgba(57,255,20,0.2)] rounded-lg text-[var(--color-text-secondary)] hover:border-[var(--color-neon-green)] hover:text-[var(--color-neon-green)] transition-all"
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <line x1="18" y1="6" x2="6" y2="18"></line>
-                  <line x1="6" y1="6" x2="18" y2="18"></line>
-                </svg>
-              </button>
-            </div>
-
-            <!-- Current Images -->
-            <div class="mb-6">
-              <h3 class="text-lg font-semibold mb-4 text-white">Images actuelles :</h3>
-              <div class="grid grid-cols-3 gap-4">
-                <div 
-                  v-for="(image, idx) in selectedProduct?.images" 
-                  :key="idx"
-                  class="relative aspect-square rounded-lg overflow-hidden border-2 border-[rgba(57,255,20,0.2)] group"
-                >
-                  <img 
-                    :src="image" 
-                    :alt="`Image ${idx + 1}`"
-                    class="w-full h-full object-cover"
-                  >
-                  <div class="absolute bottom-2 left-2 right-2 flex gap-2">
-                    <button 
-                      @click="removeImage(idx)"
-                      class="flex-1 bg-red-500/90 hover:bg-red-500 text-white text-xs py-1 px-2 rounded transition-colors"
-                    >
-                      Supprimer
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Upload New Image -->
-            <div class="mb-6">
-              <h3 class="text-lg font-semibold mb-4 text-white">Ajouter une nouvelle image :</h3>
-              
-              <div class="border-2 border-dashed border-[rgba(57,255,20,0.3)] rounded-xl p-8 text-center hover:border-[var(--color-neon-green)] transition-colors cursor-pointer">
-                <input 
-                  ref="fileInput"
-                  type="file"
-                  accept="image/*"
-                  @change="handleImageUpload"
-                  class="hidden"
-                >
-                <button 
-                  @click="$refs.fileInput.click()"
-                  class="btn btn-secondary"
-                >
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                    <polyline points="17 8 12 3 7 8"></polyline>
-                    <line x1="12" y1="3" x2="12" y2="15"></line>
-                  </svg>
-                  Choisir une image
-                </button>
-                <p class="text-sm text-[var(--color-text-secondary)] mt-4">
-                  Formats acceptés : JPG, PNG, WebP
-                </p>
-              </div>
-
-              <!-- Preview -->
-              <div v-if="newImagePreview" class="mt-4">
-                <img 
-                  :src="newImagePreview" 
-                  alt="Aperçu"
-                  class="max-w-full h-48 object-contain mx-auto rounded-lg border border-[rgba(57,255,20,0.2)]"
-                >
-                <button 
-                  @click="confirmImageUpload"
-                  class="btn btn-primary w-full mt-4"
-                >
-                  Confirmer l'ajout
-                </button>
-              </div>
-            </div>
-
-            <!-- URL Method (alternative) -->
-            <div>
-              <h3 class="text-lg font-semibold mb-4 text-white">Ou ajouter par URL :</h3>
-              <div class="flex gap-2">
-                <input 
-                  v-model="imageUrl"
-                  type="url"
-                  class="form-input flex-1"
-                  placeholder="https://exemple.com/image.jpg"
-                >
-                <button 
-                  @click="addImageByUrl"
-                  class="btn btn-primary whitespace-nowrap"
-                >
-                  Ajouter
-                </button>
-              </div>
-            </div>
-
-            <div class="mt-6 p-4 bg-[rgba(57,255,20,0.05)] border border-[rgba(57,255,20,0.2)] rounded-lg">
-              <p class="text-sm text-[var(--color-text-secondary)]">
-                <strong class="text-[var(--color-neon-green)]">💡 Astuce :</strong> 
-                Les changements sont enregistrés automatiquement dans le localStorage. 
-                Pour une solution permanente, contactez votre développeur.
-              </p>
-            </div>
-          </div>
-        </div>
-      </transition>
-    </teleport>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import { useAdminStore } from '../stores/admin'
-import { useProducts } from '../composables/useProducts'
 import { useEasterEggsFirestore } from '../composables/useEasterEggsFirestore'
 import { useOrders } from '../composables/useOrders'
 import { useStock } from '../composables/useStock'
@@ -695,13 +543,11 @@ import { db } from '@/config/firebase'
 
 // Composants admin tabs
 import DesignsTab from '../components/admin/DesignsTab.vue'
-import ProductsTab from '../components/admin/ProductsTab.vue'
 import OrdersTab from '../components/admin/OrdersTab.vue'
 import StockTab from '../components/admin/StockTab.vue'
 import SecurityTab from '../components/admin/SecurityTab.vue'
 
 const adminStore = useAdminStore()
-const { products, loadProducts, updateProduct } = useProducts()
 
 // Easter Eggs from Firestore
 const { easterEggs, loadEasterEggs, updateEasterEgg } = useEasterEggsFirestore()
@@ -732,7 +578,7 @@ const {
 const email = ref('')
 const password = ref('')
 const loginError = ref(false)
-const activeTab = ref(adminStore.isAuthenticated ? 'products' : 'security')
+const activeTab = ref(adminStore.isAuthenticated ? 'designs' : 'security')
 const mobileMenuOpen = ref(false)
 
 // Password change form
@@ -754,21 +600,6 @@ const blockRemainingTime = ref('')
 const showCaptcha = ref(false)
 const captchaAnswer = ref('')
 const captchaQuestion = ref({ num1: 0, num2: 0, answer: 0 })
-
-const showImageModal = ref(false)
-const selectedProduct = ref(null)
-const newImagePreview = ref(null)
-const newImageFile = ref(null)
-const imageUrl = ref('')
-
-// Bloquer le scroll quand le modal d'images est ouvert
-watch(showImageModal, (newVal) => {
-  if (newVal) {
-    document.body.style.overflow = 'hidden'
-  } else {
-    document.body.style.overflow = ''
-  }
-})
 
 // Fermer le menu mobile lors du changement de tab et bloquer le scroll
 watch(mobileMenuOpen, (newVal) => {
@@ -958,7 +789,6 @@ const handleToggleArchive = async (orderId, isCurrentlyArchived) => {
 const getActiveTabLabel = () => {
   const labels = {
     designs: '🎨 Designs',
-    products: '📦 Produits',
     orders: '🛒 Commandes',
     stock: '📊 Stock',
     security: '🔒 Sécurité'
@@ -971,7 +801,6 @@ onMounted(async () => {
   if (!adminStore.isAuthenticated) {
     activeTab.value = 'security'
   }
-  await loadProducts()
   await loadEasterEggs()
   loadHoneypotLogs()
   loadOrders()
@@ -1204,32 +1033,6 @@ const handleUpdateDesignName = async (designId, newName) => {
   }
 }
 
-const saveProducts = async () => {
-  // Les produits sont déjà sauvegardés via updateProduct()
-  console.log('✅ Produits sauvegardés')
-}
-
-const saveSiteContent = async () => {
-  const success = await updateSiteContent(siteContent.value)
-  if (success) {
-    alert('Contenu sauvegardé avec succès !')
-  } else {
-    alert('Erreur lors de la sauvegarde')
-  }
-}
-
-const incrementPrice = async (product) => {
-  product.price += 1
-  await updateProduct(product.slug, { price: product.price })
-}
-
-const decrementPrice = async (product) => {
-  if (product.price > 1) {
-    product.price -= 1
-    await updateProduct(product.slug, { price: product.price })
-  }
-}
-
 const handleLogin = async () => {
   loginError.value = false
 
@@ -1329,77 +1132,6 @@ const handleChangePassword = async () => {
     passwordMessage.value = {
       type: 'error',
       text: result.message
-    }
-  }
-}
-
-const openImageModal = (product) => {
-  selectedProduct.value = { ...product }
-  showImageModal.value = true
-}
-
-const closeImageModal = () => {
-  showImageModal.value = false
-  selectedProduct.value = null
-  newImagePreview.value = null
-  newImageFile.value = null
-  imageUrl.value = ''
-}
-
-const handleImageUpload = (event) => {
-  const file = event.target.files[0]
-  if (file && file.type.startsWith('image/')) {
-    newImageFile.value = file
-    const reader = new FileReader()
-    reader.onload = (e) => {
-      newImagePreview.value = e.target.result
-    }
-    reader.readAsDataURL(file)
-  }
-}
-
-const confirmImageUpload = async () => {
-  if (newImagePreview.value && selectedProduct.value) {
-    // Add the base64 image to the product
-    const productIndex = products.value.findIndex(p => p.id === selectedProduct.value.id)
-    if (productIndex !== -1) {
-      const updatedImages = [...products.value[productIndex].images, newImagePreview.value]
-      await updateProduct(products.value[productIndex].slug, { images: updatedImages })
-      
-      products.value[productIndex].images.push(newImagePreview.value)
-      selectedProduct.value.images.push(newImagePreview.value)
-      
-      // Reset
-      newImagePreview.value = null
-      newImageFile.value = null
-    }
-  }
-}
-
-const addImageByUrl = async () => {
-  if (imageUrl.value && selectedProduct.value) {
-    const productIndex = products.value.findIndex(p => p.id === selectedProduct.value.id)
-    if (productIndex !== -1) {
-      const updatedImages = [...products.value[productIndex].images, imageUrl.value]
-      await updateProduct(products.value[productIndex].slug, { images: updatedImages })
-      
-      products.value[productIndex].images.push(imageUrl.value)
-      selectedProduct.value.images.push(imageUrl.value)
-      imageUrl.value = ''
-    }
-  }
-}
-
-const removeImage = async (imageIndex) => {
-  if (selectedProduct.value && confirm('Supprimer cette image ?')) {
-    const productIndex = products.value.findIndex(p => p.id === selectedProduct.value.id)
-    if (productIndex !== -1) {
-      const updatedImages = [...products.value[productIndex].images]
-      updatedImages.splice(imageIndex, 1)
-      await updateProduct(products.value[productIndex].slug, { images: updatedImages })
-      
-      products.value[productIndex].images.splice(imageIndex, 1)
-      selectedProduct.value.images.splice(imageIndex, 1)
     }
   }
 }
