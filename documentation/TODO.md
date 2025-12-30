@@ -4,13 +4,13 @@
 
 ### 🎨 Configuration Stock (NOUVEAU - À FAIRE EN PREMIER)
 - [ ] **Tester le système de stock** avec `node scripts/create-test-order.js`
-- [ ] **Associer tous les produits** à un dessin (Admin → Produits → designId)
-- [ ] **Renommer les dessins** si nécessaire (Admin → Stock)
+- [ ] **Vérifier que chaque design a son stock** dans Firestore (sous-collection)
 - [ ] **Vérifier que le checkout copie le designId** dans les articles
 - [ ] Lire `STOCK_QUICKSTART.md` et `STOCK_SYSTEM.md`
 
-### Images Produits
-- [ ] Remplacer les SVG placeholders par de vraies photos
+### Images Designs
+- [ ] Remplacer les images de test par de vraies créations
+- [ ] Format recommandé : WebP ou PNG (meilleure qualité)
 - [ ] Format recommandé : WebP (meilleure compression)
 - [ ] Dimensions : 800x1000px minimum
 - [ ] Optimiser les images (< 200KB par image)
@@ -25,19 +25,14 @@
 - [ ] Configurer webhooks pour confirmation
 
 ### Backend / API
-- [ ] Choisir solution backend :
-  - Option 1 : Firebase (simple, gratuit)
-  - Option 2 : Node.js + Express
-  - Option 3 : Supabase
-- [ ] Base de données pour :
-  - Produits
-  - Commandes
-  - Clients
-  - Stock
-- [ ] API endpoints :
-  - POST /orders (créer commande)
-  - GET /orders/:id (détails commande)
-  - POST /contact (formulaire contact)
+- [ ] Firebase configuré ✅ (déjà fait)
+- [ ] Base de données Firestore avec collections :
+  - designs ✅
+  - garments ✅
+  - orders ✅
+  - stock (sous-collection de designs) ✅
+  - messages ✅
+  - honeypot_logs ✅
 
 ### Email
 - [ ] Service d'envoi emails :

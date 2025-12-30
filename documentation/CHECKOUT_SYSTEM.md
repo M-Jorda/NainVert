@@ -132,36 +132,38 @@ Le stock est géré par **design** (dessin), pas par produit individuel.
 
 ### Structure du stock
 
+Le stock est stocké en **sous-collection** de chaque design :
+
 ```javascript
-// Collection: settings
-// Document: stock
+// Collection: designs/{designId}/stock/{designId}
 {
-  designs: [
-    {
-      id: "design-1",
-      name: "Dessin Psychédélique #1",
-      totalUnits: 100,
-      remainingUnits: 85,
-      products: ["prod-1", "prod-2"] // Produits utilisant ce dessin
-    }
-  ],
+  quantity: 97,
+  salesStats: {
+    tshirt: 1,
+    hoodie: 2,
+    total: 3
+  },
+  createdAt: Timestamp,
   lastUpdated: Timestamp
 }
 ```
 
-### Lien produit ↔ design
+### Lien commande ↔ design
 
-Chaque produit doit avoir un champ `designId` ou `design` qui pointe vers l'ID du dessin utilisé.
+Chaque article de commande doit avoir un champ `designId` qui pointe vers l'ID du design utilisé.
 
-**Exemple de produit :**
+**Exemple d'article dans une commande :**
 ```javascript
 {
-  id: "prod-1",
-  name: "T-Shirt Psychédélique",
-  designId: "design-1", // ← Important !
-  price: 35,
-  sizes: ["S", "M", "L", "XL"],
-  // ...
+  id: "ftg-hoodie-L",
+  designId: "ftg", // ← Important !
+  name: "ftg",
+  slug: "ftg",
+  type: "hoodie",
+  size: "L",
+  price: 65,  // designPrice (15) + basePrice (50)
+  quantity: 2,
+  image: "..."
 }
 ```
 
@@ -169,10 +171,10 @@ Chaque produit doit avoir un champ `designId` ou `design` qui pointe vers l'ID d
 
 | Statut | Description | Action |
 |--------|-------------|--------|
-| `pending` | Commande créée, en attente de paiement | Stock déjà décrémenté |
+| `pending` | Commande créée, en attente de paiement | Stock **non** décrémenté |
 | `paid` | Paiement reçu et validé | Prête pour expédition |
 | `shipped` | Commande expédiée | Numéro de tracking ajouté |
-| `delivered` | Commande livrée | Archivée |
+| `delivered` | Commande livrée | **Stock décrémenté automatiquement** |
 | `cancelled` | Commande annulée | Stock peut être remis |
 
 ## Prochaines étapes
@@ -244,16 +246,16 @@ const { loadStock, updateDesignStock, stockData } = useStock()
 loadStock()
 
 // Mettre à jour le stock manuellement
-await updateDesignStock('design-1', 50)
+await updateDesignStock('design-id', 50)
 ```
 
 ## Notes importantes
 
-⚠️ **Stock décrémenté immédiatement**
-Le stock est décrémenté dès la création de la commande (statut `pending`), pas seulement quand elle est livrée. Cela évite les surventes.
+⚠️ **Stock décrémenté à la livraison**
+Le stock est décrémenté automatiquement lorsqu'une commande passe au statut `delivered`, pas au moment de la création.
 
 ⚠️ **Design ID obligatoire**
-Pour que la gestion du stock fonctionne, chaque produit DOIT avoir un `designId`.
+Pour que la gestion du stock fonctionne, chaque article de commande DOIT avoir un `designId`.
 
 ⚠️ **Numéros de commande uniques**
 Format : `NV-YYYYMMDD-XXXXX` où XXXXX est un nombre aléatoire à 5 chiffres.

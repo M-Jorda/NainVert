@@ -31,34 +31,59 @@ Le système de gestion de stock fonctionne **par dessin**, et non par produit in
 }
 ```
 
-#### Produits (Firestore: `products/{productId}`)
+#### Designs (Firestore: `designs/{designId}`)
 ```json
 {
-  "name": "T-Shirt Nain Vert",
-  "price": 25,
-  "type": "tshirt",
-  "designId": "design-1",  // ← Association au dessin
+  "id": "ftg",
+  "name": "ftg",
+  "slug": "ftg",
+  "designPrice": 15,  // Prix du design
+  "tagline": "...",
+  "description": "...",
+  "story": "...",
+  "images": ["url1", "url2"],
+  "featured": true,
   "inStock": true,
-  "sizes": ["S", "M", "L", "XL"],
-  "images": ["url1", "url2"]
+  "archived": false
 }
 ```
+
+#### Garments (Firestore: `garments/{type}`)
+```json
+{
+  "type": "tshirt",  // ou "hoodie"
+  "basePrice": 20,  // Prix de base du vêtement
+  "sizes": ["XS", "S", "M", "L", "XL", "XXL", "XXXL"],
+  "photos": ["url1", "url2"],  // Photos du vêtement seul
+  "details": {
+    "material": "100% coton",
+    "weight": "185 m/g²",
+    "fit": "Coupe classique unisexe",
+    "care": "Lavage machine 30°C"
+  }
+}
+```
+
+**Prix final** = `designPrice` + `basePrice` (ex: 15€ + 20€ = 35€)
 
 #### Commandes (Firestore: `orders/{orderId}`)
 ```json
 {
   "items": [
     {
-      "name": "T-Shirt Nain Vert",
+      "id": "ftg-hoodie-L",  // ID unique
+      "designId": "ftg",  // ← Association au design
+      "name": "ftg",
+      "slug": "ftg",
+      "type": "hoodie",
+      "size": "L",
       "quantity": 2,
-      "designId": "design-1",  // ← Hérité du produit
-      "size": "M",
-      "price": 25,
-      "total": 50
+      "price": 65,  // designPrice (15) + basePrice (50)
+      "image": "url1"
     }
   ],
   "status": "delivered",  // ← Déclenche la décrémentation
-  "total": 50
+  "total": 130
 }
 ```
 
@@ -111,43 +136,29 @@ Le stock s'initialise automatiquement au premier accès à l'onglet Stock de l'a
 - 2 dessins par défaut
 - 100 unités chacun
 
-### 2. Associer les produits aux dessins
+### 2. Vérifier les designs dans Firestore
 
-**Option A : Via l'interface admin (recommandé)**
-1. Aller dans l'onglet "Produits"
-2. Cliquer sur un produit
-3. Sélectionner le dessin associé dans le menu déroulant
-4. Les changements sont sauvegardés automatiquement
-
-**Option B : Via le script de migration**
-```bash
-cd /home/mel/Website/NainVert
-node scripts/add-design-ids.js
-```
-
-Éditez le script pour mapper vos produits :
-```javascript
-const productToDesignMap = {
-  'tshirt-nain-vert': 'design-1',
-  'pull-nain-vert': 'design-1',
-  'tshirt-champignon': 'design-2',
-  'pull-champignon': 'design-2',
-}
-```
+Les designs doivent exister dans la collection `designs` :
+- Chaque design a automatiquement une sous-collection `stock` créée lors de sa création
+- Le stock est géré individuellement par design
+- Le système décrémente automatiquement lors du passage à "delivered"
 
 ### 3. S'assurer que les commandes incluent le designId
 
-Lors de la création d'une commande (checkout), le designId doit être copié du produit vers l'article :
+Lors de la création d'une commande (checkout), le designId est automatiquement copié depuis le design sélectionné :
 
 ```javascript
-// Dans votre processus de checkout
+// Dans le processus de checkout
 const cartItem = {
-  name: product.name,
-  quantity: 1,
-  size: selectedSize,
-  price: product.price,
-  total: product.price * quantity,
-  designId: product.designId  // ← Important !
+  id: `${design.id}-${garmentType}-${size}`,
+  designId: design.id,  // ← Important !
+  name: design.name,
+  slug: design.slug,
+  type: garmentType,
+  size: size,
+  quantity: quantity,
+  price: design.designPrice + garment.basePrice,
+  image: design.images[0]
 }
 ```
 
@@ -173,11 +184,11 @@ const cartItem = {
   - Unités vendues
   - Pourcentage global
 
-### Onglet Produits
+### Onglet Designs
 
-- **Colonne "Dessin"** dans le tableau
-- **Sélecteur de dessin** dans le modal de détail
-- Indicateur visuel (badge violet) si un dessin est associé
+- **Colonne "Stock"** dans le tableau des designs
+- **Indicateur visuel** du niveau de stock
+- Badge de statut par design (BON, FAIBLE, CRITIQUE, ÉPUISÉ)
 
 ## Sécurité
 
@@ -209,18 +220,18 @@ Lors d'une livraison, vous verrez :
 ### Le stock ne se décrémente pas
 
 **Vérifier :**
-1. Les produits ont-ils un `designId` ?
-2. Les articles de la commande ont-ils le `designId` copié ?
+1. Les designs existent-ils dans Firestore ?
+2. Les articles de la commande ont-ils le `designId` ?
 3. Le statut passe-t-il bien à "delivered" ?
 4. Consulter la console pour les erreurs
 
 **Console utile :**
 ```javascript
-// Vérifier un produit
-console.log(product.designId) // devrait afficher "design-1" ou "design-2"
+// Vérifier un article de commande
+console.log(order.items[0].designId) // devrait afficher l'ID du design (ex: "ftg")
 
-// Vérifier une commande
-console.log(order.items[0].designId) // devrait afficher le designId
+// Vérifier le stock d'un design
+// Dans Firestore: designs/{designId}/stock/{designId}
 ```
 
 ### Stock incorrect
@@ -233,5 +244,6 @@ console.log(order.items[0].designId) // devrait afficher le designId
 
 Pour toute question ou problème :
 - Consulter les logs dans la console navigateur
-- Vérifier Firestore : `settings/stock` et `products`
-- Tester avec une commande factice
+- Vérifier Firestore : `designs/{id}/stock` et `designs` collection
+- Vérifier que les commandes contiennent bien le `designId`
+- Tester avec une commande factice via `scripts/create-test-order.js`

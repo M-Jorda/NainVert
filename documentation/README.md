@@ -29,29 +29,41 @@ NainVert/
 │   │   ├── Footer.vue
 │   │   ├── Cart.vue
 │   │   ├── CartIcon.vue
-│   │   ├── ProductCard.vue
-│   │   ├── ProductGrid.vue
+│   │   ├── CheckoutModal.vue
 │   │   ├── EasterEggModal.vue
-│   │   └── admin/             # Composants admin
-│   │       ├── ProductsTab.vue
-│   │       ├── ContentTab.vue
-│   │       ├── OrdersTab.vue
-│   │       ├── RefundsTab.vue
-│   │       ├── StockTab.vue   # ✨ Gestion de stock
-│   │       └── SecurityTab.vue
+│   │   ├── SeedMessages.vue
+│   │   ├── admin/             # Composants admin
+│   │   │   ├── DesignsTab.vue
+│   │   │   ├── GarmentsTab.vue
+│   │   │   ├── MessagesTab.vue
+│   │   │   ├── OrdersTab.vue
+│   │   │   ├── SecurityTab.vue
+│   │   │   └── StockTab.vue
+│   │   └── shop/              # Composants boutique
+│   │       ├── DesignCard.vue
+│   │       └── SizeSelector.vue
 │   ├── pages/                 # Pages de l'application
 │   │   ├── Home.vue
-│   │   ├── Products.vue
-│   │   ├── ProductDetail.vue
+│   │   ├── Designs.vue
+│   │   ├── DesignDetail.vue
 │   │   ├── Contact.vue
-│   │   └── Admin.vue          # Panel admin Firebase
+│   │   ├── Admin.vue
+│   │   ├── Honeypot.vue
+│   │   ├── DevTools.vue
+│   │   ├── Shipping.vue
+│   │   ├── Returns.vue
+│   │   ├── Terms.vue
+│   │   ├── Legal.vue
+│   │   └── NotFound.vue
 │   ├── composables/           # Logique réutilisable
-│   │   ├── useProducts.js     # Gestion produits Firestore
-│   │   ├── useSiteContent.js  # Gestion contenu Firestore
-│   │   ├── useEasterEgg.js    # Easter eggs cachés
-│   │   ├── useOrders.js       # Gestion commandes
-│   │   ├── useRefunds.js      # Gestion remboursements
-│   │   └── useStock.js        # ✨ Gestion stock par dessin
+│   │   ├── useDesigns.js      # Gestion des designs
+│   │   ├── useGarments.js     # Gestion des types de vêtements
+│   │   ├── useGarmentTypes.js # Types de vêtements
+│   │   ├── useOrders.js       # Gestion des commandes
+│   │   ├── useStock.js        # Gestion stock par design
+│   │   ├── useCheckout.js     # Système de checkout
+│   │   ├── useEasterEgg.js    # Easter eggs
+│   │   └── useEasterEggsFirestore.js
 │   ├── stores/                # Stores Pinia
 │   │   ├── cart.js            # Panier (localStorage)
 │   │   └── admin.js           # Auth Firebase
@@ -65,13 +77,15 @@ NainVert/
 │   └── main.js
 ├── scripts/                    # Scripts utilitaires
 │   ├── importToFirestore.js   # Import données vers Firebase
-│   └── testFirestore.js       # Test connexion Firebase
+│   ├── testFirestore.js       # Test connexion Firebase
+│   └── create-test-order.js   # Créer commande de test
+├── documentation/              # Documentation projet
+├── firebase.json
+├── firestore.rules
+├── storage.rules
 ├── index.html
 ├── vite.config.js
-├── package.json
-├── FIREBASE_SETUP.md          # Guide setup Firebase
-├── MIGRATION_COMPLETE.md      # Guide migration & tests
-└── README.md
+└── package.json
 ```
 
 ## 🎨 Palette de Couleurs
@@ -111,12 +125,17 @@ NainVert/
 - [x] **Frontend moderne** avec Vue 3 + Tailwind CSS
 - [x] **Backend Firebase** (Firestore + Authentication)
 - [x] **Panel Admin** complet pour gérer :
-  - Produits (nom, prix, description, images, stock)
-  - Contenu du site (home, contact)
+  - Designs (nom, prix, description, images, tagline, story)
+  - Vêtements/Garments (types, tailles, prix de base, photos)
+  - Commandes (statuts, tracking, archivage)
+  - Stock (par design avec décrémentation automatique)
+  - Messages (formulaire de contact)
+  - Sécurité (logs honeypot, changement mot de passe)
 - [x] **Navigation responsive** avec menu mobile
 - [x] **Page d'accueil** avec hero et produits vedette
-- [x] **Catalogue** avec filtres (T-shirts / Pulls)
-- [x] **Page détail produit** avec galerie d'images
+- [x] **Catalogue designs** avec filtres par type de vêtement
+- [x] **Page détail design** avec galerie d'images
+- [x] **Système checkout** avec modal et création de commande
 - [x] **Panier** latéral avec gestion des quantités (localStorage)
 - [x] **Page de contact** avec formulaire
 - [x] **Easter eggs** cachés dans le site (10 citations)
@@ -135,24 +154,35 @@ NainVert/
 - [ ] Newsletter (intégration Mailchimp)
 - [ ] Analytics (Google Analytics / Firebase)
 
-## 🛍️ Produits
+## 🛍️ Système Produits
 
-Le site propose 4 produits :
+Le système fonctionne avec **designs + garments** :
 
-### T-Shirts
-1. **Neon Dreams T-Shirt** - 35€
-2. **Acid Wave T-Shirt** - 38€
-
-### Pulls
-3. **Electric Jungle Hoodie** - 75€
-4. **Cyber Trip Crewneck** - 65€
+- **Designs** : Les créations graphiques (illustrations, artworks)
+  - Prix du design (ex: 15€)
+  - Images, description, tagline, story
+  - Stock géré par design
+  
+- **Garments** : Les types de vêtements
+  - T-shirt : Prix de base 20€
+  - Hoodie : Prix de base 50€
+  - Tailles, matériaux, photos du vêtement seul
+  
+- **Prix final** = Design price + Garment base price
+- Le client choisit d'abord un design, puis le type de vêtement et la taille
 
 ## 🎯 Pages
 
-- **/** - Page d'accueil avec hero et lien Instagram
-- **/products** - Catalogue avec filtres
-- **/products/:slug** - Détail d'un produit
+- **/** - Page d'accueil avec hero et designs vedette
+- **/designs** - Catalogue des designs avec filtres
+- **/designs/:slug** - Détail d'un design avec choix de vêtement/taille
 - **/contact** - Formulaire de contact
+- **/rho** - Panel d'administration (protégé)
+- **/admin** - Honeypot (faux admin qui log les intrusions)
+- **/shipping** - Informations livraison
+- **/returns** - Politique de retours
+- **/terms** - Conditions générales
+- **/legal** - Mentions légales
 
 ## 🔧 Configuration Firebase
 
@@ -174,15 +204,15 @@ Le site propose 4 produits :
 
 ### Panel Admin
 
-- **URL** : `/admin`
+- **URL** : `/rho` (le vrai admin, `/admin` est un honeypot)
 - **Connexion** : Email + mot de passe Firebase
 - **Fonctionnalités** :
-  - **Produits** : Modifier nom, prix, description, images, stock, dessin associé
-  - **Contenu** : Modifier le contenu du site (home, contact)
-  - **Commandes** : Gérer les commandes, changer statuts, ajouter tracking
-  - **Remboursements** : Traiter les demandes de remboursement
-  - **Stock** : ✨ Gestion automatique du stock par dessin (voir ci-dessous)
-  - **Sécurité** : Changer mot de passe, voir logs honeypot
+  - **Designs** : CRUD complet, upload images Cloudinary, featured, archived
+  - **Vêtements** : CRUD types de vêtements (T-shirt, Hoodie), prix base, tailles, photos
+  - **Commandes** : Gestion statuts, tracking, notes, archivage, recherche
+  - **Stock** : Gestion automatique par design, décrémentation à la livraison
+  - **Messages** : Messages du formulaire de contact
+  - **Sécurité** : Logs honeypot, changement mot de passe, anti-bruteforce
   - Tout est sauvegardé automatiquement dans Firestore
 
 ### 📦 Système de Gestion de Stock (NOUVEAU)
@@ -195,9 +225,10 @@ Le stock se gère **par dessin** et non par produit individuel :
 - **Interface visuelle** : barres de progression, badges de statut, alertes
 
 **Configuration :**
-1. Aller dans l'onglet "Produits" de l'admin
-2. Associer chaque produit à un dessin (design-1 ou design-2)
-3. Le stock se décrémentera automatiquement lors des livraisons
+1. Les designs ont automatiquement un stock dans Firestore
+2. Le système décrémente automatiquement lors du passage à "delivered"
+3. Suivi en temps réel via Firestore listeners
+4. Interface visuelle dans l'onglet Stock de l'admin
 
 **Documentation complète** : Voir `STOCK_SYSTEM.md`
 

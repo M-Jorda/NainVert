@@ -1,0 +1,645 @@
+================================================================================
+                        🌿 NAINVERT - DOCUMENTATION TECHNIQUE
+                         Architecture & Cahier des Charges
+                    Site E-commerce Streetwear Psychédélique
+================================================================================
+
+================================================================================
+1. VUE D'ENSEMBLE DU PROJET
+================================================================================
+
+1.1 Description
+-------------------------------------------------------------------------------
+NainVert est un site e-commerce moderne dédié à la vente de vêtements 
+streetwear psychédéliques. Le projet combine une esthétique futuriste 
+(noir & vert néon) avec une architecture technique robuste basée sur 
+Vue.js et Firebase.
+
+1.2 Objectifs
+-------------------------------------------------------------------------------
+• Offrir une expérience utilisateur fluide et immersive
+• Permettre la gestion complète des produits, commandes et stocks
+• Assurer la sécurité des données et des accès administrateur
+• Proposer un design distinctif et mémorable
+• Garantir des performances optimales et un SEO efficace
+
+
+================================================================================
+2. STACK TECHNIQUE
+================================================================================
+
+2.1 Technologies Frontend
+-------------------------------------------------------------------------------
+┌─────────────────┬──────────┬─────────────────────────────────────────────┐
+│ Technologie     │ Version  │ Rôle                                        │
+├─────────────────┼──────────┼─────────────────────────────────────────────┤
+│ Vue.js          │ 3.4.21   │ Framework JavaScript (Composition API)      │
+│ Vite            │ 7.1.12   │ Build tool ultra-rapide                     │
+│ Vue Router      │ 4.3.0    │ Routing SPA                                 │
+│ Pinia           │ 2.1.7    │ State management moderne                    │
+│ Tailwind CSS    │ 4.1.16   │ Framework CSS utility-first                 │
+└─────────────────┴──────────┴─────────────────────────────────────────────┘
+
+2.2 Technologies Backend
+-------------------------------------------------------------------------------
+┌─────────────────────────┬───────────────────────────────────────────────┐
+│ Service                 │ Usage                                         │
+├─────────────────────────┼───────────────────────────────────────────────┤
+│ Firebase Firestore      │ Base de données NoSQL temps réel              │
+│ Firebase Authentication │ Authentification admin (Email/Password)       │
+│ Firebase Hosting        │ Hébergement statique (prévu)                  │
+└─────────────────────────┴───────────────────────────────────────────────┘
+
+
+================================================================================
+3. ARCHITECTURE DU PROJET
+================================================================================
+
+3.1 Structure des dossiers
+-------------------------------------------------------------------------------
+NainVert/
+├── public/                     # Fichiers statiques
+│   ├── products/              # Images produits
+│   ├── favicon.svg
+│   ├── manifest.json
+│   ├── robots.txt
+│   └── sitemap.xml
+├── src/
+│   ├── components/            # Composants réutilisables
+│   │   ├── Header.vue
+│   │   ├── Footer.vue
+│   │   ├── Cart.vue
+│   │   ├── CartIcon.vue
+│   │   ├── ProductCard.vue
+│   │   ├── ProductGrid.vue
+│   │   ├── EasterEggModal.vue
+│   │   └── admin/             # Composants admin
+│   │       ├── ProductsTab.vue
+│   │       ├── ContentTab.vue
+│   │       ├── OrdersTab.vue
+│   │       ├── RefundsTab.vue
+│   │       ├── StockTab.vue
+│   │       └── SecurityTab.vue
+│   ├── pages/                 # Pages de l'application
+│   │   ├── Home.vue
+│   │   ├── Products.vue
+│   │   ├── ProductDetail.vue
+│   │   ├── Contact.vue
+│   │   ├── Admin.vue
+│   │   ├── Honeypot.vue
+│   │   ├── Shipping.vue
+│   │   ├── Returns.vue
+│   │   ├── Terms.vue
+│   │   ├── Legal.vue
+│   │   └── NotFound.vue
+│   ├── composables/           # Logique réutilisable
+│   │   ├── useProducts.js
+│   │   ├── useSiteContent.js
+│   │   ├── useOrders.js
+│   │   ├── useRefunds.js
+│   │   ├── useStock.js
+│   │   ├── useCheckout.js
+│   │   └── useEasterEgg.js
+│   ├── stores/                # Stores Pinia
+│   │   ├── cart.js
+│   │   └── admin.js
+│   ├── config/
+│   │   └── firebase.js
+│   ├── router/
+│   │   └── index.js
+│   ├── styles/
+│   │   └── main.css
+│   ├── App.vue
+│   └── main.js
+├── scripts/                   # Scripts utilitaires
+│   ├── importToFirestore.js
+│   ├── testFirestore.js
+│   ├── create-test-order.js
+│   └── add-design-ids.js
+├── firestore.rules
+├── package.json
+└── vite.config.js
+
+3.2 Composables (Logique métier)
+-------------------------------------------------------------------------------
+┌────────────────────┬────────────────────────────────────────────────────────┐
+│ Composable         │ Responsabilité                                         │
+├────────────────────┼────────────────────────────────────────────────────────┤
+│ useProducts.js     │ Chargement, mise à jour et filtrage des produits       │
+│ useSiteContent.js  │ Gestion du contenu éditable (home, contact, footer)    │
+│ useOrders.js       │ Gestion des commandes, statuts, tracking et notes      │
+│ useRefunds.js      │ Traitement des demandes de remboursement               │
+│ useStock.js        │ Gestion du stock par dessin, décrémentation auto       │
+│ useCheckout.js     │ Création de commandes depuis le panier                 │
+│ useEasterEgg.js    │ Gestion des easter eggs cachés                         │
+└────────────────────┴────────────────────────────────────────────────────────┘
+
+3.3 Stores Pinia
+-------------------------------------------------------------------------------
+• cart.js   : Gestion du panier client avec persistance localStorage
+• admin.js  : Authentification Firebase, session et changement mot de passe
+
+
+================================================================================
+4. BASE DE DONNÉES (FIRESTORE)
+================================================================================
+
+4.1 Collections principales
+-------------------------------------------------------------------------------
+
+COLLECTION: products
+{
+  "id": "tshirt-neon-dreams",
+  "name": "T-Shirt Neon Dreams",
+  "slug": "tshirt-neon-dreams",
+  "price": 35,
+  "type": "tshirt",
+  "designId": "design-1",
+  "description": "...",
+  "images": ["url1", "url2", "url3"],
+  "sizes": ["S", "M", "L", "XL", "XXL"],
+  "inStock": true,
+  "featured": true,
+  "details": {
+    "material": "100% Coton bio",
+    "weight": "180g/m²",
+    "fit": "Coupe régulière",
+    "care": "Lavage machine 30°C"
+  }
+}
+
+COLLECTION: orders
+{
+  "orderNumber": "NV-20251106-12345",
+  "status": "pending",
+  "items": [
+    {
+      "id": "prod-123",
+      "name": "T-Shirt Psychédélique",
+      "designId": "design-1",
+      "price": 35,
+      "size": "M",
+      "quantity": 2
+    }
+  ],
+  "customer": {
+    "name": "Jean Dupont",
+    "email": "jean@email.com",
+    "phone": "0612345678",
+    "address": {
+      "street": "123 rue de la Paix",
+      "postalCode": "75001",
+      "city": "Paris",
+      "country": "France"
+    }
+  },
+  "subtotal": 70,
+  "shipping": 0,
+  "total": 70,
+  "createdAt": Timestamp,
+  "updatedAt": Timestamp
+}
+
+COLLECTION: settings/stock
+{
+  "designs": [
+    {
+      "id": "design-1",
+      "name": "Dessin 1",
+      "totalUnits": 100,
+      "remainingUnits": 85,
+      "products": []
+    },
+    {
+      "id": "design-2",
+      "name": "Dessin 2",
+      "totalUnits": 100,
+      "remainingUnits": 92,
+      "products": []
+    }
+  ],
+  "lastUpdated": Timestamp
+}
+
+COLLECTION: siteContent/global
+{
+  "home": {
+    "title": "...",
+    "subtitle": "...",
+    "cta": "..."
+  },
+  "contact": {
+    "title": "...",
+    "subtitle": "...",
+    "email": "...",
+    "instagram": "...",
+    "hours": "..."
+  },
+  "footer": {
+    "tagline": "..."
+  }
+}
+
+COLLECTION: messages (formulaire contact)
+{
+  "name": "...",
+  "email": "...",
+  "subject": "...",
+  "message": "...",
+  "timestamp": Timestamp,
+  "status": "unread"
+}
+
+COLLECTION: honeypot_logs
+{
+  "email": "...",
+  "passwordStart": "...",
+  "timestamp": Timestamp,
+  "userAgent": "...",
+  "attemptNumber": 1
+}
+
+4.2 Statuts de commande
+-------------------------------------------------------------------------------
+┌────────────┬────────────────────────────────────────┬───────────────────────┐
+│ Statut     │ Description                            │ Action stock          │
+├────────────┼────────────────────────────────────────┼───────────────────────┤
+│ pending    │ Commande créée, en attente de paiement │ Aucune                │
+│ paid       │ Paiement reçu et validé                │ Aucune                │
+│ shipped    │ Commande expédiée avec tracking        │ Aucune                │
+│ delivered  │ Commande livrée au client              │ Décrémentation auto   │
+│ cancelled  │ Commande annulée                       │ Remise possible       │
+└────────────┴────────────────────────────────────────┴───────────────────────┘
+
+
+================================================================================
+5. SYSTÈME DE GESTION DE STOCK
+================================================================================
+
+5.1 Principe
+-------------------------------------------------------------------------------
+Le stock est géré PAR DESSIN et non par produit individuel. Un dessin peut 
+être utilisé sur plusieurs produits (T-shirt, Pull, etc.). Chaque dessin 
+dispose de 100 unités qui sont décrémentées automatiquement lors de la 
+livraison d'une commande.
+
+5.2 Flux automatique
+-------------------------------------------------------------------------------
+1. L'admin change le statut d'une commande à "delivered"
+2. useOrders.updateOrderStatus() détecte le changement
+3. Si nouveau statut = "delivered", appel à decrementStockForDeliveredOrder()
+4. Pour chaque article avec un designId, décrémentation du remainingUnits
+5. Mise à jour en temps réel via Firestore onSnapshot
+
+5.3 Association produit ↔ dessin
+-------------------------------------------------------------------------------
+Chaque produit doit avoir un champ "designId" qui référence l'identifiant 
+du dessin (ex: "design-1", "design-2"). Cette association se fait dans 
+l'onglet Produits de l'admin.
+
+5.4 Interface admin
+-------------------------------------------------------------------------------
+• Visualisation du stock par dessin avec barres de progression
+• Badges de statut (OK, Alerte, Critique, Rupture)
+• Actions rapides (+1, -1, +10, -10, etc.)
+• Ajustement manuel du stock
+• Modification du nom des dessins
+
+
+================================================================================
+6. SÉCURITÉ
+================================================================================
+
+6.1 Routes protégées
+-------------------------------------------------------------------------------
+┌──────────┬────────────────────────────────────────────────┬─────────────────┐
+│ Route    │ Description                                    │ Protection      │
+├──────────┼────────────────────────────────────────────────┼─────────────────┤
+│ /admin   │ Honeypot - Faux admin qui log les intrusions   │ Tarpit + Logs   │
+│ /rho     │ Vrai panel d'administration                    │ Firebase Auth   │
+└──────────┴────────────────────────────────────────────────┴─────────────────┘
+
+6.2 Honeypot
+-------------------------------------------------------------------------------
+Le honeypot est un système de sécurité qui :
+• Capture les tentatives d'intrusion sur /admin (fausse page)
+• Protège le vrai admin accessible sur /rho
+• Log toutes les tentatives dans Firebase Firestore
+• Fait perdre du temps aux bots avec des délais artificiels
+
+Fonctionnalités :
+• Interface identique au vrai admin pour tromper les bots
+• Délais artificiels de 5-10 secondes par tentative (tarpit)
+• Messages d'erreur aléatoires
+• Logging complet dans Firestore (honeypot_logs)
+• Faux succès occasionnels créant des boucles infinies
+
+6.3 Règles Firestore
+-------------------------------------------------------------------------------
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Lecture publique, écriture admin seulement
+    match /products/{productId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+    
+    match /siteContent/{contentId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+    
+    // Honeypot: écriture publique, lecture admin
+    match /honeypot_logs/{logId} {
+      allow create: if true;
+      allow read, delete: if request.auth != null;
+    }
+    
+    // Commandes: création publique, gestion admin
+    match /orders/{orderId} {
+      allow create: if true;
+      allow read, update, delete: if request.auth != null;
+    }
+    
+    // Messages contact: création publique, lecture admin
+    match /messages/{messageId} {
+      allow create: if true;
+      allow read, update, delete: if request.auth != null;
+    }
+  }
+}
+
+6.4 Protection anti-bruteforce
+-------------------------------------------------------------------------------
+• Captcha mathématique après 2 tentatives échouées
+• Blocage 30 secondes après 3 tentatives
+• Blocage 5 minutes après 6 tentatives
+• Blocage 30 minutes après 10 tentatives
+• Stockage des tentatives en localStorage
+
+
+================================================================================
+7. CHARTE GRAPHIQUE
+================================================================================
+
+7.1 Palette de couleurs
+-------------------------------------------------------------------------------
+┌───────────────────┬───────────┬────────────────────────────────────────────┐
+│ Nom               │ Code      │ Usage                                      │
+├───────────────────┼───────────┼────────────────────────────────────────────┤
+│ Noir profond      │ #0a0a0a   │ Fond principal                             │
+│ Noir clair        │ #1a1a1a   │ Cartes, sections                           │
+│ Noir plus clair   │ #2a2a2a   │ Bordures, inputs                           │
+│ Vert néon         │ #39FF14   │ Couleur primaire, CTA, prix                │
+│ Vert cyan         │ #00FF88   │ Couleur secondaire, hover                  │
+│ Vert lime         │ #B0FF00   │ Accents, badges                            │
+│ Vert foncé        │ #0d4d0d   │ Subtil                                     │
+│ Texte principal   │ #ffffff   │ Titres, texte important                    │
+│ Texte secondaire  │ #b0b0b0   │ Descriptions                               │
+│ Texte muted       │ #666666   │ Labels, métadonnées                        │
+└───────────────────┴───────────┴────────────────────────────────────────────┘
+
+7.2 Typographie
+-------------------------------------------------------------------------------
+Police principale : Montserrat (Google Fonts)
+
+Hiérarchie :
+• H1 Hero    : 6rem (responsive), poids 900
+• H1 Page    : 4rem (responsive), poids 900
+• H2         : 3rem (responsive), poids 800
+• H3         : 2rem (responsive), poids 700
+• Body       : 1rem (16px), poids 400
+• Boutons    : 1rem, poids 600, uppercase
+
+Styles spéciaux :
+• .text-gradient : Dégradé vert néon → cyan
+• .neon-text     : Effet glow vert néon
+
+7.3 Breakpoints responsive
+-------------------------------------------------------------------------------
+• Mobile   : < 768px    (1 colonne, menu hamburger)
+• Tablette : 768-1024px (2 colonnes, navigation simplifiée)
+• Desktop  : > 1024px   (3-4 colonnes, navigation complète)
+
+7.4 Composants visuels
+-------------------------------------------------------------------------------
+Boutons :
+• btn-primary   : Gradient vert néon, box-shadow glow
+• btn-secondary : Border vert néon, fond transparent
+• btn-ghost     : Border grise, minimal
+
+Cards :
+• Background: --black-light
+• Border: --black-lighter
+• Border radius: 12px
+• Hover: translateY(-5px) + border neon
+
+Inputs :
+• Background: --black-lighter
+• Border: 2px solid (même couleur que bg)
+• Focus: Border --neon-green + glow subtil
+
+7.5 Animations
+-------------------------------------------------------------------------------
+• Transitions : 0.3s ease (standard)
+• Hover cards : translateY(-8px) + border neon
+• Glow        : Animation keyframes 2s infinite
+• Float       : Animation 20s infinite (cercles hero)
+
+
+================================================================================
+8. ROUTES DE L'APPLICATION
+================================================================================
+
+┌──────────────────┬────────────────────────────────────────┬──────────────────┐
+│ URL              │ Description                            │ Composant        │
+├──────────────────┼────────────────────────────────────────┼──────────────────┤
+│ /                │ Page d'accueil avec hero               │ Home.vue         │
+│ /products        │ Catalogue avec filtres                 │ Products.vue     │
+│ /products/:slug  │ Détail produit avec galerie            │ ProductDetail.vue│
+│ /contact         │ Formulaire de contact                  │ Contact.vue      │
+│ /shipping        │ Informations livraison                 │ Shipping.vue     │
+│ /returns         │ Politique de retours                   │ Returns.vue      │
+│ /terms           │ Conditions générales de vente          │ Terms.vue        │
+│ /legal           │ Mentions légales et RGPD               │ Legal.vue        │
+│ /rho             │ Panel d'administration (protégé)       │ Admin.vue        │
+│ /admin           │ Honeypot (faux admin)                  │ Honeypot.vue     │
+│ /dev-tools       │ Outils développeur                     │ DevTools.vue     │
+│ /*               │ Page 404                               │ NotFound.vue     │
+└──────────────────┴────────────────────────────────────────┴──────────────────┘
+
+
+================================================================================
+9. FONCTIONNALITÉS IMPLÉMENTÉES
+================================================================================
+
+9.1 Frontend
+-------------------------------------------------------------------------------
+✅ Navigation responsive avec menu mobile
+✅ Page d'accueil avec hero et produits vedette
+✅ Catalogue avec filtres par type de produit (T-shirts / Pulls)
+✅ Page détail produit avec galerie d'images
+✅ Panier latéral avec gestion des quantités
+✅ Persistance du panier en localStorage
+✅ Formulaire de contact avec honeypot anti-spam
+✅ Easter eggs cachés (10 citations)
+✅ Animations et transitions fluides
+✅ Design futuriste noir & vert néon
+✅ SEO optimisé (meta tags, sitemap, robots.txt)
+
+9.2 Panel Admin (/rho)
+-------------------------------------------------------------------------------
+✅ Authentification Firebase (email/password)
+✅ Onglet Produits : Modification nom, prix, description, images, designId
+✅ Onglet Contenu  : Édition home, contact, footer
+✅ Onglet Commandes : Gestion statuts, tracking, notes
+✅ Onglet Remboursements : Traitement des demandes
+✅ Onglet Stock : Gestion visuelle par dessin avec barres de progression
+✅ Onglet Sécurité : Logs honeypot, changement de mot de passe
+✅ Protection anti-bruteforce avec captcha
+
+9.3 Système de Checkout
+-------------------------------------------------------------------------------
+✅ Modal de checkout avec formulaire
+✅ Validation des données client
+✅ Génération automatique de numéro de commande (NV-YYYYMMDD-XXXXX)
+✅ Sauvegarde en base de données Firestore
+✅ Association produit ↔ design via designId
+✅ Vidage automatique du panier après succès
+✅ Feedback visuel (loading, erreurs, succès)
+
+9.4 Gestion du Stock
+-------------------------------------------------------------------------------
+✅ Stock par dessin (pas par produit)
+✅ 2 dessins avec 100 unités chacun
+✅ Décrémentation automatique à la livraison
+✅ Interface admin visuelle (barres, badges, alertes)
+✅ Temps réel via Firestore listeners
+
+
+================================================================================
+10. PROCHAINES ÉTAPES (TODO)
+================================================================================
+
+10.1 Priorité 1 - Mise en ligne
+-------------------------------------------------------------------------------
+□ Remplacer les images placeholder par de vraies photos (WebP, 800x1000px)
+□ Intégration paiement Stripe/PayPal
+□ Configuration emails transactionnels (SendGrid)
+□ Associer tous les produits à un dessin
+□ Tester le système de stock complet
+□ Configurer Firebase Hosting ou Vercel
+
+10.2 Priorité 2 - Amélioration UX
+-------------------------------------------------------------------------------
+□ Modal de confirmation "Ajouté au panier"
+□ Animation d'ajout au panier
+□ Codes promo / réductions
+□ Barre de recherche avec suggestions
+□ Modal Quick View produit
+□ Wishlist / Favoris
+
+10.3 Priorité 3 - Marketing & Analytics
+-------------------------------------------------------------------------------
+□ Google Analytics 4
+□ Facebook Pixel
+□ Newsletter (Mailchimp / Brevo)
+□ Schema.org pour SEO produits (JSON-LD)
+□ Open Graph images optimisées
+□ Google Search Console
+
+10.4 Priorité 4 - Fonctionnalités avancées
+-------------------------------------------------------------------------------
+□ Comptes clients avec Firebase Auth
+□ Page profil et historique commandes
+□ Système d'avis et notations
+□ Photos clients (UGC)
+□ Alertes email quand stock < 10 unités
+□ Pré-commandes pour produits en rupture
+□ Multi-langue (i18n FR/EN)
+□ PWA avec Service Worker
+
+10.5 Priorité 5 - Administration
+-------------------------------------------------------------------------------
+□ Interface admin séparée
+□ Statistiques ventes dashboard
+□ Intégration Mondial Relay / Colissimo
+□ Calcul frais de port automatique
+
+
+================================================================================
+11. DÉPLOIEMENT
+================================================================================
+
+11.1 Options d'hébergement recommandées
+-------------------------------------------------------------------------------
+1. Vercel         - Gratuit, simple, excellent pour Vue
+2. Netlify        - Gratuit, CI/CD facile
+3. Firebase Hosting - Gratuit jusqu'à 10GB, même écosystème
+4. AWS Amplify    - Plus complexe, scalable
+
+11.2 Configuration build
+-------------------------------------------------------------------------------
+• Build command      : npm run build
+• Publish directory  : dist
+• Node version       : 18+
+
+11.3 Variables d'environnement (.env)
+-------------------------------------------------------------------------------
+VITE_FIREBASE_API_KEY=xxx
+VITE_FIREBASE_AUTH_DOMAIN=xxx
+VITE_FIREBASE_PROJECT_ID=xxx
+VITE_FIREBASE_STORAGE_BUCKET=xxx
+VITE_FIREBASE_MESSAGING_SENDER_ID=xxx
+VITE_FIREBASE_APP_ID=xxx
+VITE_STRIPE_PUBLIC_KEY=pk_test_xxx (à venir)
+
+11.4 Commandes utiles
+-------------------------------------------------------------------------------
+npm install          # Installer les dépendances
+npm run dev          # Serveur de développement (localhost:3000)
+npm run build        # Build production
+npm run preview      # Prévisualiser le build
+vercel --prod        # Déployer sur Vercel
+firebase deploy      # Déployer sur Firebase Hosting
+
+11.5 Budget estimé (mensuel)
+-------------------------------------------------------------------------------
+• Domaine             : ~10€/an
+• Hébergement         : 0€ (Vercel/Netlify/Firebase gratuit)
+• Stripe              : 1.4% + 0.25€ par transaction
+• SendGrid            : 0€ (jusqu'à 100 emails/jour)
+• Firebase            : 0€ (plan gratuit généreux)
+• TOTAL démarrage     : ~15€ + frais transaction
+
+
+================================================================================
+12. RESSOURCES & DOCUMENTATION
+================================================================================
+
+Documentation officielle :
+• Vue 3          : https://vuejs.org/guide/
+• Vite           : https://vitejs.dev/guide/
+• Pinia          : https://pinia.vuejs.org/
+• Vue Router     : https://router.vuejs.org/
+• Tailwind CSS   : https://tailwindcss.com/docs
+• Firebase       : https://firebase.google.com/docs
+
+Documentation projet :
+• README.md              - Vue d'ensemble et installation
+• FIREBASE_SETUP.md      - Guide setup Firebase complet
+• MIGRATION_COMPLETE.md  - Guide de test et dépannage
+• HONEYPOT_SETUP.md      - Configuration du honeypot
+• STOCK_SYSTEM.md        - Documentation système de stock
+• STOCK_QUICKSTART.md    - Guide rapide stock
+• DESIGN_GUIDE.md        - Charte graphique complète
+• TODO.md                - Liste des tâches à faire
+
+
+================================================================================
+                              ─────────────────────
+                    Document généré le 30 décembre 2025
+                    NainVert © 2025 - Tous droits réservés
+================================================================================

@@ -55,22 +55,48 @@ const firebaseConfig = {
 
 ## Étape 6 : Créer les collections Firestore
 
-### Collection `products`
+### Collection `designs`
 1. Clique sur **"Commencer une collection"**
-2. Nomme-la **`products`**
-3. Ajoute un document avec ID auto
+2. Nomme-la **`designs`**
+3. Ajoute un document avec ID personnalisé (ex: "design-1")
 4. Structure:
 ```json
 {
-  "id": "string (ex: huile-argan)",
-  "name": "string (ex: Huile d'Argan Bio)",
-  "price": "number (ex: 15.99)",
-  "image": "string (URL)",
-  "category": "string (ex: Soins)",
-  "description": "string (texte long)",
-  "slug": "string (ex: huile-argan)"
+  "id": "string (ex: design-1)",
+  "name": "string (ex: Psychedelic Dream)",
+  "slug": "string (ex: psychedelic-dream)",
+  "designPrice": "number (ex: 15)",
+  "tagline": "string (accroche courte)",
+  "description": "string (description longue)",
+  "story": "string (histoire du design)",
+  "images": "array (URLs Cloudinary)",
+  "featured": "boolean (mis en avant ?)",
+  "inStock": "boolean (disponible ?)",
+  "archived": "boolean (archivé ?)",
+  "createdAt": "timestamp"
 }
 ```
+
+### Collection `garments`
+1. Crée une nouvelle collection **`garments`**
+2. Crée un document avec l'ID **`tshirt`**
+3. Structure:
+```json
+{
+  "type": "tshirt",
+  "basePrice": 20,
+  "sizes": ["XS", "S", "M", "L", "XL", "XXL", "XXXL"],
+  "photos": ["url1", "url2"],
+  "details": {
+    "material": "100% coton",
+    "weight": "185 m/g²",
+    "fit": "Coupe classique unisexe",
+    "care": "Lavage machine 30°C"
+  },
+  "createdAt": "timestamp"
+}
+```
+4. Répète pour **`hoodie`** avec `basePrice: 50`
 
 ### Collection `siteContent`
 1. Crée une nouvelle collection **`siteContent`**
@@ -98,11 +124,13 @@ const firebaseConfig = {
 
 ## Étape 7 : Importer les données existantes
 
-Tu peux importer tes données actuelles depuis `src/data/products.js` manuellement ou avec un script.
+Tu peux utiliser le script d'import fourni :
 
-**Option manuelle**: Copie-colle chaque produit dans Firestore (fastidieux mais sûr)
+```bash
+node scripts/importToFirestore.js
+```
 
-**Option script** (plus rapide): Je peux créer un script d'import si tu veux.
+Ou importer manuellement via l'interface Firestore.
 
 ## Étape 8 : Configurer les règles de sécurité Firestore
 
@@ -114,19 +142,51 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // Règles pour les produits
-    match /products/{productId} {
-      // Lecture publique
+    // Règles pour les designs
+    match /designs/{designId} {
       allow read: if true;
-      // Écriture uniquement pour les utilisateurs authentifiés
+      allow write: if request.auth != null;
+      
+      // Sous-collection stock
+      match /stock/{stockId} {
+        allow read: if true;
+        allow write: if request.auth != null;
+      }
+    }
+    
+    // Règles pour les types de vêtements
+    match /garments/{garmentId} {
+      allow read: if true;
       allow write: if request.auth != null;
     }
     
     // Règles pour le contenu du site
     match /siteContent/{document} {
-      // Lecture publique
       allow read: if true;
-      // Écriture uniquement pour les utilisateurs authentifiés
+      allow write: if request.auth != null;
+    }
+    
+    // Règles pour les commandes
+    match /orders/{orderId} {
+      allow create: if true;  // Clients peuvent créer
+      allow read, update, delete: if request.auth != null;  // Admin gère
+    }
+    
+    // Règles pour les messages contact
+    match /messages/{messageId} {
+      allow create: if true;
+      allow read, update, delete: if request.auth != null;
+    }
+    
+    // Règles pour honeypot logs
+    match /honeypot_logs/{logId} {
+      allow create: if true;
+      allow read, delete: if request.auth != null;
+    }
+    
+    // Règles pour les settings
+    match /settings/{settingId} {
+      allow read: if true;
       allow write: if request.auth != null;
     }
   }
@@ -153,7 +213,8 @@ Une fois que tu as tout configuré, dis-moi et je mettrai à jour le code pour u
 - [ ] Authentication Email/Password activée
 - [ ] Utilisateur admin créé
 - [ ] Firestore activé
-- [ ] Collections `products` et `siteContent` créées
+- [ ] Collections `designs`, `garments` et `siteContent` créées
 - [ ] Règles de sécurité configurées
+- [ ] Données importées (designs, garments)
 
-**Quand tu auras fait tout ça, dis-moi et je coderai la migration du code Vue ! 🚀**
+**Le site est maintenant prêt à fonctionner ! 🚀**

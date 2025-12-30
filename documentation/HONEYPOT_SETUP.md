@@ -48,7 +48,17 @@ service cloud.firestore {
     }
     
     // Vos autres règles existantes...
-    match /products/{productId} {
+    match /designs/{designId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+      
+      match /stock/{stockId} {
+        allow read: if true;
+        allow write: if request.auth != null;
+      }
+    }
+    
+    match /garments/{garmentId} {
       allow read: if true;
       allow write: if request.auth != null;
     }
