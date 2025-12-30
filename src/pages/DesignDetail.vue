@@ -29,14 +29,14 @@
         <div class="flex flex-col items-center justify-center gap-3">
           <!-- Image principale avec effet loupe suivant la souris -->
           <div 
-            class="w-[60%] aspect-square rounded-lg border-2 border-[rgba(57,255,20,0.2)] relative overflow-hidden"
+            class="w-[60%] aspect-square rounded-lg border-2 border-[rgba(57,255,20,0.2)] relative overflow-hidden bg-[var(--color-black-light)] p-4"
             @mousemove="handleMouseMove"
             @mouseleave="resetZoom"
           >
             <img 
               :src="mainImage" 
               :alt="design.name"
-              class="w-full h-full object-cover cursor-zoom-in"
+              class="w-full h-full object-contain cursor-zoom-in rounded-lg"
               :style="zoomStyle"
               ref="zoomImage"
             >
@@ -49,13 +49,13 @@
               :key="index"
               @click="selectedImageIndex = index"
               :class="[
-                'w-16 h-16 rounded border-2 overflow-hidden transition-all',
+                'w-16 h-16 rounded border-2 overflow-hidden transition-all bg-[var(--color-black-light)] p-1',
                 selectedImageIndex === index 
                   ? 'border-[var(--color-neon-green)]' 
                   : 'border-[rgba(57,255,20,0.2)] hover:border-[var(--color-neon-green)]'
               ]"
             >
-              <img :src="img" :alt="`Photo ${index + 1}`" class="w-full h-full object-cover">
+              <img :src="img" :alt="`Photo ${index + 1}`" class="w-full h-full object-contain rounded">
             </button>
           </div>
         </div>

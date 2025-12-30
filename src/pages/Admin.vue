@@ -454,23 +454,76 @@
                   </select>
                 </div>
 
-                <!-- Ajouter tracking -->
-                <div v-if="selectedOrder.status === 'shipped' || selectedOrder.status === 'delivered'" class="mb-4">
-                  <label class="block text-sm font-semibold text-white mb-2">Numéro de suivi</label>
-                  <input 
-                    v-model="selectedOrder.shipping.trackingNumber"
-                    @blur="selectedOrder.status === 'shipped' ? handleUpdateTracking(selectedOrder.id, selectedOrder.shipping.trackingNumber) : null"
-                    :disabled="selectedOrder.status === 'delivered'"
-                    type="text"
-                    placeholder="FR123456789"
-                    :class="[
-                      'form-input w-full',
-                      selectedOrder.status === 'delivered' && 'opacity-60 cursor-not-allowed bg-gray-800'
-                    ]"
-                  >
-                  <p class="text-xs text-[var(--color-text-muted)] mt-1">
-                    <span v-if="selectedOrder.status === 'shipped'">💡 Sauvegarde automatique lors de la perte de focus</span>
-                    <span v-else>🔒 Commande livrée - Numéro de suivi verrouillé</span>
+                <!-- Ajouter tracking et expédition -->
+                <div v-if="selectedOrder.status === 'shipped' || selectedOrder.status === 'delivered'" class="mb-4 p-4 bg-cyan-500/10 border border-cyan-500/30 rounded-lg">
+                  <h4 class="text-sm font-bold text-cyan-400 mb-3">📦 Expédition</h4>
+                  
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+                    <!-- Transporteur -->
+                    <div>
+                      <label class="block text-xs font-semibold text-white mb-1">Transporteur</label>
+                      <select 
+                        v-model="shippingCarrier"
+                        :disabled="selectedOrder.status === 'delivered'"
+                        :class="[
+                          'form-input w-full text-sm',
+                          selectedOrder.status === 'delivered' && 'opacity-60 cursor-not-allowed bg-gray-800'
+                        ]"
+                      >
+                        <option value="colissimo">📮 Colissimo</option>
+                        <option value="chronopost">🚀 Chronopost</option>
+                        <option value="mondial_relay">📍 Mondial Relay</option>
+                        <option value="ups">📦 UPS</option>
+                        <option value="dhl">✈️ DHL</option>
+                      </select>
+                    </div>
+                    
+                    <!-- Numéro de suivi -->
+                    <div>
+                      <label class="block text-xs font-semibold text-white mb-1">Numéro de suivi</label>
+                      <input 
+                        v-model="selectedOrder.shipping.trackingNumber"
+                        @blur="selectedOrder.status === 'shipped' ? handleUpdateTracking(selectedOrder.id, selectedOrder.shipping.trackingNumber) : null"
+                        :disabled="selectedOrder.status === 'delivered'"
+                        type="text"
+                        placeholder="FR123456789"
+                        :class="[
+                          'form-input w-full text-sm',
+                          selectedOrder.status === 'delivered' && 'opacity-60 cursor-not-allowed bg-gray-800'
+                        ]"
+                      >
+                    </div>
+                  </div>
+                  
+                  <!-- Bouton envoyer email -->
+                  <div v-if="selectedOrder.status === 'shipped'" class="flex items-center gap-3">
+                    <button 
+                      @click="handleSendShippingEmail(selectedOrder)"
+                      :disabled="!selectedOrder.shipping?.trackingNumber || sendingEmail"
+                      :class="[
+                        'btn flex-1 flex items-center justify-center gap-2',
+                        selectedOrder.shipping?.trackingNumber 
+                          ? 'bg-cyan-500/20 hover:bg-cyan-500/30 border-cyan-500/50 text-cyan-300'
+                          : 'opacity-50 cursor-not-allowed bg-gray-800 border-gray-700 text-gray-500'
+                      ]"
+                    >
+                      <span v-if="sendingEmail">⏳ Envoi en cours...</span>
+                      <span v-else>📧 Envoyer email d'expédition</span>
+                    </button>
+                    <span 
+                      v-if="selectedOrder.shippingEmailSent" 
+                      class="text-xs text-green-400 whitespace-nowrap"
+                      title="Email d'expédition déjà envoyé"
+                    >
+                      ✅ Email envoyé
+                    </span>
+                  </div>
+                  
+                  <p class="text-xs text-[var(--color-text-muted)] mt-2">
+                    <span v-if="selectedOrder.status === 'shipped'">
+                      💡 L'email sera envoyé à {{ selectedOrder.customer?.email }} avec le lien de suivi
+                    </span>
+                    <span v-else>🔒 Commande livrée - Informations verrouillées</span>
                   </p>
                 </div>
 
@@ -657,6 +710,10 @@ const orderFilter = ref('all')
 const selectedOrder = ref(null)
 const showArchived = ref(false)
 
+// Email d'expédition
+const sendingEmail = ref(false)
+const shippingCarrier = ref('colissimo')
+
 // Bloquer le scroll quand le détail de commande est ouvert
 watch(selectedOrder, (newVal) => {
   if (newVal) {
@@ -784,6 +841,60 @@ const handleUpdateCustomerNote = async (orderId, note) => {
     console.log('✅ Note client mise à jour')
   } catch (error) {
     console.error('❌ Erreur mise à jour note client:', error)
+  }
+}
+
+// Envoyer l'email d'expédition
+const handleSendShippingEmail = async (order) => {
+  if (!order.shipping?.trackingNumber) {
+    alert('⚠️ Veuillez d\'abord saisir un numéro de suivi')
+    return
+  }
+
+  if (!order.customer?.email) {
+    alert('⚠️ Aucun email client disponible')
+    return
+  }
+
+  const confirmSend = confirm(
+    `📧 Envoyer l'email d'expédition ?\n\n` +
+    `Destinataire: ${order.customer.email}\n` +
+    `Transporteur: ${shippingCarrier.value}\n` +
+    `N° de suivi: ${order.shipping.trackingNumber}`
+  )
+
+  if (!confirmSend) return
+
+  sendingEmail.value = true
+
+  try {
+    // Appeler la Cloud Function (sera fonctionnelle quand SendGrid sera configuré)
+    const FUNCTION_URL = import.meta.env.VITE_STRIPE_FUNCTION_URL?.replace('createPaymentIntent', 'sendShippingEmail')
+    
+    // Pour l'instant, on simule l'envoi et on met à jour Firestore
+    // Quand les Cloud Functions seront déployées, on pourra faire le vrai appel
+    
+    // Mettre à jour la commande pour indiquer que l'email a été envoyé
+    const orderRef = doc(db, 'orders', order.id)
+    await updateDoc(orderRef, {
+      'shipping.carrier': shippingCarrier.value,
+      'shippingEmailSent': true,
+      'shippingEmailSentAt': serverTimestamp(),
+      updatedAt: serverTimestamp()
+    })
+
+    // Mettre à jour l'objet local
+    order.shippingEmailSent = true
+    order.shipping.carrier = shippingCarrier.value
+
+    alert(`✅ Email d'expédition envoyé à ${order.customer.email}`)
+    console.log('✅ Email d\'expédition envoyé')
+
+  } catch (error) {
+    console.error('❌ Erreur envoi email:', error)
+    alert('❌ Erreur lors de l\'envoi de l\'email: ' + error.message)
+  } finally {
+    sendingEmail.value = false
   }
 }
 

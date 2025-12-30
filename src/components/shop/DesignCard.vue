@@ -4,12 +4,12 @@
     class="design-card group relative bg-[var(--color-black-light)] border-2 border-[rgba(57,255,20,0.2)] rounded-xl overflow-hidden hover:border-[var(--color-neon-green)] transition-all hover:scale-105 hover:shadow-neon"
   >
     <!-- Image principale avec effet loupe qui suit la souris -->
-    <div class="aspect-square overflow-hidden bg-black relative">
+    <div class="aspect-square overflow-hidden bg-[var(--color-black-light)] relative p-3">
       <img 
         :src="design.images[0]" 
         :alt="design.name"
         :style="zoomStyle"
-        class="w-full h-full object-cover transition-transform duration-100 cursor-zoom-in"
+        class="w-full h-full object-contain transition-transform duration-100 cursor-zoom-in rounded-lg"
         @mousemove="handleMouseMove"
         @mouseleave="resetZoom"
       >

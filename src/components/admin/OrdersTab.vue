@@ -141,7 +141,7 @@
             <td class="p-3 text-sm" style="width: 18%">{{ formatOrderDate(order.createdAt) }}</td>
             <td class="p-3 font-bold text-[var(--color-neon-green)]" style="width: 12%">{{ order.total?.toFixed(2) }}€</td>
             <td class="p-3" style="width: 22%">
-              <div class="flex items-center gap-2">
+              <div class="flex items-center gap-2 flex-wrap">
                 <span :class="[
                   'px-2 py-1 text-xs font-bold rounded',
                   order.status === 'pending' && 'bg-yellow-500/20 text-yellow-400',
@@ -151,6 +151,14 @@
                   order.status === 'cancelled' && 'bg-red-500/20 text-red-400'
                 ]">
                   {{ getStatusLabel(order.status) }}
+                </span>
+                <!-- Badge note client -->
+                <span 
+                  v-if="order.notes && order.notes.trim()" 
+                  class="px-2 py-1 text-xs font-bold rounded bg-purple-500/20 text-purple-400 animate-pulse" 
+                  title="Ce client a laissé une note"
+                >
+                  💬
                 </span>
                 <span v-if="order.isArchived" class="px-2 py-1 text-xs font-bold rounded bg-orange-500/20 text-orange-400" title="Commande archivée">
                   📦
@@ -175,7 +183,7 @@
               <p class="text-xs text-[var(--color-text-muted)] mb-1">N° Commande</p>
               <p class="font-mono text-sm font-bold text-[var(--color-neon-green)]">{{ order.orderNumber || order.orderId || '-' }}</p>
             </div>
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-2 flex-wrap">
               <span :class="[
                 'px-2 py-1 text-xs font-bold rounded whitespace-nowrap',
                 order.status === 'pending' && 'bg-yellow-500/20 text-yellow-400',
@@ -185,6 +193,14 @@
                 order.status === 'cancelled' && 'bg-red-500/20 text-red-400'
               ]">
                 {{ getStatusLabel(order.status) }}
+              </span>
+              <!-- Badge note client -->
+              <span 
+                v-if="order.notes && order.notes.trim()" 
+                class="px-2 py-1 text-xs font-bold rounded bg-purple-500/20 text-purple-400 animate-pulse" 
+                title="Ce client a laissé une note"
+              >
+                💬
               </span>
               <span v-if="order.isArchived" class="px-2 py-1 text-xs font-bold rounded bg-orange-500/20 text-orange-400" title="Commande archivée">
                 📦

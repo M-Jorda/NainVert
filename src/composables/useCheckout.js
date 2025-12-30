@@ -1,7 +1,8 @@
 import { ref } from 'vue'
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore'
+import { collection, addDoc, doc, updateDoc, serverTimestamp } from 'firebase/firestore'
 import { db } from '@/config/firebase'
 import { useStock } from './useStock'
+import { formatAmountForStripe } from '@/services/stripe'
 
 const processing = ref(false)
 const error = ref(null)
@@ -163,11 +164,90 @@ export function useCheckout() {
     }
   }
 
+  /**
+   * Crée un PaymentIntent Stripe pour une commande
+   * @param {Object} params
+   * @param {number} params.amount - Montant en euros
+   * @param {string} params.orderNumber - Numéro de commande
+   * @param {Object} params.customer - Infos client
+   * @returns {Promise<{clientSecret: string, paymentIntentId: string}>}
+   */
+  const createPaymentIntent = async ({ amount, orderNumber, customer }) => {
+    processing.value = true
+    error.value = null
+
+    try {
+      const FUNCTION_URL = import.meta.env.VITE_STRIPE_FUNCTION_URL
+
+      if (!FUNCTION_URL || FUNCTION_URL.includes('VOTRE_PROJECT_ID')) {
+        throw new Error('URL de la fonction Stripe non configurée. Voir .env')
+      }
+
+      const response = await fetch(FUNCTION_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          amount: formatAmountForStripe(amount),
+          currency: 'eur',
+          orderId: orderNumber,
+          customer: {
+            email: customer.email,
+            name: customer.name
+          },
+          metadata: {
+            orderId: orderNumber,
+            customerEmail: customer.email
+          }
+        })
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Erreur création paiement')
+      }
+
+      const data = await response.json()
+      return data
+
+    } catch (err) {
+      console.error('❌ Erreur création PaymentIntent:', err)
+      error.value = err.message
+      throw err
+    } finally {
+      processing.value = false
+    }
+  }
+
+  /**
+   * Met à jour le statut de paiement d'une commande
+   * @param {string} orderId - ID du document Firestore
+   * @param {Object} paymentData - Données de paiement
+   */
+  const updatePaymentStatus = async (orderId, paymentData) => {
+    try {
+      const orderRef = doc(db, 'orders', orderId)
+      await updateDoc(orderRef, {
+        status: paymentData.status === 'succeeded' ? 'paid' : 'pending',
+        'payment.status': paymentData.status,
+        'payment.method': 'stripe',
+        'payment.transactionId': paymentData.paymentIntentId,
+        updatedAt: serverTimestamp()
+      })
+      console.log('✅ Statut paiement mis à jour:', paymentData.status)
+    } catch (err) {
+      console.error('❌ Erreur mise à jour paiement:', err)
+    }
+  }
+
   return {
     processing,
     error,
     createOrder,
     processCheckout,
+    createPaymentIntent,
+    updatePaymentStatus,
     generateOrderNumber
   }
 }

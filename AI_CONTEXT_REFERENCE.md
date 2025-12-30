@@ -58,6 +58,9 @@ NainVert/
 │   ├── manifest.json
 │   ├── robots.txt
 │   └── sitemap.xml
+├── functions/                  # 🆕 Cloud Functions Firebase
+│   ├── package.json
+│   └── index.js               # Stripe + Emails
 ├── src/
 │   ├── components/            # Composants réutilisables
 │   │   ├── Header.vue
@@ -65,6 +68,9 @@ NainVert/
 │   │   ├── Cart.vue
 │   │   ├── CartIcon.vue
 │   │   ├── CheckoutModal.vue
+│   │   ├── CheckoutModalStripe.vue  # 🆕 Version avec Stripe
+│   │   ├── StripePaymentForm.vue    # 🆕 Formulaire paiement
+│   │   ├── OrderSummary.vue         # 🆕 Résumé commande
 │   │   ├── EasterEggModal.vue
 │   │   ├── SeedMessages.vue
 │   │   ├── admin/             # Composants admin
@@ -93,6 +99,7 @@ NainVert/
 │   ├── composables/           # Logique réutilisable
 │   │   ├── useDesigns.js      # Gestion des designs
 │   │   ├── useGarments.js     # Gestion des types de vêtements
+│   │   ├── useStripePayment.js # 🆕 Paiement Stripe
 │   │   ├── useGarmentTypes.js # Types de vêtements
 │   │   ├── useOrders.js       # Gestion des commandes
 │   │   ├── useStock.js        # Gestion du stock
@@ -105,7 +112,9 @@ NainVert/
 │   ├── config/
 │   │   └── firebase.js        # Configuration Firebase
 │   ├── services/
-│   │   └── cloudinary.js      # Upload images
+│   │   ├── cloudinary.js      # Upload images
+│   │   ├── stripe.js          # 🆕 Service Stripe
+│   │   └── email.js           # 🆕 Service emails
 │   ├── router/
 │   │   └── index.js           # Routes
 │   ├── styles/
@@ -115,6 +124,7 @@ NainVert/
 │   └── main.js
 ├── scripts/                   # Scripts utilitaires
 ├── documentation/             # Documentation projet
+│   └── STRIPE_SENDGRID_SETUP.md # 🆕 Guide intégration paiement
 ├── firebase.json              # Config Firebase
 ├── firestore.rules            # Règles sécurité Firestore
 ├── storage.rules              # Règles sécurité Storage

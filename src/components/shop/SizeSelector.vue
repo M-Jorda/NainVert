@@ -26,8 +26,21 @@
             <div class="flex flex-col overflow-visible">
               <h3 class="text-base font-bold text-white mb-2">Sélectionne ta taille</h3>
               
-              <!-- Tailles en radio - UNE SEULE LIGNE HORIZONTALE -->
-              <div class="grid grid-cols-7 gap-1.5 mb-3">
+                            <!-- Lien vers la FAQ tailles -->
+                            <div class="mb-2">
+                              <a 
+                                href="/returns#faq-tailles" 
+                                target="_blank" 
+                                rel="noopener" 
+                                class="inline-flex items-center gap-1 text-xs text-[var(--color-neon-green)] hover:underline hover:text-white transition-colors font-semibold"
+                              >
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="inline-block align-middle"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                                Guide complet des tailles
+                              </a>
+                            </div>
+
+                            <!-- Tailles en radio - UNE SEULE LIGNE HORIZONTALE -->
+                            <div class="grid grid-cols-7 gap-1.5 mb-3">
                 <label
                   v-for="size in sizeChart"
                   :key="size.name"

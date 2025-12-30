@@ -12,6 +12,7 @@
     "import-eastereggs": "node scripts/importEasterEggs.js"
   },
   "dependencies": {
+    "@stripe/stripe-js": "^8.6.0",
     "cloudinary": "^2.8.0",
     "firebase": "^12.5.0",
     "pinia": "^2.1.7",

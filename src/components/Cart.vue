@@ -46,8 +46,8 @@
               :key="`${item.id}-${item.size}`"
               class="flex gap-3 p-2 bg-[var(--color-black-light)] rounded-lg border border-[rgba(57,255,20,0.2)]"
             >
-              <div class="w-12 h-12 rounded overflow-hidden bg-[rgba(57,255,20,0.05)] flex-shrink-0">
-                <img :src="item.image" :alt="item.name" class="w-full h-full object-cover" />
+              <div class="w-14 h-14 rounded-lg overflow-hidden bg-[var(--color-black-lighter)] flex-shrink-0 p-1.5">
+                <img :src="item.image" :alt="item.name" class="w-full h-full object-contain rounded" />
               </div>
               
               <div class="flex-1 flex flex-col justify-center">
@@ -89,6 +89,24 @@
 
           <!-- Footer with Total & Checkout -->
           <div class="p-4 border-t border-[rgba(57,255,20,0.2)] bg-[var(--color-black-light)] flex flex-col gap-3">
+            <!-- Indicateur livraison gratuite -->
+            <div v-if="freeShippingMessage" 
+                 class="p-3 rounded-lg text-sm" 
+                 :class="isFreeShipping 
+                   ? 'bg-[rgba(57,255,20,0.1)] border border-[var(--color-neon-green)] text-[var(--color-neon-green)]' 
+                   : 'bg-[rgba(255,193,7,0.1)] border border-yellow-500/30 text-yellow-400'">
+              <div class="flex items-center gap-2">
+                <span v-if="isFreeShipping">🚚✨</span>
+                <span v-else>🚚</span>
+                <span class="font-medium">{{ freeShippingMessage }}</span>
+              </div>
+              <!-- Barre de progression -->
+              <div v-if="!isFreeShipping" class="mt-2 h-1.5 bg-[var(--color-black)] rounded-full overflow-hidden">
+                <div class="h-full bg-gradient-to-r from-yellow-500 to-[var(--color-neon-green)] transition-all duration-500" 
+                     :style="{ width: progressPercentage + '%' }"></div>
+              </div>
+            </div>
+
             <div class="flex justify-between items-center">
               <span class="text-base font-semibold text-white">Total</span>
               <span class="text-xl font-black text-[var(--color-neon-green)]">{{ cartStore.totalPrice.toFixed(2) }}€</span>
@@ -112,19 +130,28 @@
     </div>
   </transition>
 
-  <!-- Checkout Modal -->
-  <CheckoutModal :isOpen="showCheckoutModal" @close="showCheckoutModal = false" />
+  <!-- Checkout Modal avec Stripe -->
+  <CheckoutModalStripe :isOpen="showCheckoutModal" @close="showCheckoutModal = false" />
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useCartStore } from '@/stores/cart'
-import CheckoutModal from './CheckoutModal.vue'
+import CheckoutModalStripe from './CheckoutModalStripe.vue'
+import { FREE_SHIPPING_THRESHOLD, getFreeShippingMessage } from '@/services/shipping'
 
 const cartStore = useCartStore()
 const router = useRouter()
 const showCheckoutModal = ref(false)
+
+// Livraison gratuite
+const freeShippingMessage = computed(() => getFreeShippingMessage(cartStore.totalPrice))
+const isFreeShipping = computed(() => cartStore.totalPrice >= FREE_SHIPPING_THRESHOLD)
+const progressPercentage = computed(() => {
+  if (isFreeShipping.value) return 100
+  return Math.min((cartStore.totalPrice / FREE_SHIPPING_THRESHOLD) * 100, 100)
+})
 
 const openCheckout = () => {
   showCheckoutModal.value = true
