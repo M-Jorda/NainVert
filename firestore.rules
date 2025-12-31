@@ -1,49 +1,54 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    
+
     // Collection products : lecture publique, écriture admin seulement
     match /products/{productId} {
       allow read: if true;
-      allow write: if request.auth != null;
+      allow write: if request.auth.token.admin == true;
     }
-    
+
     // Collection siteContent : lecture publique, écriture admin seulement
     match /siteContent/{contentId} {
       allow read: if true;
-      allow write: if request.auth != null;
+      allow write: if request.auth.token.admin == true;
     }
-    
-    // Collection honeypot_logs : 
+
+    // Collection honeypot_logs :
     // - Tout le monde peut écrire (c'est le but du honeypot)
     // - Seuls les admins authentifiés peuvent lire et supprimer
     match /honeypot_logs/{logId} {
       allow create: if true; // Bots peuvent créer des logs
-      allow read, delete: if request.auth != null; // Seuls admins peuvent lire/supprimer
+      allow read, delete: if request.auth.token.admin == true; // Seuls admins peuvent lire/supprimer
     }
-    
+
     // Collection easterEggs :
     // - Lecture publique (pour afficher sur le site)
     // - Écriture admin seulement
     match /easterEggs/{eggId} {
       allow read: if true; // Tout le monde peut lire
-      allow write: if request.auth != null; // Seuls admins peuvent modifier
+      allow write: if request.auth.token.admin == true; // Seuls admins peuvent modifier
     }
-    
+
     // Collection messages (formulaire de contact) :
     // - Tout le monde peut créer (envoyer un message)
     // - Seuls admins peuvent lire/modifier/supprimer
     match /messages/{messageId} {
       allow create: if true; // Tout le monde peut envoyer un message
-      allow read, update, delete: if request.auth != null; // Seuls admins
+      allow read, update, delete: if request.auth.token.admin == true; // Seuls admins
     }
-    
+
     // Collection orders (commandes) :
     // - Tout le monde peut créer (passer commande)
     // - Seuls admins peuvent lire/modifier/supprimer
     match /orders/{orderId} {
-      allow create: if true; // Tout le monde peut passer commande
-      allow read, update, delete: if request.auth != null; // Seuls admins
+      allow create: if
+        request.resource.data.keys().hasAll(['items', 'email', 'total', 'createdAt']) &&
+        request.resource.data.total is number &&
+        request.resource.data.total > 0 &&
+        request.resource.data.items is list &&
+        request.resource.data.items.size() > 0;
+      allow read, update, delete: if request.auth.token.admin == true;
     }
 
     // Collection refunds (remboursements) :
@@ -51,39 +56,39 @@ service cloud.firestore {
     // - Seuls admins peuvent lire/modifier/supprimer
     match /refunds/{refundId} {
       allow create: if true; // Tout le monde peut demander un remboursement
-      allow read, update, delete: if request.auth != null; // Seuls admins
+      allow read, update, delete: if request.auth.token.admin == true; // Seuls admins
     }
-    
+
     // Collection designs (nouveaux designs) :
     // - Lecture publique (pour afficher sur le site)
     // - Écriture admin seulement
     match /designs/{designId} {
       allow read: if true; // Tout le monde peut lire les designs
-      allow write: if request.auth != null; // Seuls admins peuvent créer/modifier
+      allow write: if request.auth.token.admin == true; // Seuls admins peuvent créer/modifier
     }
-    
+
     // Collection settings (paramètres et stock) :
     // - Lecture publique (pour afficher les stocks)
     // - Écriture admin seulement
     match /settings/{settingId} {
       allow read: if true; // Tout le monde peut lire les settings (stock, etc.)
-      allow write: if request.auth != null; // Seuls admins peuvent modifier
+      allow write: if request.auth.token.admin == true; // Seuls admins peuvent modifier
     }
-    
+
     // Collection garments (types de vêtements : T-shirt, Hoodie) :
     // - Lecture publique (pour afficher sur le site)
     // - Écriture admin seulement
     match /garments/{garmentId} {
       allow read: if true; // Tout le monde peut lire les vêtements
-      allow write: if request.auth != null; // Seuls admins peuvent créer/modifier
+      allow write: if request.auth.token.admin == true; // Seuls admins peuvent créer/modifier
     }
-    
+
     // Collection stock (stocks par design) :
     // - Lecture publique (pour afficher les stocks disponibles)
     // - Écriture admin seulement
     match /stock/{stockId} {
       allow read: if true; // Tout le monde peut lire les stocks
-      allow write: if request.auth != null; // Seuls admins peuvent modifier
+      allow write: if request.auth.token.admin == true; // Seuls admins peuvent modifier
     }
   }
 }

@@ -32,3 +32,6 @@ dist-ssr
 # Build files
 build
 .cache
+
+firebase-admin-setup/serviceAccountKey.json
+.editorconfig
