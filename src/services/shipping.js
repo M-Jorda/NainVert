@@ -1,7 +1,7 @@
 /**
  * Service de calcul des frais de livraison - NainVert
  * Tarifs basés sur Colissimo, Chronopost et Mondial Relay
- * 
+ *
  * Note: Ces tarifs sont indicatifs et peuvent être mis à jour.
  * Pour des tarifs en temps réel, intégrer l'API du transporteur.
  */
@@ -105,10 +105,14 @@ export const SHIPPING_OPTIONS = [
  * @param {Array} items - Articles du panier
  * @returns {number} - Poids total en grammes
  */
-export const calculateCartWeight = (items) => {
+export function calculateCartWeight(items) {
+  // Defensive: ensure array
+  if (!Array.isArray(items)) {
+    console.warn('calculateCartWeight received non-array:', items)
+    return 0
+  }
   return items.reduce((total, item) => {
-    const weight = PRODUCT_WEIGHTS[item.type] || PRODUCT_WEIGHTS.default
-    return total + (weight * item.quantity)
+    // ... your logic
   }, 0)
 }
 
@@ -120,7 +124,7 @@ export const calculateCartWeight = (items) => {
  */
 export const getShippingZone = (country, postalCode = '') => {
   const countryLower = country?.toLowerCase() || 'france'
-  
+
   // France métropolitaine
   if (countryLower === 'france' || countryLower === 'fr') {
     // Vérifier si c'est un DOM-TOM
@@ -130,7 +134,7 @@ export const getShippingZone = (country, postalCode = '') => {
     }
     return 'france'
   }
-  
+
   // Pays européens
   const europeanCountries = [
     'allemagne', 'germany', 'de',
@@ -143,11 +147,11 @@ export const getShippingZone = (country, postalCode = '') => {
     'autriche', 'austria', 'at',
     'suisse', 'switzerland', 'ch'
   ]
-  
+
   if (europeanCountries.includes(countryLower)) {
     return 'europe'
   }
-  
+
   // Par défaut: Europe
   return 'europe'
 }
@@ -161,7 +165,7 @@ export const getShippingZone = (country, postalCode = '') => {
  */
 const getCarrierRate = (carrier, weight, zone) => {
   let rates
-  
+
   switch (carrier) {
     case 'colissimo':
       rates = COLISSIMO_RATES[zone] || COLISSIMO_RATES.france
@@ -175,7 +179,7 @@ const getCarrierRate = (carrier, weight, zone) => {
     default:
       return null
   }
-  
+
   // Trouver le tarif correspondant au poids
   const rate = rates.find(r => weight <= r.maxWeight)
   return rate ? rate.price : null
@@ -191,10 +195,10 @@ const getCarrierRate = (carrier, weight, zone) => {
 export const calculateShippingOptions = (items, country = 'France', postalCode = '') => {
   const weight = calculateCartWeight(items)
   const zone = getShippingZone(country, postalCode)
-  
+
   return SHIPPING_OPTIONS.map(option => {
     const price = getCarrierRate(option.id, weight, zone)
-    
+
     return {
       ...option,
       price,
@@ -216,7 +220,7 @@ export const calculateShippingOptions = (items, country = 'France', postalCode =
 export const calculateShippingCost = (method, items, country = 'France', postalCode = '') => {
   const weight = calculateCartWeight(items)
   const zone = getShippingZone(country, postalCode)
-  
+
   const price = getCarrierRate(method, weight, zone)
   return price || 0
 }
@@ -243,7 +247,7 @@ export const FREE_SHIPPING_THRESHOLD = 80 // €
  */
 export const getFreeShippingMessage = (subtotal) => {
   const remaining = FREE_SHIPPING_THRESHOLD - subtotal
-  
+
   if (remaining <= 0) {
     return {
       isFree: true,
@@ -251,7 +255,7 @@ export const getFreeShippingMessage = (subtotal) => {
       message: '🎉 Livraison gratuite !'
     }
   }
-  
+
   return {
     isFree: false,
     remaining: remaining.toFixed(2),
