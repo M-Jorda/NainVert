@@ -10,9 +10,9 @@
 
 1.1 Description
 -------------------------------------------------------------------------------
-NainVert est un site e-commerce moderne dédié à la vente de vêtements 
-streetwear psychédéliques. Le projet combine une esthétique futuriste 
-(noir & vert néon) avec une architecture technique robuste basée sur 
+NainVert est un site e-commerce moderne dédié à la vente de vêtements
+streetwear psychédéliques. Le projet combine une esthétique futuriste
+(noir & vert néon) avec une architecture technique robuste basée sur
 Vue.js et Firebase.
 
 1.2 Objectifs
@@ -48,6 +48,7 @@ Vue.js et Firebase.
 │ Firebase Firestore      │ Base de données NoSQL temps réel              │
 │ Firebase Authentication │ Authentification admin (Email/Password)       │
 │ Firebase Hosting        │ Hébergement statique (prévu)                  │
+│ Cloudinary              │ Hébergement et optimisation des images        │
 └─────────────────────────┴───────────────────────────────────────────────┘
 
 
@@ -72,7 +73,9 @@ NainVert/
 │   │   ├── CartIcon.vue
 │   │   ├── ProductCard.vue
 │   │   ├── ProductGrid.vue
+│   │   ├── ProductSelector.vue    # ⭐ Sélecteur type + taille combiné
 │   │   ├── EasterEggModal.vue
+│   │   ├── ShippingSelector.vue
 │   │   └── admin/             # Composants admin
 │   │       ├── ProductsTab.vue
 │   │       ├── ContentTab.vue
@@ -85,6 +88,7 @@ NainVert/
 │   │   ├── Products.vue
 │   │   ├── ProductDetail.vue
 │   │   ├── Contact.vue
+│   │   ├── FAQ.vue                # ⭐ NOUVEAU - Page FAQ
 │   │   ├── Admin.vue
 │   │   ├── Honeypot.vue
 │   │   ├── Shipping.vue
@@ -99,6 +103,7 @@ NainVert/
 │   │   ├── useRefunds.js
 │   │   ├── useStock.js
 │   │   ├── useCheckout.js
+│   │   ├── useFAQ.js              # ⭐ NOUVEAU - Gestion FAQ
 │   │   └── useEasterEgg.js
 │   ├── stores/                # Stores Pinia
 │   │   ├── cart.js
@@ -131,6 +136,7 @@ NainVert/
 │ useRefunds.js      │ Traitement des demandes de remboursement               │
 │ useStock.js        │ Gestion du stock par dessin, décrémentation auto       │
 │ useCheckout.js     │ Création de commandes depuis le panier                 │
+│ useFAQ.js          │ ⭐ Gestion des questions FAQ et guide des tailles      │
 │ useEasterEgg.js    │ Gestion des easter eggs cachés                         │
 └────────────────────┴────────────────────────────────────────────────────────┘
 
@@ -240,6 +246,149 @@ COLLECTION: siteContent/global
   }
 }
 
+⭐ COLLECTION: siteContent/faq (NOUVEAU)
+{
+  "categories": [
+    {
+      "id": "sizes",
+      "name": "Guide des tailles",
+      "icon": "📏",
+      "order": 1,
+      "questions": [
+        {
+          "id": "size-guide",
+          "question": "Comment choisir ma taille ?",
+          "answer": "Nos vêtements sont taillés normalement. En cas de doute entre deux tailles, nous recommandons de prendre la taille supérieure pour un look streetwear oversized.",
+          "order": 1
+        },
+        {
+          "id": "size-chart-tshirt",
+          "question": "Quelles sont les mesures des T-shirts ?",
+          "answer": "S: Largeur 48cm, Longueur 68cm | M: Largeur 52cm, Longueur 70cm | L: Largeur 56cm, Longueur 72cm | XL: Largeur 60cm, Longueur 74cm | XXL: Largeur 64cm, Longueur 76cm",
+          "order": 2
+        },
+        {
+          "id": "size-chart-hoodie",
+          "question": "Quelles sont les mesures des Hoodies ?",
+          "answer": "S: Largeur 52cm, Longueur 66cm | M: Largeur 56cm, Longueur 68cm | L: Largeur 60cm, Longueur 70cm | XL: Largeur 64cm, Longueur 72cm | XXL: Largeur 68cm, Longueur 74cm",
+          "order": 3
+        },
+        {
+          "id": "size-measure",
+          "question": "Comment prendre mes mesures ?",
+          "answer": "Largeur : Mesurez un vêtement similaire à plat, d'aisselle à aisselle. Longueur : Mesurez du haut de l'épaule jusqu'en bas du vêtement.",
+          "order": 4
+        }
+      ]
+    },
+    {
+      "id": "shipping",
+      "name": "Livraison",
+      "icon": "📦",
+      "order": 2,
+      "questions": [
+        {
+          "id": "shipping-delay",
+          "question": "Quels sont les délais de livraison ?",
+          "answer": "France métropolitaine : 2-4 jours ouvrés. Europe : 5-7 jours ouvrés. Les commandes sont expédiées sous 24-48h.",
+          "order": 1
+        },
+        {
+          "id": "shipping-cost",
+          "question": "Quels sont les frais de livraison ?",
+          "answer": "Livraison gratuite en France métropolitaine dès 50€ d'achat. Sinon, frais de port calculés selon le poids et la destination.",
+          "order": 2
+        },
+        {
+          "id": "shipping-tracking",
+          "question": "Comment suivre ma commande ?",
+          "answer": "Un email avec le numéro de suivi vous est envoyé dès l'expédition. Vous pouvez suivre votre colis sur le site du transporteur.",
+          "order": 3
+        }
+      ]
+    },
+    {
+      "id": "orders",
+      "name": "Commandes",
+      "icon": "🛒",
+      "order": 3,
+      "questions": [
+        {
+          "id": "order-modify",
+          "question": "Puis-je modifier ma commande ?",
+          "answer": "Contactez-nous rapidement via le formulaire de contact. Si la commande n'est pas encore expédiée, nous ferons notre possible pour la modifier.",
+          "order": 1
+        },
+        {
+          "id": "order-cancel",
+          "question": "Comment annuler ma commande ?",
+          "answer": "Envoyez-nous un message via la page Contact avec votre numéro de commande. L'annulation est possible tant que la commande n'est pas expédiée.",
+          "order": 2
+        },
+        {
+          "id": "payment-methods",
+          "question": "Quels moyens de paiement acceptez-vous ?",
+          "answer": "Nous acceptons les cartes bancaires (Visa, Mastercard) via Stripe, paiement 100% sécurisé.",
+          "order": 3
+        }
+      ]
+    },
+    {
+      "id": "returns",
+      "name": "Retours & Échanges",
+      "icon": "↩️",
+      "order": 4,
+      "questions": [
+        {
+          "id": "return-policy",
+          "question": "Quelle est votre politique de retour ?",
+          "answer": "Vous disposez de 14 jours après réception pour retourner un article non porté, avec étiquettes. Consultez notre page Retours pour plus de détails.",
+          "order": 1
+        },
+        {
+          "id": "exchange",
+          "question": "Comment échanger un article ?",
+          "answer": "Contactez-nous pour initier un échange. Les frais de retour sont à votre charge, mais le renvoi du nouvel article est offert.",
+          "order": 2
+        },
+        {
+          "id": "refund-delay",
+          "question": "Sous quel délai serai-je remboursé ?",
+          "answer": "Le remboursement est effectué sous 5-7 jours ouvrés après réception et vérification de l'article retourné.",
+          "order": 3
+        }
+      ]
+    },
+    {
+      "id": "products",
+      "name": "Produits",
+      "icon": "👕",
+      "order": 5,
+      "questions": [
+        {
+          "id": "product-quality",
+          "question": "Quelle est la qualité de vos vêtements ?",
+          "answer": "Nos T-shirts sont en 100% coton bio 180g/m², nos hoodies en coton bio 350g/m². Impression DTG haute qualité, résistante aux lavages.",
+          "order": 1
+        },
+        {
+          "id": "product-care",
+          "question": "Comment entretenir mes vêtements NainVert ?",
+          "answer": "Lavage machine 30°C, retourné sur l'envers. Pas de sèche-linge. Repassage sur l'envers, sans repasser l'impression.",
+          "order": 2
+        },
+        {
+          "id": "product-restock",
+          "question": "Un article sera-t-il réapprovisionné ?",
+          "answer": "Nos designs sont en édition limitée (100 pièces par design). Une fois épuisés, ils ne sont généralement pas réimprimés.",
+          "order": 3
+        }
+      ]
+    }
+  ],
+  "lastUpdated": Timestamp
+}
+
 COLLECTION: messages (formulaire contact)
 {
   "name": "...",
@@ -273,17 +422,324 @@ COLLECTION: honeypot_logs
 
 
 ================================================================================
-5. SYSTÈME DE GESTION DE STOCK
+5. SYSTÈME DE SÉLECTION PRODUIT (CHECKOUT SIMPLIFIÉ)
 ================================================================================
 
-5.1 Principe
+⭐ NOUVEAU : Flux de sélection en 2 étapes au lieu de 3
+
+5.1 Ancien flux (3 étapes) - OBSOLÈTE
 -------------------------------------------------------------------------------
-Le stock est géré PAR DESSIN et non par produit individuel. Un dessin peut 
-être utilisé sur plusieurs produits (T-shirt, Pull, etc.). Chaque dessin 
-dispose de 100 unités qui sont décrémentées automatiquement lors de la 
+1. Choix du design
+2. Choix du type de vêtement (T-shirt / Hoodie)
+3. Choix de la taille
+
+5.2 Nouveau flux (2 étapes) - IMPLÉMENTÉ
+-------------------------------------------------------------------------------
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ ÉTAPE 1 : Choix du design                                                   │
+│ • Affichage des designs disponibles avec preview                            │
+│ • Indication du stock restant par design                                    │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ ÉTAPE 2 : Choix du type ET de la taille (combiné)                          │
+│                                                                             │
+│ ┌─────────────────────────────────────────────────────────────────────────┐ │
+│ │ TYPE DE VÊTEMENT                                                        │ │
+│ │ ┌─────────────┐  ┌─────────────┐                                        │ │
+│ │ │  T-SHIRT    │  │   HOODIE    │                                        │ │
+│ │ │   35€       │  │    65€      │                                        │ │
+│ │ └─────────────┘  └─────────────┘                                        │ │
+│ └─────────────────────────────────────────────────────────────────────────┘ │
+│                                                                             │
+│ ┌─────────────────────────────────────────────────────────────────────────┐ │
+│ │ TAILLE                              📏 Guide des tailles (lien FAQ)     │ │
+│ │ ┌────┐ ┌────┐ ┌────┐ ┌────┐ ┌────┐                                     │ │
+│ │ │ S  │ │ M  │ │ L  │ │ XL │ │XXL │                                     │ │
+│ │ └────┘ └────┘ └────┘ └────┘ └────┘                                     │ │
+│ └─────────────────────────────────────────────────────────────────────────┘ │
+│                                                                             │
+│ [         AJOUTER AU PANIER - 35€         ]                                │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+5.3 Composant ProductSelector.vue
+-------------------------------------------------------------------------------
+Props:
+  - design: Object (design sélectionné)
+  - availableSizes: Array ['S', 'M', 'L', 'XL', 'XXL']
+
+Emits:
+  - @add-to-cart: { type: 'tshirt'|'hoodie', size: 'M', designId: 'design-1' }
+  - @close: fermeture du sélecteur
+
+Structure interne:
+```vue
+<template>
+  <div class="product-selector">
+    <!-- Section Type -->
+    <div class="type-selection">
+      <h3>Type de vêtement</h3>
+      <div class="type-options">
+        <button
+          v-for="type in types"
+          :key="type.id"
+          :class="{ active: selectedType === type.id }"
+          @click="selectedType = type.id"
+        >
+          <span class="type-name">{{ type.name }}</span>
+          <span class="type-price">{{ type.price }}€</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Section Taille -->
+    <div class="size-selection">
+      <div class="size-header">
+        <h3>Taille</h3>
+        <router-link to="/faq#sizes" class="size-guide-link">
+          📏 Guide des tailles
+        </router-link>
+      </div>
+      <div class="size-options">
+        <button
+          v-for="size in availableSizes"
+          :key="size"
+          :class="{ active: selectedSize === size }"
+          @click="selectedSize = size"
+        >
+          {{ size }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Bouton ajout -->
+    <button
+      class="btn-add-cart"
+      :disabled="!canAddToCart"
+      @click="addToCart"
+    >
+      Ajouter au panier - {{ currentPrice }}€
+    </button>
+  </div>
+</template>
+```
+
+5.4 Données types de vêtements
+-------------------------------------------------------------------------------
+const types = [
+  { id: 'tshirt', name: 'T-Shirt', price: 35 },
+  { id: 'hoodie', name: 'Hoodie', price: 65 }
+]
+
+
+================================================================================
+6. PAGE FAQ
+================================================================================
+
+6.1 Route
+-------------------------------------------------------------------------------
+/faq → FAQ.vue
+
+Avec ancres pour navigation directe:
+- /faq#sizes    → Section guide des tailles
+- /faq#shipping → Section livraison
+- /faq#orders   → Section commandes
+- /faq#returns  → Section retours
+- /faq#products → Section produits
+
+6.2 Structure de la page FAQ.vue
+-------------------------------------------------------------------------------
+```vue
+<template>
+  <div class="faq-page">
+    <h1>Questions fréquentes</h1>
+
+    <!-- Navigation rapide -->
+    <nav class="faq-nav">
+      <a
+        v-for="category in categories"
+        :key="category.id"
+        :href="'#' + category.id"
+        class="faq-nav-item"
+      >
+        {{ category.icon }} {{ category.name }}
+      </a>
+    </nav>
+
+    <!-- Catégories -->
+    <section
+      v-for="category in categories"
+      :key="category.id"
+      :id="category.id"
+      class="faq-category"
+    >
+      <h2>{{ category.icon }} {{ category.name }}</h2>
+
+      <!-- Questions accordion -->
+      <div class="faq-questions">
+        <div
+          v-for="q in category.questions"
+          :key="q.id"
+          class="faq-item"
+          :class="{ open: openQuestion === q.id }"
+        >
+          <button
+            class="faq-question"
+            @click="toggleQuestion(q.id)"
+          >
+            {{ q.question }}
+            <span class="faq-icon">{{ openQuestion === q.id ? '−' : '+' }}</span>
+          </button>
+          <div class="faq-answer" v-show="openQuestion === q.id">
+            <p>{{ q.answer }}</p>
+
+            <!-- Tableau des tailles si question size-chart -->
+            <SizeChart
+              v-if="q.id.includes('size-chart')"
+              :type="q.id.includes('tshirt') ? 'tshirt' : 'hoodie'"
+            />
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA Contact -->
+    <div class="faq-contact">
+      <p>Vous n'avez pas trouvé la réponse à votre question ?</p>
+      <router-link to="/contact" class="btn-primary">
+        Contactez-nous
+      </router-link>
+    </div>
+  </div>
+</template>
+```
+
+6.3 Composant SizeChart.vue (tableau des tailles)
+-------------------------------------------------------------------------------
+```vue
+<template>
+  <div class="size-chart">
+    <table>
+      <thead>
+        <tr>
+          <th>Taille</th>
+          <th>Largeur (cm)</th>
+          <th>Longueur (cm)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="size in sizes[type]" :key="size.name">
+          <td>{{ size.name }}</td>
+          <td>{{ size.width }}</td>
+          <td>{{ size.length }}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="size-tip">
+      💡 <strong>Astuce :</strong> En cas de doute, prenez la taille supérieure
+      pour un look oversized tendance streetwear.
+    </div>
+  </div>
+</template>
+
+<script setup>
+const sizes = {
+  tshirt: [
+    { name: 'S', width: 48, length: 68 },
+    { name: 'M', width: 52, length: 70 },
+    { name: 'L', width: 56, length: 72 },
+    { name: 'XL', width: 60, length: 74 },
+    { name: 'XXL', width: 64, length: 76 }
+  ],
+  hoodie: [
+    { name: 'S', width: 52, length: 66 },
+    { name: 'M', width: 56, length: 68 },
+    { name: 'L', width: 60, length: 70 },
+    { name: 'XL', width: 64, length: 72 },
+    { name: 'XXL', width: 68, length: 74 }
+  ]
+}
+
+defineProps({
+  type: {
+    type: String,
+    required: true,
+    validator: (v) => ['tshirt', 'hoodie'].includes(v)
+  }
+})
+</script>
+```
+
+6.4 Composable useFAQ.js
+-------------------------------------------------------------------------------
+```javascript
+import { ref } from 'vue'
+import { doc, getDoc, setDoc } from 'firebase/firestore'
+import { db } from '@/config/firebase'
+
+export function useFAQ() {
+  const categories = ref([])
+  const loading = ref(false)
+  const error = ref(null)
+
+  const loadFAQ = async () => {
+    loading.value = true
+    try {
+      const docRef = doc(db, 'siteContent', 'faq')
+      const docSnap = await getDoc(docRef)
+
+      if (docSnap.exists()) {
+        const data = docSnap.data()
+        categories.value = data.categories.sort((a, b) => a.order - b.order)
+      }
+    } catch (e) {
+      error.value = e.message
+      console.error('Erreur chargement FAQ:', e)
+    } finally {
+      loading.value = false
+    }
+  }
+
+  // Admin: mise à jour FAQ
+  const updateFAQ = async (newCategories) => {
+    try {
+      const docRef = doc(db, 'siteContent', 'faq')
+      await setDoc(docRef, {
+        categories: newCategories,
+        lastUpdated: new Date()
+      })
+      categories.value = newCategories
+    } catch (e) {
+      error.value = e.message
+      throw e
+    }
+  }
+
+  return {
+    categories,
+    loading,
+    error,
+    loadFAQ,
+    updateFAQ
+  }
+}
+```
+
+
+================================================================================
+7. SYSTÈME DE GESTION DE STOCK
+================================================================================
+
+7.1 Principe
+-------------------------------------------------------------------------------
+Le stock est géré PAR DESSIN et non par produit individuel. Un dessin peut
+être utilisé sur plusieurs produits (T-shirt, Pull, etc.). Chaque dessin
+dispose de 100 unités qui sont décrémentées automatiquement lors de la
 livraison d'une commande.
 
-5.2 Flux automatique
+7.2 Flux automatique
 -------------------------------------------------------------------------------
 1. L'admin change le statut d'une commande à "delivered"
 2. useOrders.updateOrderStatus() détecte le changement
@@ -291,13 +747,13 @@ livraison d'une commande.
 4. Pour chaque article avec un designId, décrémentation du remainingUnits
 5. Mise à jour en temps réel via Firestore onSnapshot
 
-5.3 Association produit ↔ dessin
+7.3 Association produit ↔ dessin
 -------------------------------------------------------------------------------
-Chaque produit doit avoir un champ "designId" qui référence l'identifiant 
-du dessin (ex: "design-1", "design-2"). Cette association se fait dans 
+Chaque produit doit avoir un champ "designId" qui référence l'identifiant
+du dessin (ex: "design-1", "design-2"). Cette association se fait dans
 l'onglet Produits de l'admin.
 
-5.4 Interface admin
+7.4 Interface admin
 -------------------------------------------------------------------------------
 • Visualisation du stock par dessin avec barres de progression
 • Badges de statut (OK, Alerte, Critique, Rupture)
@@ -307,10 +763,10 @@ l'onglet Produits de l'admin.
 
 
 ================================================================================
-6. SÉCURITÉ
+8. SÉCURITÉ
 ================================================================================
 
-6.1 Routes protégées
+8.1 Routes protégées
 -------------------------------------------------------------------------------
 ┌──────────┬────────────────────────────────────────────────┬─────────────────┐
 │ Route    │ Description                                    │ Protection      │
@@ -319,7 +775,7 @@ l'onglet Produits de l'admin.
 │ /rho     │ Vrai panel d'administration                    │ Firebase Auth   │
 └──────────┴────────────────────────────────────────────────┴─────────────────┘
 
-6.2 Honeypot
+8.2 Honeypot
 -------------------------------------------------------------------------------
 Le honeypot est un système de sécurité qui :
 • Capture les tentatives d'intrusion sur /admin (fausse page)
@@ -334,35 +790,35 @@ Fonctionnalités :
 • Logging complet dans Firestore (honeypot_logs)
 • Faux succès occasionnels créant des boucles infinies
 
-6.3 Règles Firestore
+8.3 Règles Firestore
 -------------------------------------------------------------------------------
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    
+
     // Lecture publique, écriture admin seulement
     match /products/{productId} {
       allow read: if true;
       allow write: if request.auth != null;
     }
-    
+
     match /siteContent/{contentId} {
       allow read: if true;
       allow write: if request.auth != null;
     }
-    
+
     // Honeypot: écriture publique, lecture admin
     match /honeypot_logs/{logId} {
       allow create: if true;
       allow read, delete: if request.auth != null;
     }
-    
+
     // Commandes: création publique, gestion admin
     match /orders/{orderId} {
       allow create: if true;
       allow read, update, delete: if request.auth != null;
     }
-    
+
     // Messages contact: création publique, lecture admin
     match /messages/{messageId} {
       allow create: if true;
@@ -371,7 +827,7 @@ service cloud.firestore {
   }
 }
 
-6.4 Protection anti-bruteforce
+8.4 Protection anti-bruteforce
 -------------------------------------------------------------------------------
 • Captcha mathématique après 2 tentatives échouées
 • Blocage 30 secondes après 3 tentatives
@@ -381,10 +837,10 @@ service cloud.firestore {
 
 
 ================================================================================
-7. CHARTE GRAPHIQUE
+9. CHARTE GRAPHIQUE
 ================================================================================
 
-7.1 Palette de couleurs
+9.1 Palette de couleurs
 -------------------------------------------------------------------------------
 ┌───────────────────┬───────────┬────────────────────────────────────────────┐
 │ Nom               │ Code      │ Usage                                      │
@@ -401,7 +857,7 @@ service cloud.firestore {
 │ Texte muted       │ #666666   │ Labels, métadonnées                        │
 └───────────────────┴───────────┴────────────────────────────────────────────┘
 
-7.2 Typographie
+9.2 Typographie
 -------------------------------------------------------------------------------
 Police principale : Montserrat (Google Fonts)
 
@@ -417,13 +873,13 @@ Styles spéciaux :
 • .text-gradient : Dégradé vert néon → cyan
 • .neon-text     : Effet glow vert néon
 
-7.3 Breakpoints responsive
+9.3 Breakpoints responsive
 -------------------------------------------------------------------------------
 • Mobile   : < 768px    (1 colonne, menu hamburger)
 • Tablette : 768-1024px (2 colonnes, navigation simplifiée)
 • Desktop  : > 1024px   (3-4 colonnes, navigation complète)
 
-7.4 Composants visuels
+9.4 Composants visuels
 -------------------------------------------------------------------------------
 Boutons :
 • btn-primary   : Gradient vert néon, box-shadow glow
@@ -441,7 +897,7 @@ Inputs :
 • Border: 2px solid (même couleur que bg)
 • Focus: Border --neon-green + glow subtil
 
-7.5 Animations
+9.5 Animations
 -------------------------------------------------------------------------------
 • Transitions : 0.3s ease (standard)
 • Hover cards : translateY(-8px) + border neon
@@ -450,7 +906,7 @@ Inputs :
 
 
 ================================================================================
-8. ROUTES DE L'APPLICATION
+10. ROUTES DE L'APPLICATION
 ================================================================================
 
 ┌──────────────────┬────────────────────────────────────────┬──────────────────┐
@@ -460,6 +916,7 @@ Inputs :
 │ /products        │ Catalogue avec filtres                 │ Products.vue     │
 │ /products/:slug  │ Détail produit avec galerie            │ ProductDetail.vue│
 │ /contact         │ Formulaire de contact                  │ Contact.vue      │
+│ /faq             │ ⭐ Questions fréquentes + guide tailles│ FAQ.vue          │
 │ /shipping        │ Informations livraison                 │ Shipping.vue     │
 │ /returns         │ Politique de retours                   │ Returns.vue      │
 │ /terms           │ Conditions générales de vente          │ Terms.vue        │
@@ -472,24 +929,27 @@ Inputs :
 
 
 ================================================================================
-9. FONCTIONNALITÉS IMPLÉMENTÉES
+11. FONCTIONNALITÉS IMPLÉMENTÉES
 ================================================================================
 
-9.1 Frontend
+11.1 Frontend
 -------------------------------------------------------------------------------
 ✅ Navigation responsive avec menu mobile
 ✅ Page d'accueil avec hero et produits vedette
 ✅ Catalogue avec filtres par type de produit (T-shirts / Pulls)
 ✅ Page détail produit avec galerie d'images
+✅ ⭐ Sélection type + taille combinée en une seule étape
+✅ ⭐ Lien vers guide des tailles dans le sélecteur
 ✅ Panier latéral avec gestion des quantités
 ✅ Persistance du panier en localStorage
 ✅ Formulaire de contact avec honeypot anti-spam
+✅ ⭐ Page FAQ complète avec guide des tailles
 ✅ Easter eggs cachés (10 citations)
 ✅ Animations et transitions fluides
 ✅ Design futuriste noir & vert néon
 ✅ SEO optimisé (meta tags, sitemap, robots.txt)
 
-9.2 Panel Admin (/rho)
+11.2 Panel Admin (/rho)
 -------------------------------------------------------------------------------
 ✅ Authentification Firebase (email/password)
 ✅ Onglet Produits : Modification nom, prix, description, images, designId
@@ -500,7 +960,7 @@ Inputs :
 ✅ Onglet Sécurité : Logs honeypot, changement de mot de passe
 ✅ Protection anti-bruteforce avec captcha
 
-9.3 Système de Checkout
+11.3 Système de Checkout
 -------------------------------------------------------------------------------
 ✅ Modal de checkout avec formulaire
 ✅ Validation des données client
@@ -509,8 +969,9 @@ Inputs :
 ✅ Association produit ↔ design via designId
 ✅ Vidage automatique du panier après succès
 ✅ Feedback visuel (loading, erreurs, succès)
+✅ ⭐ Intégration Stripe pour paiements
 
-9.4 Gestion du Stock
+11.4 Gestion du Stock
 -------------------------------------------------------------------------------
 ✅ Stock par dessin (pas par produit)
 ✅ 2 dessins avec 100 unités chacun
@@ -520,19 +981,18 @@ Inputs :
 
 
 ================================================================================
-10. PROCHAINES ÉTAPES (TODO)
+12. PROCHAINES ÉTAPES (TODO)
 ================================================================================
 
-10.1 Priorité 1 - Mise en ligne
+12.1 Priorité 1 - Mise en ligne
 -------------------------------------------------------------------------------
 □ Remplacer les images placeholder par de vraies photos (WebP, 800x1000px)
-□ Intégration paiement Stripe/PayPal
-□ Configuration emails transactionnels (SendGrid)
 □ Associer tous les produits à un dessin
 □ Tester le système de stock complet
 □ Configurer Firebase Hosting ou Vercel
+□ Tests utilisateur du nouveau flux checkout en 2 étapes
 
-10.2 Priorité 2 - Amélioration UX
+12.2 Priorité 2 - Amélioration UX
 -------------------------------------------------------------------------------
 □ Modal de confirmation "Ajouté au panier"
 □ Animation d'ajout au panier
@@ -541,7 +1001,7 @@ Inputs :
 □ Modal Quick View produit
 □ Wishlist / Favoris
 
-10.3 Priorité 3 - Marketing & Analytics
+12.3 Priorité 3 - Marketing & Analytics
 -------------------------------------------------------------------------------
 □ Google Analytics 4
 □ Facebook Pixel
@@ -550,7 +1010,7 @@ Inputs :
 □ Open Graph images optimisées
 □ Google Search Console
 
-10.4 Priorité 4 - Fonctionnalités avancées
+12.4 Priorité 4 - Fonctionnalités avancées
 -------------------------------------------------------------------------------
 □ Comptes clients avec Firebase Auth
 □ Page profil et historique commandes
@@ -561,32 +1021,33 @@ Inputs :
 □ Multi-langue (i18n FR/EN)
 □ PWA avec Service Worker
 
-10.5 Priorité 5 - Administration
+12.5 Priorité 5 - Administration
 -------------------------------------------------------------------------------
 □ Interface admin séparée
 □ Statistiques ventes dashboard
 □ Intégration Mondial Relay / Colissimo
 □ Calcul frais de port automatique
+□ Édition FAQ depuis l'admin
 
 
 ================================================================================
-11. DÉPLOIEMENT
+13. DÉPLOIEMENT
 ================================================================================
 
-11.1 Options d'hébergement recommandées
+13.1 Options d'hébergement recommandées
 -------------------------------------------------------------------------------
 1. Vercel         - Gratuit, simple, excellent pour Vue
 2. Netlify        - Gratuit, CI/CD facile
 3. Firebase Hosting - Gratuit jusqu'à 10GB, même écosystème
 4. AWS Amplify    - Plus complexe, scalable
 
-11.2 Configuration build
+13.2 Configuration build
 -------------------------------------------------------------------------------
 • Build command      : npm run build
 • Publish directory  : dist
 • Node version       : 18+
 
-11.3 Variables d'environnement (.env)
+13.3 Variables d'environnement (.env)
 -------------------------------------------------------------------------------
 VITE_FIREBASE_API_KEY=xxx
 VITE_FIREBASE_AUTH_DOMAIN=xxx
@@ -594,9 +1055,10 @@ VITE_FIREBASE_PROJECT_ID=xxx
 VITE_FIREBASE_STORAGE_BUCKET=xxx
 VITE_FIREBASE_MESSAGING_SENDER_ID=xxx
 VITE_FIREBASE_APP_ID=xxx
-VITE_STRIPE_PUBLIC_KEY=pk_test_xxx (à venir)
+VITE_STRIPE_PUBLIC_KEY=pk_live_xxx
+VITE_STRIPE_SECRET_KEY=sk_live_xxx (backend only)
 
-11.4 Commandes utiles
+13.4 Commandes utiles
 -------------------------------------------------------------------------------
 npm install          # Installer les dépendances
 npm run dev          # Serveur de développement (localhost:3000)
@@ -605,7 +1067,7 @@ npm run preview      # Prévisualiser le build
 vercel --prod        # Déployer sur Vercel
 firebase deploy      # Déployer sur Firebase Hosting
 
-11.5 Budget estimé (mensuel)
+13.5 Budget estimé (mensuel)
 -------------------------------------------------------------------------------
 • Domaine             : ~10€/an
 • Hébergement         : 0€ (Vercel/Netlify/Firebase gratuit)
@@ -616,7 +1078,7 @@ firebase deploy      # Déployer sur Firebase Hosting
 
 
 ================================================================================
-12. RESSOURCES & DOCUMENTATION
+14. RESSOURCES & DOCUMENTATION
 ================================================================================
 
 Documentation officielle :
@@ -626,6 +1088,7 @@ Documentation officielle :
 • Vue Router     : https://router.vuejs.org/
 • Tailwind CSS   : https://tailwindcss.com/docs
 • Firebase       : https://firebase.google.com/docs
+• Stripe         : https://stripe.com/docs
 
 Documentation projet :
 • README.md              - Vue d'ensemble et installation
@@ -640,6 +1103,6 @@ Documentation projet :
 
 ================================================================================
                               ─────────────────────
-                    Document généré le 30 décembre 2025
+                    Document généré le 31 décembre 2025
                     NainVert © 2025 - Tous droits réservés
 ================================================================================
