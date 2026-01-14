@@ -90,19 +90,17 @@
           <!-- Footer with Total & Checkout -->
           <div class="p-4 border-t border-[rgba(57,255,20,0.2)] bg-[var(--color-black-light)] flex flex-col gap-3">
             <!-- Indicateur livraison gratuite -->
-            <div v-if="freeShippingMessage" 
-                 class="p-3 rounded-lg text-sm" 
-                 :class="isFreeShipping 
-                   ? 'bg-[rgba(57,255,20,0.1)] border border-[var(--color-neon-green)] text-[var(--color-neon-green)]' 
+            <div v-if="shippingInfo"
+                 class="p-3 rounded-lg text-sm"
+                 :class="shippingInfo.isFree
+                   ? 'bg-[rgba(57,255,20,0.1)] border border-[var(--color-neon-green)] text-[var(--color-neon-green)]'
                    : 'bg-[rgba(255,193,7,0.1)] border border-yellow-500/30 text-yellow-400'">
               <div class="flex items-center gap-2">
-                <span v-if="isFreeShipping">🚚✨</span>
-                <span v-else>🚚</span>
-                <span class="font-medium">{{ freeShippingMessage }}</span>
+                <span class="font-medium">{{ shippingInfo.message }}</span>
               </div>
               <!-- Barre de progression -->
-              <div v-if="!isFreeShipping" class="mt-2 h-1.5 bg-[var(--color-black)] rounded-full overflow-hidden">
-                <div class="h-full bg-gradient-to-r from-yellow-500 to-[var(--color-neon-green)] transition-all duration-500" 
+              <div v-if="!shippingInfo.isFree" class="mt-2 h-1.5 bg-[var(--color-black)] rounded-full overflow-hidden">
+                <div class="h-full bg-gradient-to-r from-yellow-500 to-[var(--color-neon-green)] transition-all duration-500"
                      :style="{ width: progressPercentage + '%' }"></div>
               </div>
             </div>
@@ -117,11 +115,11 @@
                 Procéder au paiement
               </button>
               
-              <button 
-                @click="continueAndGoToDesigns" 
+              <button
+                @click="continueAndGoToDesigns"
                 class="btn btn-ghost text-sm py-2"
               >
-                Retour aux designs
+                Continuer les achats
               </button>
             </div>
           </div>
@@ -146,10 +144,9 @@ const router = useRouter()
 const showCheckoutModal = ref(false)
 
 // Livraison gratuite
-const freeShippingMessage = computed(() => getFreeShippingMessage(cartStore.totalPrice))
-const isFreeShipping = computed(() => cartStore.totalPrice >= FREE_SHIPPING_THRESHOLD)
+const shippingInfo = computed(() => getFreeShippingMessage(cartStore.totalPrice))
 const progressPercentage = computed(() => {
-  if (isFreeShipping.value) return 100
+  if (shippingInfo.value.isFree) return 100
   return Math.min((cartStore.totalPrice / FREE_SHIPPING_THRESHOLD) * 100, 100)
 })
 

@@ -252,14 +252,14 @@ export const getFreeShippingMessage = (subtotal) => {
     return {
       isFree: true,
       remaining: 0,
-      message: '🎉 Livraison gratuite !'
+      message: '🚚✨ 🎉 Livraison gratuite !'
     }
   }
 
   return {
     isFree: false,
-    remaining: remaining.toFixed(2),
-    message: `Plus que ${remaining.toFixed(2)}€ pour la livraison gratuite !`
+    remaining: Number(remaining.toFixed(2)),
+    message: `🚚 Plus que ${remaining.toFixed(2)}€ pour la livraison gratuite !`
   }
 }
 

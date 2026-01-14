@@ -11,6 +11,7 @@ import Returns from '@/pages/Returns.vue'
 import Terms from '@/pages/Terms.vue'
 import Legal from '@/pages/Legal.vue'
 import DevTools from '@/pages/DevTools.vue'
+import FAQ from '@/pages/FAQ.vue'
 
 const routes = [
   {
@@ -108,6 +109,15 @@ const routes = [
     meta: {
       title: 'Mentions Légales - NainVert',
       description: 'Mentions légales et protection des données'
+    }
+  },
+  {
+    path: '/faq',
+    name: 'FAQ',
+    component: FAQ,
+    meta: {
+      title: 'FAQ - NainVert',
+      description: 'Questions fréquentes sur les tailles, livraison, retours et produits'
     }
   },
   {
