@@ -236,7 +236,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, watch, computed } from 'vue'
+import { ref, reactive, watch, computed, onBeforeUnmount } from 'vue'
 import { useCartStore } from '@/stores/cart'
 import { useCheckout } from '@/composables/useCheckout'
 
@@ -265,6 +265,11 @@ watch(() => props.isOpen, (newValue) => {
   }
 })
 
+// Ensure body overflow is reset if component unmounts unexpectedly
+onBeforeUnmount(() => {
+  document.body.style.overflow = ''
+})
+
 const formData = reactive({
   name: '',
   email: '',
@@ -280,8 +285,11 @@ const formData = reactive({
 // Validation en temps réel
 const isPhoneValid = computed(() => {
   if (!formData.phone) return false
+  const phone = formData.phone.trim()
+  // Must be 8-20 characters, contain only allowed chars, and have at least 8 digits
   const phoneRegex = /^[\d\s+\-()]+$/
-  return phoneRegex.test(formData.phone)
+  const digitCount = (phone.match(/\d/g) || []).length
+  return phoneRegex.test(phone) && phone.length >= 8 && phone.length <= 20 && digitCount >= 8
 })
 
 const isPostalCodeValid = computed(() => {

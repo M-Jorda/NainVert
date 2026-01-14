@@ -40,7 +40,7 @@ export const useCartStore = defineStore('cart', () => {
 
   const totalPrice = computed(() => {
     return items.value.reduce((total, item) => {
-      return total + (item.price * item.quantity)
+      return total + ((item.price ?? 0) * (item.quantity ?? 0))
     }, 0)
   })
 
@@ -81,7 +81,7 @@ export const useCartStore = defineStore('cart', () => {
         name: product.name,
         slug: product.slug,
         price: product.price,
-        image: product.images[0],
+        image: product.images?.[0] ?? null,
         size: size,
         quantity: 1,
         designId: product.designId || product.design || null

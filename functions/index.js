@@ -35,28 +35,51 @@ exports.createPaymentIntent = functions.https.onRequest((req, res) => {
     try {
       const { amount, currency, orderId, customer, metadata } = req.body
 
-      // Validation
-      if (!amount || amount < 100) { // Minimum 1€ (100 centimes)
-        return res.status(400).json({ error: 'Montant invalide (minimum 1€)' })
-      }
-
       if (!orderId) {
         return res.status(400).json({ error: 'ID de commande requis' })
       }
 
-      // Créer le PaymentIntent
+      // CRITICAL: Validate amount against actual order in Firestore
+      const db = admin.firestore()
+      const ordersSnapshot = await db.collection('orders')
+        .where('orderNumber', '==', orderId)
+        .limit(1)
+        .get()
+
+      if (ordersSnapshot.empty) {
+        return res.status(404).json({ error: 'Commande non trouvée' })
+      }
+
+      const orderDoc = ordersSnapshot.docs[0]
+      const orderData = orderDoc.data()
+
+      // Calculate expected amount from order (convert to cents)
+      const expectedAmount = Math.round((orderData.total || 0) * 100)
+
+      // Validate the amount matches the order total (with small tolerance for rounding)
+      if (!amount || Math.abs(amount - expectedAmount) > 1) {
+        console.error(`❌ Montant invalide: reçu ${amount}, attendu ${expectedAmount} pour commande ${orderId}`)
+        return res.status(400).json({ error: 'Montant ne correspond pas à la commande' })
+      }
+
+      // Minimum 1€ (100 centimes)
+      if (expectedAmount < 100) {
+        return res.status(400).json({ error: 'Montant invalide (minimum 1€)' })
+      }
+
+      // Créer le PaymentIntent with validated amount
       const paymentIntent = await stripe.paymentIntents.create({
-        amount: Math.round(amount), // En centimes
+        amount: expectedAmount, // Use server-validated amount, not client amount
         currency: currency || 'eur',
         automatic_payment_methods: {
           enabled: true,
         },
         metadata: {
           orderId: orderId,
-          customerEmail: customer?.email || '',
+          customerEmail: customer?.email || orderData.customer?.email || '',
           ...metadata
         },
-        receipt_email: customer?.email || null,
+        receipt_email: customer?.email || orderData.customer?.email || null,
         description: `Commande NainVert ${orderId}`
       })
 

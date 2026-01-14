@@ -4,15 +4,22 @@ import { db } from '@/config/firebase'
 
 const stockData = ref([])
 const loading = ref(false)
+let unsubscribe = null
 
 export function useStock() {
-  
+
   const loadStock = () => {
+    // Clean up previous listener if exists
+    if (unsubscribe) {
+      unsubscribe()
+      unsubscribe = null
+    }
+
     loading.value = true
-    
+
     const stockCollectionRef = collection(db, 'stock')
-    
-    const unsubscribe = onSnapshot(query(stockCollectionRef), (snapshot) => {
+
+    unsubscribe = onSnapshot(query(stockCollectionRef), (snapshot) => {
       stockData.value = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
@@ -22,8 +29,15 @@ export function useStock() {
       console.error('❌ Erreur chargement stock:', error)
       loading.value = false
     })
-    
+
     return unsubscribe
+  }
+
+  const cleanup = () => {
+    if (unsubscribe) {
+      unsubscribe()
+      unsubscribe = null
+    }
   }
 
   const updateDesignStock = async (designId, stockUpdate) => {
@@ -121,6 +135,7 @@ export function useStock() {
     decrementStock,
     checkStockAvailable,
     getStockQuantity,
-    decrementStockForOrder
+    decrementStockForOrder,
+    cleanup
   }
 }

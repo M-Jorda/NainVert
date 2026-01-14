@@ -53,8 +53,10 @@ const routes = [
     name: 'RealAdmin',
     component: Admin,
     meta: {
-      title: 'NainVert - Administration'
+      title: 'NainVert - Administration',
+      requiresAuth: true
     }
+    // Note: Auth is handled by Admin.vue component which shows login form if not authenticated
   },
   {
     path: '/admin',

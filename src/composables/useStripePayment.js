@@ -54,11 +54,22 @@ export function useStripePayment() {
       })
       
       if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Erreur lors de la création du paiement')
+        let errorMessage = 'Erreur lors de la création du paiement'
+        try {
+          const errorData = await response.json()
+          errorMessage = errorData.error || errorMessage
+        } catch {
+          // Response was not valid JSON, use default error message
+        }
+        throw new Error(errorMessage)
       }
-      
-      const data = await response.json()
+
+      let data
+      try {
+        data = await response.json()
+      } catch {
+        throw new Error('Réponse invalide du serveur de paiement')
+      }
       
       clientSecret.value = data.clientSecret
       paymentIntentId.value = data.paymentIntentId

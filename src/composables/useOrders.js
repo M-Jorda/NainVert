@@ -14,24 +14,30 @@ export function useOrders() {
    * Charge toutes les commandes depuis Firestore
    */
   const loadOrders = () => {
-  return new Promise((resolve) => {
-    onAuthStateChanged(auth, (user) => {
-      if (user) {
-        // Now load orders - user is authenticated
-        const q = query(collection(db, 'orders'), orderBy('createdAt', 'desc'))
-        onSnapshot(q, (snapshot) => {
-          orders.value = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
-          resolve()
-        }, (error) => {
-          console.error('Erreur chargement commandes:', error)
-          resolve()
-        })
-      } else {
-        resolve() // Not logged in, skip
-      }
+    // Clean up previous listener if exists
+    if (unsubscribe) {
+      unsubscribe()
+      unsubscribe = null
+    }
+
+    return new Promise((resolve, reject) => {
+      onAuthStateChanged(auth, (user) => {
+        if (user) {
+          // Now load orders - user is authenticated
+          const q = query(collection(db, 'orders'), orderBy('createdAt', 'desc'))
+          unsubscribe = onSnapshot(q, (snapshot) => {
+            orders.value = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+            resolve()
+          }, (error) => {
+            console.error('Erreur chargement commandes:', error)
+            reject(error)
+          })
+        } else {
+          resolve() // Not logged in, skip
+        }
+      })
     })
-  })
-}
+  }
 
   /**
    * Met à jour le statut d'une commande
@@ -86,7 +92,7 @@ export function useOrders() {
 
           if (designIndex !== -1) {
             const quantity = item.quantity || 1
-            const currentRemaining = designs[designIndex].remainingUnits
+            const currentRemaining = designs[designIndex].remainingUnits ?? 0
             const newRemaining = Math.max(0, currentRemaining - quantity)
 
             designs[designIndex].remainingUnits = newRemaining
@@ -99,16 +105,13 @@ export function useOrders() {
         }
       }
 
-      // Modified to check for orders created by the client
-      if (updated && !orders.value.some(order => order.customer.email === auth.currentUser.email)) {
-        if (updated) {
-          await updateDoc(stockRef, {
-            designs: designs,
-            lastUpdated: serverTimestamp()
-          })
+      if (updated) {
+        await updateDoc(stockRef, {
+          designs: designs,
+          lastUpdated: serverTimestamp()
+        })
 
-          console.log('✅ Stock mis à jour suite à livraison')
-        }
+        console.log('✅ Stock mis à jour suite à livraison')
       }
     } catch (error) {
       console.error('❌ Erreur décrémentation stock:', error)
