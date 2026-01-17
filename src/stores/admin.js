@@ -25,10 +25,8 @@ export const useAdminStore = defineStore('admin', () => {
       const userCredential = await signInWithEmailAndPassword(auth, email, password)
       user.value = userCredential.user
       isAuthenticated.value = true
-      console.log('✅ Admin connecté:', user.value.email)
       return true
     } catch (err) {
-      console.error('❌ Erreur de connexion:', err)
       error.value = getErrorMessage(err.code)
       isAuthenticated.value = false
       return false
@@ -44,7 +42,7 @@ export const useAdminStore = defineStore('admin', () => {
       isAuthenticated.value = false
       user.value = null
     } catch (err) {
-      console.error('Erreur lors de la déconnexion:', err)
+      // Silent logout error handling
     }
   }
 
@@ -68,7 +66,6 @@ export const useAdminStore = defineStore('admin', () => {
 
       return { success: true, message: 'Mot de passe modifié avec succès' }
     } catch (err) {
-      console.error('Erreur changement mot de passe:', err)
       const errorMsg = getErrorMessage(err.code) || 'Erreur lors du changement de mot de passe'
       error.value = errorMsg
       return { 
@@ -87,7 +84,6 @@ export const useAdminStore = defineStore('admin', () => {
         if (firebaseUser) {
           user.value = firebaseUser
           isAuthenticated.value = true
-          console.log('✅ Session admin restaurée:', firebaseUser.email)
         } else {
           user.value = null
           isAuthenticated.value = false

@@ -1,19 +1,19 @@
 <template>
   <div class="shipping-selector">
     <!-- Message livraison gratuite -->
-    <div v-if="freeShippingMessage" class="mb-4 p-3 rounded-lg border text-sm"
-         :class="isFreeShipping ? 'bg-[rgba(57,255,20,0.1)] border-[var(--color-neon-green)] text-[var(--color-neon-green)]' : 'bg-[rgba(255,193,7,0.1)] border-yellow-500/30 text-yellow-400'">
+    <div v-if="freeShippingMessage?.message" class="mb-4 p-3 rounded-lg border text-sm"
+         :class="freeShippingMessage.isFree ? 'bg-[rgba(57,255,20,0.1)] border-[var(--color-neon-green)] text-[var(--color-neon-green)]' : 'bg-[rgba(255,193,7,0.1)] border-yellow-500/30 text-yellow-400'">
       <div class="flex items-center gap-2">
-        <svg v-if="isFreeShipping" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <svg v-if="freeShippingMessage.isFree" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <polyline points="20 6 9 17 4 12"></polyline>
         </svg>
         <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
         </svg>
-        <span>{{ freeShippingMessage }}</span>
+        <span>{{ freeShippingMessage.message }}</span>
       </div>
       <!-- Barre de progression vers livraison gratuite -->
-      <div v-if="!isFreeShipping && progressPercentage > 0" class="mt-2 h-1.5 bg-[var(--color-black-lighter)] rounded-full overflow-hidden">
+      <div v-if="!freeShippingMessage.isFree && progressPercentage > 0" class="mt-2 h-1.5 bg-[var(--color-black-lighter)] rounded-full overflow-hidden">
         <div class="h-full bg-gradient-to-r from-yellow-500 to-[var(--color-neon-green)] transition-all duration-300"
              :style="{ width: progressPercentage + '%' }"></div>
       </div>

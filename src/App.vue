@@ -1,7 +1,8 @@
 <template>
   <div id="app" class="min-h-screen flex flex-col bg-[var(--color-black)]">
-    <!-- Header désactivé pour design minimaliste -->
-    <!-- <Header /> -->
+    <!-- NainVert icon for navigation (shows on all pages except home) -->
+    <NainVertIcon v-if="showNavIcon" />
+
     <main class="flex-1">
       <router-view v-slot="{ Component }">
         <transition name="fade" mode="out-in">
@@ -17,14 +18,15 @@
 <script setup>
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
-// import Header from './components/Header.vue'
+import NainVertIcon from './components/NainVertIcon.vue'
 import Footer from './components/Footer.vue'
 import Cart from './components/Cart.vue'
 
 const route = useRoute()
 
-// Le footer ne s'affiche pas sur la page d'accueil
+// Le footer et l'icone ne s'affichent pas sur la page d'accueil
 const showFooter = computed(() => route.name !== 'Home')
+const showNavIcon = computed(() => route.name !== 'Home')
 </script>
 
 <style scoped>

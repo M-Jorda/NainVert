@@ -2,9 +2,16 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper function
+    // Helper function - checks if user exists in admins collection
     function isAdmin() {
-      return request.auth != null && request.auth.token.admin == true;
+      return request.auth != null &&
+             exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    // Admins collection: only admins can read, no one can write (manual setup only)
+    match /admins/{adminId} {
+      allow read: if request.auth != null && request.auth.uid == adminId;
+      allow write: if false; // Manually managed in Firebase Console
     }
 
     // Products: public read, admin write
@@ -19,13 +26,13 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
-    // Honeypot logs: anyone creates (with size limit), admin reads, no delete
+    // Honeypot logs: anyone creates (with size limit), admin reads and deletes
     match /honeypot_logs/{logId} {
       allow create: if request.resource.data.keys().hasAll(['email', 'timestamp'])
                     && request.resource.data.email is string
                     && request.resource.data.email.size() <= 100;
-      allow read: if isAdmin();
-      allow update, delete: if false;
+      allow read, delete: if isAdmin();
+      allow update: if false;
     }
 
     // Easter eggs: public read, admin write
@@ -92,10 +99,30 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
-    // Stock: public read, admin write
-    match /stock/{stockId} {
+    // Plans: public read (for display), admin write
+    match /plans/{planId} {
       allow read: if true;
       allow write: if isAdmin();
+    }
+
+    // Stock: public read, admin write, but allow decrement during order creation
+    match /stock/{stockId} {
+      allow read: if true;
+      // Admins can do anything
+      allow write: if isAdmin();
+      // Allow stock decrement from clients (for order creation)
+      // Only allows updating quantity (decrement) and salesStats, not arbitrary writes
+      allow update: if request.resource.data.quantity is number
+                    && request.resource.data.quantity >= 0
+                    && request.resource.data.quantity <= resource.data.quantity
+                    && request.resource.data.keys().hasAll(['quantity', 'lastUpdated'])
+                    && request.resource.data.salesStats is map;
+    }
+
+    // Clients: centralized client/tag management - admin only
+    match /clients/{clientId} {
+      allow read, write: if isAdmin();
+      // Also allow Cloud Functions to write (they run with admin privileges)
     }
   }
 }

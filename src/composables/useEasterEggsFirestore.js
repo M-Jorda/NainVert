@@ -12,7 +12,6 @@ export function useEasterEggsFirestore() {
   // Load Easter Eggs from Firestore
   const loadEasterEggs = async () => {
     if (easterEggs.value.length > 0) {
-      console.log('✅ Easter Eggs déjà en cache')
       return easterEggs.value
     }
 
@@ -20,17 +19,15 @@ export function useEasterEggsFirestore() {
     try {
       const q = query(collection(db, 'easterEggs'), orderBy('order', 'asc'))
       const snapshot = await getDocs(q)
-      
+
       easterEggs.value = snapshot.docs.map(doc => ({
         id: doc.id,
         key: doc.id,
         ...doc.data()
       }))
-      
-      console.log(`✅ ${easterEggs.value.length} Easter Eggs chargés depuis Firestore`)
+
       return easterEggs.value
     } catch (error) {
-      console.error('❌ Erreur chargement Easter Eggs:', error)
       return []
     } finally {
       loading.value = false
@@ -42,17 +39,15 @@ export function useEasterEggsFirestore() {
     try {
       const docRef = doc(db, 'easterEggs', eggKey)
       await updateDoc(docRef, data)
-      
+
       // Update cache
       const index = easterEggs.value.findIndex(egg => egg.key === eggKey)
       if (index !== -1) {
         easterEggs.value[index] = { ...easterEggs.value[index], ...data }
       }
-      
-      console.log(`✅ Easter Egg mis à jour: ${eggKey}`)
+
       return true
     } catch (error) {
-      console.error('❌ Erreur mise à jour Easter Egg:', error)
       return false
     }
   }

@@ -5,7 +5,49 @@
 
 const functions = require('firebase-functions')
 const admin = require('firebase-admin')
-const cors = require('cors')({ origin: true })
+
+// CORS configuration with explicit allowed origins
+const allowedOrigins = [
+  'http://localhost:3000',
+  'http://localhost:4000',
+  'http://localhost:5173',
+  'http://127.0.0.1:3000',
+  'http://127.0.0.1:4000',
+  'http://127.0.0.1:5173',
+  'https://nainvert.com',
+  'https://www.nainvert.com',
+  'https://nainvert.web.app',
+  'https://nainvert.firebaseapp.com'
+]
+
+const corsHandler = require('cors')({
+  origin: (origin, callback) => {
+    // Allow requests with no origin (mobile apps, curl, etc.)
+    if (!origin) return callback(null, true)
+
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true)
+    } else {
+      console.log(`⚠️ CORS: origine non autorisée: ${origin}`)
+      // Still allow for development flexibility
+      callback(null, true)
+    }
+  },
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  credentials: true,
+  maxAge: 86400 // Cache preflight for 24 hours
+})
+
+// Helper function to set CORS headers manually for edge cases
+const setCorsHeaders = (res, origin) => {
+  const allowedOrigin = allowedOrigins.includes(origin) ? origin : '*'
+  res.set('Access-Control-Allow-Origin', allowedOrigin)
+  res.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+  res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With')
+  res.set('Access-Control-Allow-Credentials', 'true')
+  res.set('Access-Control-Max-Age', '86400')
+}
 
 // Initialiser Firebase Admin
 admin.initializeApp()
@@ -26,7 +68,7 @@ sgMail.setApiKey(functions.config().sendgrid?.api_key || process.env.SENDGRID_AP
  * Appelé par le frontend avant d'afficher le formulaire de paiement
  */
 exports.createPaymentIntent = functions.https.onRequest((req, res) => {
-  cors(req, res, async () => {
+  corsHandler(req, res, async () => {
     // Vérifier la méthode HTTP
     if (req.method !== 'POST') {
       return res.status(405).json({ error: 'Méthode non autorisée' })
@@ -621,3 +663,312 @@ exports.sendCustomEmail = functions.https.onCall(async (data, context) => {
     throw new functions.https.HttpsError('internal', error.message)
   }
 })
+
+// ============================================================================
+// 6. CLIENT TAG NOTIFICATIONS
+// ============================================================================
+
+/**
+ * Called when a client tag is added or changed
+ * Sends email notification to all admin users
+ * Uses HTTP request with CORS support for broader compatibility
+ */
+exports.onClientTagAdded = functions.https.onRequest((req, res) => {
+  // Set CORS headers manually first for reliability
+  const origin = req.headers.origin
+  setCorsHeaders(res, origin)
+
+  // Handle preflight OPTIONS request explicitly
+  if (req.method === 'OPTIONS') {
+    console.log('📥 OPTIONS preflight request received from:', origin)
+    return res.status(204).send('')
+  }
+
+  // Use corsHandler for the actual request
+  corsHandler(req, res, async () => {
+    console.log('📥 onClientTagAdded appelé - Méthode:', req.method, 'Origin:', origin)
+
+    if (req.method !== 'POST') {
+      console.log('❌ Méthode non autorisée:', req.method)
+      return res.status(405).json({ error: 'Méthode non autorisée' })
+    }
+
+    // Log the request body for debugging
+    console.log('📝 Body reçu:', JSON.stringify(req.body))
+
+    const { clientEmail, clientName, tag, privateNote, previousTag } = req.body
+
+    if (!clientEmail) {
+      console.log('❌ Email client manquant')
+      return res.status(400).json({ error: 'Email client requis' })
+    }
+
+    try {
+      const db = admin.firestore()
+
+      // Get all admin emails from the admins collection
+      console.log('🔍 Recherche des admins...')
+      const adminsSnapshot = await db.collection('admins').get()
+      const adminEmails = []
+
+      adminsSnapshot.docs.forEach(doc => {
+        const adminData = doc.data()
+        if (adminData.email) {
+          adminEmails.push(adminData.email)
+          console.log('👤 Admin trouvé:', adminData.email)
+        }
+      })
+
+      // Fallback to config email if no admins found
+      if (adminEmails.length === 0) {
+        const fallbackEmail = functions.config().admin?.email || 'contact@nainvert.com'
+        adminEmails.push(fallbackEmail)
+        console.log('⚠️ Aucun admin trouvé, utilisation email de secours:', fallbackEmail)
+      }
+
+      // Get tag label
+      const tagLabels = {
+        'vip': '⭐ VIP - Client premium',
+        'good': '👍 Bon client',
+        'neutral': '😐 Neutre',
+        'watch': '⚠️ À surveiller',
+        'problematic': '🚫 Problématique',
+        '': 'Aucun tag'
+      }
+
+      const tagLabel = tagLabels[tag] || tag || 'Aucun tag'
+      const previousTagLabel = tagLabels[previousTag] || previousTag || 'Aucun tag'
+
+      console.log(`📬 Envoi notification: ${clientEmail} - Tag: ${previousTagLabel} → ${tagLabel}`)
+
+      // Generate email HTML
+      const html = generateTagNotificationHTML({
+        clientEmail,
+        clientName,
+        tag: tag || '',
+        tagLabel,
+        tagComment: privateNote || '',
+        previousTag,
+        previousTagLabel,
+        updatedBy: 'Admin',
+        timestamp: new Date().toLocaleString('fr-FR', { timeZone: 'Europe/Paris' })
+      })
+
+      // Check if SendGrid API key is configured
+      const sendGridApiKey = functions.config().sendgrid?.api_key || process.env.SENDGRID_API_KEY
+      if (!sendGridApiKey) {
+        console.error('❌ SendGrid API key non configurée!')
+        return res.status(500).json({ error: 'SendGrid non configuré' })
+      }
+
+      // Send email to all admins
+      console.log(`📧 Envoi email à ${adminEmails.length} admin(s)...`)
+      const emailPromises = adminEmails.map(adminEmail => {
+        const msg = {
+          to: adminEmail,
+          from: {
+            email: functions.config().sendgrid?.from_email || 'contact@nainvert.com',
+            name: 'NainVert - Notifications'
+          },
+          subject: `🏷️ Tag client modifié: ${clientName || clientEmail}`,
+          html
+        }
+        console.log(`  → Envoi à: ${adminEmail}`)
+        return sgMail.send(msg)
+      })
+
+      await Promise.all(emailPromises)
+      console.log(`✅ Notification tag envoyée à ${adminEmails.length} admin(s)`)
+
+      res.status(200).json({ success: true, notifiedAdmins: adminEmails.length })
+
+    } catch (error) {
+      console.error('❌ Erreur notification tag:', error)
+      console.error('❌ Error details:', error.response?.body || error.message)
+      res.status(500).json({ error: error.message })
+    }
+  })
+})
+
+/**
+ * Firestore trigger: automatically notify when client document tag changes
+ */
+exports.onClientTagUpdated = functions.firestore
+  .document('clients/{clientId}')
+  .onUpdate(async (change, context) => {
+    const before = change.before.data()
+    const after = change.after.data()
+
+    // Check if tag changed
+    if (before.tag === after.tag && before.tagComment === after.tagComment) {
+      return null // No tag change, skip
+    }
+
+    // Only notify if tag actually changed (not just comment)
+    if (before.tag === after.tag) {
+      console.log('📝 Seulement le commentaire a changé, pas de notification')
+      return null
+    }
+
+    const db = admin.firestore()
+
+    try {
+      // Get all admin emails
+      const adminsSnapshot = await db.collection('admins').get()
+      const adminEmails = []
+
+      adminsSnapshot.docs.forEach(doc => {
+        const adminData = doc.data()
+        if (adminData.email) {
+          adminEmails.push(adminData.email)
+        }
+      })
+
+      if (adminEmails.length === 0) {
+        console.log('⚠️ Aucun admin trouvé pour la notification')
+        return null
+      }
+
+      const tagLabels = {
+        'vip': '⭐ VIP - Client premium',
+        'good': '👍 Bon client',
+        'neutral': '😐 Neutre',
+        'watch': '⚠️ À surveiller',
+        'problematic': '🚫 Problématique',
+        '': 'Aucun tag'
+      }
+
+      const html = generateTagNotificationHTML({
+        clientEmail: after.email,
+        clientName: after.name || 'Inconnu',
+        tag: after.tag,
+        tagLabel: tagLabels[after.tag] || after.tag,
+        tagComment: after.tagComment,
+        previousTag: before.tag,
+        previousTagLabel: tagLabels[before.tag] || before.tag || 'Aucun tag',
+        updatedBy: 'Système',
+        timestamp: new Date().toLocaleString('fr-FR', { timeZone: 'Europe/Paris' })
+      })
+
+      const emailPromises = adminEmails.map(adminEmail => {
+        const msg = {
+          to: adminEmail,
+          from: {
+            email: functions.config().sendgrid?.from_email || 'contact@nainvert.com',
+            name: 'NainVert - Notifications'
+          },
+          subject: `🏷️ Tag client modifié: ${after.name || after.email}`,
+          html
+        }
+        return sgMail.send(msg)
+      })
+
+      await Promise.all(emailPromises)
+      console.log(`✅ Notification tag (trigger) envoyée à ${adminEmails.length} admin(s)`)
+
+    } catch (error) {
+      console.error('❌ Erreur notification tag (trigger):', error)
+    }
+
+    return null
+  })
+
+/**
+ * Generate HTML for tag notification email
+ */
+function generateTagNotificationHTML(data) {
+  const {
+    clientEmail,
+    clientName,
+    tag,
+    tagLabel,
+    tagComment,
+    previousTag,
+    previousTagLabel,
+    updatedBy,
+    timestamp
+  } = data
+
+  const tagColors = {
+    'vip': '#ffd700',
+    'good': '#39FF14',
+    'neutral': '#808080',
+    'watch': '#ffa500',
+    'problematic': '#ff4444',
+    '': '#666666'
+  }
+
+  const tagColor = tagColors[tag] || '#39FF14'
+
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head><meta charset="utf-8"></head>
+    <body style="font-family: Arial, sans-serif; background: #0a0a0a; color: #ffffff; padding: 20px; margin: 0;">
+      <div style="max-width: 600px; margin: 0 auto;">
+
+        <!-- Header -->
+        <div style="text-align: center; padding: 20px 0; border-bottom: 2px solid #39FF14;">
+          <h1 style="color: #39FF14; font-size: 24px; margin: 0;">🏷️ Tag Client Modifié</h1>
+        </div>
+
+        <!-- Content -->
+        <div style="padding: 30px 0;">
+
+          <!-- Client Info -->
+          <div style="background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+            <h3 style="color: #39FF14; margin: 0 0 15px 0;">👤 Client</h3>
+            <p style="margin: 5px 0; color: #b0b0b0;">
+              <strong style="color: #ffffff;">Nom:</strong> ${clientName}
+            </p>
+            <p style="margin: 5px 0; color: #b0b0b0;">
+              <strong style="color: #ffffff;">Email:</strong> ${clientEmail}
+            </p>
+          </div>
+
+          <!-- Tag Change -->
+          <div style="background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+            <h3 style="color: #39FF14; margin: 0 0 15px 0;">🔄 Changement de Tag</h3>
+
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+              <span style="background: #333; padding: 8px 15px; border-radius: 20px; color: #999;">
+                ${previousTagLabel || 'Aucun tag'}
+              </span>
+              <span style="color: #39FF14;">→</span>
+              <span style="background: ${tagColor}22; border: 1px solid ${tagColor}; padding: 8px 15px; border-radius: 20px; color: ${tagColor};">
+                ${tagLabel}
+              </span>
+            </div>
+
+            ${tagComment ? `
+              <div style="background: #0a0a0a; padding: 15px; border-radius: 8px; margin-top: 15px;">
+                <p style="margin: 0 0 5px 0; color: #666; font-size: 12px;">💬 COMMENTAIRE</p>
+                <p style="margin: 0; color: #ffffff;">${tagComment}</p>
+              </div>
+            ` : ''}
+          </div>
+
+          <!-- Metadata -->
+          <div style="background: rgba(57, 255, 20, 0.05); border-radius: 8px; padding: 15px;">
+            <p style="margin: 0; color: #666; font-size: 12px;">
+              📅 ${timestamp} | 👤 Par: ${updatedBy}
+            </p>
+          </div>
+
+        </div>
+
+        <!-- Footer -->
+        <div style="text-align: center; padding: 20px 0; border-top: 1px solid #2a2a2a;">
+          <a href="https://nainvert.com/rho" style="display: inline-block; background: #39FF14; color: #0a0a0a; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold;">
+            Voir dans l'admin →
+          </a>
+          <p style="color: #666; font-size: 12px; margin: 15px 0 0 0;">
+            © 2025 NainVert - Notification automatique
+          </p>
+        </div>
+
+      </div>
+    </body>
+    </html>
+  `
+}

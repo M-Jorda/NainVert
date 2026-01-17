@@ -7,10 +7,9 @@ const loading = ref(false)
 const error = ref(null)
 
 export function useDesigns() {
-  
+
   const loadDesigns = async () => {
     if (designs.value.length > 0) {
-      console.log('✅ Designs déjà en cache:', designs.value.length)
       return designs.value
     }
 
@@ -18,17 +17,12 @@ export function useDesigns() {
     error.value = null
 
     try {
-      console.log('🔄 Chargement des designs depuis Firestore...')
       const querySnapshot = await getDocs(collection(db, 'designs'))
       designs.value = querySnapshot.docs.map(doc => ({
         ...doc.data(),
         id: doc.id
       }))
-      console.log('✅ Designs chargés depuis Firestore:', designs.value.length)
-      console.log('🎨 Designs:', designs.value)
     } catch (err) {
-      console.error('❌ Erreur lors du chargement des designs:', err)
-      console.error('❌ Détails:', err.code, err.message)
       error.value = err.message
     } finally {
       loading.value = false
@@ -48,11 +42,9 @@ export function useDesigns() {
           ...docSnap.data()
         }
       } else {
-        console.warn(`⚠️ Design non trouvé: ${slug}`)
         return null
       }
     } catch (err) {
-      console.error('❌ Erreur lors du chargement du design:', err)
       error.value = err.message
       return null
     }
@@ -66,16 +58,14 @@ export function useDesigns() {
     try {
       const docRef = doc(db, 'designs', slug)
       await updateDoc(docRef, data)
-      
+
       const index = designs.value.findIndex(d => d.slug === slug)
       if (index !== -1) {
         designs.value[index] = { ...designs.value[index], ...data }
       }
-      
-      console.log('✅ Design mis à jour:', slug)
+
       return { success: true }
     } catch (err) {
-      console.error('❌ Erreur lors de la mise à jour du design:', err)
       error.value = err.message
       return { success: false, error: err.message }
     }
@@ -85,9 +75,9 @@ export function useDesigns() {
     try {
       const docRef = doc(db, 'designs', designData.slug)
       await setDoc(docRef, designData)
-      
+
       designs.value.push({ id: designData.slug, ...designData })
-      
+
       // Initialiser le stock à 100
       const stockRef = doc(db, 'stock', designData.slug)
       await setDoc(stockRef, {
@@ -100,12 +90,9 @@ export function useDesigns() {
         lastUpdated: new Date(),
         createdAt: new Date()
       })
-      
-      console.log('✅ Design créé:', designData.slug)
-      console.log('📦 Stock initialisé: 100 unités')
+
       return { success: true }
     } catch (err) {
-      console.error('❌ Erreur lors de la création du design:', err)
       error.value = err.message
       return { success: false, error: err.message }
     }
@@ -114,16 +101,14 @@ export function useDesigns() {
   const deleteDesign = async (slug) => {
     try {
       await deleteDoc(doc(db, 'designs', slug))
-      
+
       const index = designs.value.findIndex(d => d.slug === slug)
       if (index !== -1) {
         designs.value.splice(index, 1)
       }
-      
-      console.log('✅ Design supprimé:', slug)
+
       return { success: true }
     } catch (err) {
-      console.error('❌ Erreur lors de la suppression du design:', err)
       error.value = err.message
       return { success: false, error: err.message }
     }

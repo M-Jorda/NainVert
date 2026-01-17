@@ -55,21 +55,26 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { useDesigns } from '@/composables/useDesigns'
+import { useStock } from '@/composables/useStock'
 import { useCart } from '@/stores/cart'
 import DesignCard from '@/components/shop/DesignCard.vue'
 
 const { designs, loading, loadDesigns } = useDesigns()
+const { stockData, loadStock, getStockQuantity, cleanup: cleanupStock } = useStock()
 const cart = useCart()
 
-// Filtrer uniquement les designs featured, en stock ET non archivés
+// Filtrer uniquement les designs featured, en stock (quantité > 0), ET non archivés
 const featuredDesigns = computed(() => {
-  return designs.value.filter(design => 
-    design.featured === true && 
-    design.inStock === true &&
-    design.archived !== true  // Exclure les designs archivés
-  )
+  return designs.value.filter(design => {
+    // Filtres de base
+    if (design.featured !== true || design.archived === true) return false
+
+    // Vérifier le stock réel (quantité > 0)
+    const stockQty = getStockQuantity(design.slug || design.id)
+    return stockQty > 0
+  })
 })
 
 // Nombre d'articles dans le panier
@@ -78,7 +83,13 @@ const cartItemsCount = computed(() => {
 })
 
 onMounted(async () => {
+  // Charger le stock en parallèle avec les designs
+  loadStock()
   await loadDesigns()
+})
+
+onUnmounted(() => {
+  cleanupStock()
 })
 </script>
 

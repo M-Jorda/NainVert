@@ -29,7 +29,6 @@ export function useOrders() {
             orders.value = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
             resolve()
           }, (error) => {
-            console.error('Erreur chargement commandes:', error)
             reject(error)
           })
         } else {
@@ -61,13 +60,11 @@ export function useOrders() {
       })
 
       if (newStatus === 'delivered' && previousStatus !== 'delivered') {
-        console.log('📦 Commande livrée - Décrémentation du stock...')
         await decrementStockForDeliveredOrder(orderData.items || [])
       }
 
       return { success: true }
     } catch (error) {
-      console.error('Erreur mise à jour statut:', error)
       return { success: false, error: error.message }
     }
   }
@@ -78,7 +75,6 @@ export function useOrders() {
       const docSnap = await getDoc(stockRef)
 
       if (!docSnap.exists()) {
-        console.warn('⚠️ Stock non initialisé - impossible de décrémenter')
         return
       }
 
@@ -97,10 +93,6 @@ export function useOrders() {
 
             designs[designIndex].remainingUnits = newRemaining
             updated = true
-
-            console.log(`✅ Stock décrémenté: ${item.designId} (-${quantity}) -> ${newRemaining} unités restantes`)
-          } else {
-            console.warn(`⚠️ Dessin non trouvé pour l'article: ${item.designId}`)
           }
         }
       }
@@ -110,11 +102,9 @@ export function useOrders() {
           designs: designs,
           lastUpdated: serverTimestamp()
         })
-
-        console.log('✅ Stock mis à jour suite à livraison')
       }
     } catch (error) {
-      console.error('❌ Erreur décrémentation stock:', error)
+      // Silent error handling for stock decrement
     }
   }
 
@@ -131,7 +121,6 @@ export function useOrders() {
       })
       return { success: true }
     } catch (error) {
-      console.error('Erreur ajout tracking:', error)
       return { success: false, error: error.message }
     }
   }
@@ -148,7 +137,6 @@ export function useOrders() {
       })
       return { success: true }
     } catch (error) {
-      console.error('Erreur ajout note:', error)
       return { success: false, error: error.message }
     }
   }
@@ -166,7 +154,6 @@ export function useOrders() {
       const docRef = await addDoc(collection(db, 'orders'), newOrder)
       return { success: true, orderId: docRef.id }
     } catch (error) {
-      console.error('Erreur création commande:', error)
       return { success: false, error: error.message }
     }
   }
@@ -179,7 +166,6 @@ export function useOrders() {
       await deleteDoc(doc(db, 'orders', orderId))
       return { success: true }
     } catch (error) {
-      console.error('Erreur suppression commande:', error)
       return { success: false, error: error.message }
     }
   }
@@ -212,7 +198,6 @@ export function useOrders() {
         ...doc.data()
       }))
     } catch (error) {
-      console.error('Erreur recherche commandes:', error)
       return []
     }
   }

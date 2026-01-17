@@ -93,18 +93,26 @@
                 </div>
               </div>
 
+              <!-- Message rupture de stock -->
+              <div v-if="isOutOfStock" class="mb-3 p-3 bg-red-500/10 border border-red-500/30 rounded-lg">
+                <p class="text-red-400 font-semibold text-center text-sm">
+                  Ce produit est actuellement en rupture de stock
+                </p>
+              </div>
+
               <!-- Bouton d'action pleine largeur -->
-              <button 
+              <button
                 @click="addToCart"
-                :disabled="!selectedSize"
+                :disabled="!selectedSize || isOutOfStock"
                 :class="[
                   'btn w-full py-3 text-base font-bold transition-all',
-                  selectedSize 
-                    ? 'btn-primary hover:scale-105' 
+                  selectedSize && !isOutOfStock
+                    ? 'btn-primary hover:scale-105'
                     : 'bg-gray-700 text-gray-400 cursor-not-allowed'
                 ]"
               >
-                {{ selectedSize ? '🛒 Ajouter au panier' : 'Sélectionne une taille' }}
+                <template v-if="isOutOfStock">Rupture de stock</template>
+                <template v-else>{{ selectedSize ? '🛒 Ajouter au panier' : 'Sélectionne une taille' }}</template>
               </button>
             </div>
 
@@ -183,6 +191,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useCart } from '@/stores/cart'
 import { useGarmentTypes } from '@/composables/useGarmentTypes'
+import { useStock } from '@/composables/useStock'
 
 const props = defineProps({
   design: {
@@ -204,6 +213,14 @@ const emit = defineEmits(['close', 'add-to-cart'])
 
 const cart = useCart()
 const { garmentTypes } = useGarmentTypes()
+const { getStockQuantity, loadStock, cleanup: cleanupStock } = useStock()
+
+// Vérifier le stock
+const currentStock = computed(() => {
+  return getStockQuantity(props.design.slug || props.design.id)
+})
+
+const isOutOfStock = computed(() => currentStock.value <= 0)
 
 const selectedSize = ref('L') // Taille L par défaut
 
@@ -225,10 +242,13 @@ const tvaAmount = computed(() => {
 // Désactiver le scroll du body quand le modal est ouvert
 onMounted(() => {
   document.body.style.overflow = 'hidden'
+  // Charger le stock
+  loadStock()
 })
 
 onUnmounted(() => {
   document.body.style.overflow = ''
+  cleanupStock()
 })
 
 // Tableau des tailles avec descriptions
@@ -280,6 +300,12 @@ const sizeChart = [
 const addToCart = () => {
   if (!selectedSize.value) return
 
+  // Vérifier le stock avant d'ajouter
+  if (isOutOfStock.value) {
+    alert('Ce produit est actuellement en rupture de stock')
+    return
+  }
+
   // Créer l'item pour le panier
   const cartItem = {
     id: `${props.design.slug}-${props.selectedType}-${selectedSize.value}`,
@@ -294,10 +320,10 @@ const addToCart = () => {
   }
 
   cart.addItem(cartItem)
-  
+
   // Fermer le size selector
   emit('close')
-  
+
   // Ouvrir le panier après un petit délai
   setTimeout(() => {
     cart.openCart()

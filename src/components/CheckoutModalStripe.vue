@@ -239,22 +239,22 @@
             </div>
             
             <!-- Résumé compact -->
-            <div class="bg-[var(--color-black-light)] rounded-lg p-4 mb-6 border border-[rgba(57,255,20,0.2)]">
-              <div class="flex justify-between items-center mb-2">
+            <div class="bg-[var(--color-black-light)] rounded-lg p-6 mb-6 border border-[rgba(57,255,20,0.2)]">
+              <div class="flex justify-between items-center mb-3">
                 <span class="text-[var(--color-text-secondary)]">Commande</span>
                 <span class="text-white font-mono">{{ orderNumber }}</span>
               </div>
-              <div class="flex justify-between items-center mb-2">
+              <div class="flex justify-between items-center mb-3">
                 <span class="text-[var(--color-text-secondary)]">Sous-total</span>
                 <span class="text-white">{{ cartStore.totalPrice.toFixed(2) }}€</span>
               </div>
-              <div class="flex justify-between items-center mb-2">
+              <div class="flex justify-between items-center mb-3">
                 <span class="text-[var(--color-text-secondary)]">Livraison ({{ shippingDetails.name }})</span>
                 <span class="text-white" :class="{ 'text-[var(--color-neon-green)]': shippingCost === 0 }">
                   {{ shippingCost === 0 ? 'GRATUIT' : shippingCost.toFixed(2) + '€' }}
                 </span>
               </div>
-              <div class="border-t border-[rgba(57,255,20,0.2)] pt-2 flex justify-between items-center">
+              <div class="border-t border-[rgba(57,255,20,0.2)] pt-4 mt-2 flex justify-between items-center">
                 <span class="text-[var(--color-text-secondary)]">Total à payer</span>
                 <span class="text-[var(--color-neon-green)] text-xl font-bold">{{ totalWithShipping.toFixed(2) }}€</span>
               </div>

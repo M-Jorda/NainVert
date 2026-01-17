@@ -407,10 +407,6 @@ const handleImageUpload = async (event) => {
   const file = files[0]
   if (!file) return
   
-  // Vérifier la taille du fichier
-  const fileSizeKB = (file.size / 1024).toFixed(2)
-  if (isDev) console.log(`📦 Fichier: ${file.name} (${fileSizeKB} KB)`)
-  
   // Créer aperçu local
   const preview = URL.createObjectURL(file)
   
@@ -535,7 +531,6 @@ const saveDesign = async () => {
   }
 
   if (result.success) {
-    console.log('✅ Design sauvegardé')
     closeModal()
     await loadDesigns()
   } else {
@@ -556,7 +551,6 @@ const toggleArchive = async (design) => {
   })
   
   if (result.success) {
-    console.log(`✅ Design ${newArchivedStatus ? 'archivé' : 'désarchivé'}:`, design.slug)
     await loadDesigns()
   } else {
     alert(`Erreur lors de ${action} du design`)

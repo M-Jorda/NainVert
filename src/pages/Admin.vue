@@ -1,15 +1,30 @@
 <template>
   <div class="min-h-screen">
-    <!-- Admin Dashboard -->
-    <div v-if="adminStore.isAuthenticated || activeTab === 'security'" class="container max-w-7xl mx-auto px-4">
+    <!-- Login Page (not authenticated) -->
+    <div v-if="!adminStore.isAuthenticated" class="container max-w-7xl mx-auto px-4">
+      <SecurityTab
+        :honeypotLogs="[]"
+        :sortedHoneypotLogs="[]"
+        :loadingLogs="false"
+        :isAuthenticated="false"
+        :loginData="{ email, password, showCaptcha, captchaQuestion, captchaAnswer, isBlocked, blockRemainingTime, failedAttempts, loginError }"
+        :passwordForm="passwordForm"
+        :passwordMessage="passwordMessage"
+        @handle-login="handleLogin"
+        @update-login-field="(field, value) => { if (field === 'email') email = value; else if (field === 'password') password = value; else if (field === 'captchaAnswer') captchaAnswer = value; }"
+      />
+    </div>
+
+    <!-- Admin Dashboard (authenticated) -->
+    <div v-else class="container max-w-7xl mx-auto px-4">
       <div class="flex items-center justify-between mb-8 pt-4">
         <h1 class="text-4xl font-bold">
           <span class="text-gradient">Admin Panel</span>
         </h1>
         <div class="flex gap-3">
-          <button 
-            v-if="failedAttempts > 0" 
-            @click="resetFailedAttempts" 
+          <button
+            v-if="failedAttempts > 0"
+            @click="resetFailedAttempts"
             class="btn btn-ghost text-sm relative"
             title="Réinitialiser les tentatives échouées"
           >
@@ -18,7 +33,7 @@
               {{ failedAttempts }}
             </span>
           </button>
-          <button @click="adminStore.logout" class="btn btn-ghost">
+          <button @click="handleLogout" class="btn btn-ghost">
             Déconnexion
           </button>
         </div>
@@ -60,6 +75,14 @@
             <circle cx="18.5" cy="18.5" r="2.5"></circle>
           </svg>
           Stock
+        </button>
+        <button :class="['tab-btn', { active: activeTab === 'plan' }]" @click="activeTab = 'plan'">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+            <circle cx="8.5" cy="8.5" r="1.5"></circle>
+            <polyline points="21 15 16 10 5 21"></polyline>
+          </svg>
+          Plan
         </button>
         <button :class="['tab-btn', { active: activeTab === 'security' }]" @click="activeTab = 'security'">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -143,8 +166,8 @@
                   <span v-if="orderStats.pending > 0" class="intrusion-badge">{{ orderStats.pending }}</span>
                 </div>
               </button>
-              <button 
-                :class="['mobile-tab-btn', { active: activeTab === 'stock' }]" 
+              <button
+                :class="['mobile-tab-btn', { active: activeTab === 'stock' }]"
                 @click="activeTab = 'stock'; mobileMenuOpen = false"
               >
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -155,8 +178,19 @@
                 </svg>
                 Stock
               </button>
-              <button 
-                :class="['mobile-tab-btn', { active: activeTab === 'security' }]" 
+              <button
+                :class="['mobile-tab-btn', { active: activeTab === 'plan' }]"
+                @click="activeTab = 'plan'; mobileMenuOpen = false"
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                  <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                  <polyline points="21 15 16 10 5 21"></polyline>
+                </svg>
+                Plan
+              </button>
+              <button
+                :class="['mobile-tab-btn', { active: activeTab === 'security' }]"
                 @click="activeTab = 'security'; mobileMenuOpen = false"
               >
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -187,6 +221,9 @@
         @update-stock="handleUpdateStock"
         @update-name="handleUpdateDesignName"
       />
+
+      <!-- Plan Tab -->
+      <PlanTab v-if="activeTab === 'plan'" />
 
       <!-- Security Tab -->
       <SecurityTab
@@ -562,7 +599,7 @@
                 <!-- Tag client -->
                 <div class="mb-4">
                   <label class="block text-sm font-semibold text-white mb-2">🏷️ Tag client</label>
-                  <select 
+                  <select
                     v-model="selectedOrder.customer.tag"
                     @change="handleUpdateCustomerTag(selectedOrder.id, selectedOrder.customer.tag)"
                     class="form-input w-full"
@@ -574,20 +611,23 @@
                     <option value="watch">⚠️ À surveiller</option>
                     <option value="problematic">🚫 Problématique</option>
                   </select>
+                  <p class="text-xs text-[var(--color-text-muted)] mt-1">
+                    🔄 Le tag est centralisé et s'applique à toutes les commandes de ce client
+                  </p>
                 </div>
 
                 <!-- Note privée sur le client -->
                 <div>
                   <label class="block text-sm font-semibold text-white mb-2">📝 Note privée client</label>
-                  <textarea 
+                  <textarea
                     v-model="selectedOrder.customer.privateNote"
                     @blur="handleUpdateCustomerNote(selectedOrder.id, selectedOrder.customer.privateNote)"
                     rows="3"
-                    placeholder="Notes privées sur ce client (historique, préférences, incidents...)&#10;Exemple: 'Client fidèle, préfère livraison express'"
+                    placeholder="Notes privées sur ce client (historique, préférences, incidents...)&#10;Exemple: 'Client fidèle, préfère livraison express', 'Retour abusif le 15/01'"
                     class="form-input w-full"
                   ></textarea>
                   <p class="text-xs text-[var(--color-text-muted)] mt-1">
-                    💡 Ces informations sont privées et visibles uniquement par l'équipe
+                    💡 Ces informations sont privées, centralisées et visibles uniquement par l'équipe
                   </p>
                 </div>
               </div>
@@ -628,14 +668,17 @@ import { useAdminStore } from '../stores/admin'
 import { useEasterEggsFirestore } from '../composables/useEasterEggsFirestore'
 import { useOrders } from '../composables/useOrders'
 import { useStock } from '../composables/useStock'
+import { useClients } from '../composables/useClients'
 import { collection, query, orderBy, onSnapshot, deleteDoc, doc, getDocs, updateDoc, serverTimestamp } from 'firebase/firestore'
 import { db } from '@/config/firebase'
+import { initEmailJS, sendTagChangeNotification, isEmailServiceConfigured } from '@/services/emailNotifications'
 
 // Composants admin tabs
 import DesignsTab from '../components/admin/DesignsTab.vue'
 import GarmentsTab from '../components/admin/GarmentsTab.vue'
 import OrdersTab from '../components/admin/OrdersTab.vue'
 import StockTab from '../components/admin/StockTab.vue'
+import PlanTab from '../components/admin/PlanTab.vue'
 import SecurityTab from '../components/admin/SecurityTab.vue'
 
 const adminStore = useAdminStore()
@@ -666,10 +709,19 @@ const {
   getStockPercentage
 } = useStock()
 
+// Centralized client/tag management
+const {
+  loadClients,
+  updateClientTag,
+  updateClientNote
+} = useClients()
+
 const email = ref('')
 const password = ref('')
 const loginError = ref(false)
-const activeTab = ref(adminStore.isAuthenticated ? 'designs' : 'security')
+// Restore active tab from localStorage or default to 'orders'
+const savedTab = localStorage.getItem('admin_active_tab')
+const activeTab = ref(adminStore.isAuthenticated ? (savedTab || 'orders') : 'orders')
 const mobileMenuOpen = ref(false)
 
 // Password change form
@@ -698,6 +750,13 @@ watch(mobileMenuOpen, (newVal) => {
     document.body.style.overflow = 'hidden'
   } else {
     document.body.style.overflow = ''
+  }
+})
+
+// Persist active tab to localStorage
+watch(activeTab, (newTab) => {
+  if (adminStore.isAuthenticated && newTab !== 'security') {
+    localStorage.setItem('admin_active_tab', newTab)
   }
 })
 
@@ -765,8 +824,6 @@ const formatOrderDate = (timestamp) => {
 const handleStatusChange = async (orderId, newStatus) => {
   const result = await updateOrderStatus(orderId, newStatus)
   if (result.success) {
-    console.log('✅ Statut mis à jour')
-    
     // Initialiser trackingNumber si le statut passe à "shipped" et qu'il n'existe pas
     if (newStatus === 'shipped' && selectedOrder.value) {
       if (!selectedOrder.value.shipping) {
@@ -777,7 +834,6 @@ const handleStatusChange = async (orderId, newStatus) => {
       }
     }
   } else {
-    console.error('❌ Erreur mise à jour statut:', result.error)
     alert('Erreur lors de la mise à jour du statut')
   }
 }
@@ -786,21 +842,15 @@ const handleUpdateTracking = async (orderId, trackingNumber) => {
   if (!trackingNumber || !trackingNumber.trim()) {
     return // Ne rien faire si vide
   }
-  
+
   const result = await addTrackingNumber(orderId, trackingNumber.trim())
-  if (result.success) {
-    console.log('✅ Numéro de suivi mis à jour')
-  } else {
-    console.error('❌ Erreur mise à jour tracking:', result.error)
+  if (!result.success) {
     alert('Erreur lors de la mise à jour du numéro de suivi')
   }
 }
 
 const handleUpdateNote = async (orderId, note) => {
-  const result = await addOrderNote(orderId, note)
-  if (result.success) {
-    console.log('✅ Note mise à jour')
-  }
+  await addOrderNote(orderId, note)
 }
 
 // Fonctions pour les informations client
@@ -818,31 +868,56 @@ const customerTotalSpent = (email) => {
 }
 
 const handleUpdateCustomerTag = async (orderId, tag) => {
+  if (!selectedOrder.value?.customer?.email) {
+    alert('Email client manquant')
+    return
+  }
+
+  const clientEmail = selectedOrder.value.customer.email
+  const privateNote = selectedOrder.value.customer.privateNote || ''
+
   try {
-    const orderRef = doc(db, 'orders', orderId)
-    await updateDoc(orderRef, {
-      'customer.tag': tag,
-      updatedAt: serverTimestamp()
-    })
-    console.log('✅ Tag client mis à jour')
+    // Use centralized client management - this will propagate to all orders
+    const result = await updateClientTag(clientEmail, tag, privateNote)
+
+    if (result.success) {
+      // If a new tag was added or changed, notify admins via EmailJS
+      if (result.isNewTag || result.isTagChanged) {
+        try {
+          await sendTagChangeNotification({
+            clientEmail,
+            clientName: selectedOrder.value.customer.name || 'Inconnu',
+            newTag: tag,
+            previousTag: result.previousTag || '',
+            privateNote
+          })
+        } catch (notifyError) {
+          // Silently handle notification errors
+        }
+      }
+    } else {
+      throw new Error(result.error)
+    }
   } catch (error) {
-    console.error('❌ Erreur mise à jour tag:', error)
     alert('Erreur lors de la mise à jour du tag')
   }
 }
 
 const handleUpdateCustomerNote = async (orderId, note) => {
+  if (!selectedOrder.value?.customer?.email) {
+    return
+  }
+
+  const email = selectedOrder.value.customer.email
+
   try {
-    const orderRef = doc(db, 'orders', orderId)
-    await updateDoc(orderRef, {
-      'customer.privateNote': note,
-      updatedAt: serverTimestamp()
-    })
-    console.log('✅ Note client mise à jour')
+    // Use centralized client management - this will propagate to all orders
+    await updateClientNote(email, note)
   } catch (error) {
-    console.error('❌ Erreur mise à jour note client:', error)
+    // Silently handle note update errors
   }
 }
+
 
 // Envoyer l'email d'expédition
 const handleSendShippingEmail = async (order) => {
@@ -887,12 +962,10 @@ const handleSendShippingEmail = async (order) => {
     order.shippingEmailSent = true
     order.shipping.carrier = shippingCarrier.value
 
-    alert(`✅ Email d'expédition envoyé à ${order.customer.email}`)
-    console.log('✅ Email d\'expédition envoyé')
+    alert(`Email d'expédition envoyé à ${order.customer.email}`)
 
   } catch (error) {
-    console.error('❌ Erreur envoi email:', error)
-    alert('❌ Erreur lors de l\'envoi de l\'email: ' + error.message)
+    alert('Erreur lors de l\'envoi de l\'email: ' + error.message)
   } finally {
     sendingEmail.value = false
   }
@@ -926,10 +999,8 @@ const handleToggleArchive = async (orderId, isCurrentlyArchived) => {
     }
     
     await updateDoc(orderRef, updateData)
-    console.log(`✅ Commande ${isCurrentlyArchived ? 'désarchivée' : 'archivée'}`)
     selectedOrder.value = null
   } catch (error) {
-    console.error(`❌ Erreur ${action}:`, error)
     alert(`Erreur lors de l'${action} de la commande`)
   }
 }
@@ -941,6 +1012,7 @@ const getActiveTabLabel = () => {
     garments: '👕 Vêtements',
     orders: '🛒 Commandes',
     stock: '📊 Stock',
+    plan: '🗺️ Plan',
     security: '🔒 Sécurité'
   }
   return labels[activeTab.value] || activeTab.value
@@ -948,15 +1020,28 @@ const getActiveTabLabel = () => {
 
 onMounted(async () => {
   await adminStore.initAuth()
-  if (!adminStore.isAuthenticated) {
-    activeTab.value = 'security'
+
+  if (adminStore.isAuthenticated) {
+    // Restore saved tab or default to orders
+    const savedTab = localStorage.getItem('admin_active_tab')
+    activeTab.value = savedTab || 'orders'
+
+    // Load admin-only data (requires authentication)
+    loadHoneypotLogs()
+    loadOrders()
+    loadClients()
   }
+
+  // Load public data
   await loadEasterEggs()
-  loadHoneypotLogs()
-  loadOrders()
   loadStock()
   checkBlockStatus()
   loadFailedAttempts()
+
+  // Initialiser le service d'email pour les notifications
+  if (isEmailServiceConfigured()) {
+    initEmailJS()
+  }
 })
 
 // Load failed attempts from localStorage
@@ -1051,7 +1136,6 @@ const resetFailedAttempts = () => {
     showCaptcha.value = false
     blockRemainingTime.value = ''
     localStorage.removeItem('admin_failed_attempts')
-    console.log('✅ Tentatives réinitialisées')
   }
 }
 
@@ -1066,8 +1150,7 @@ const loadHoneypotLogs = () => {
       ...doc.data()
     }))
     loadingLogs.value = false
-  }, (error) => {
-    console.error('Erreur chargement logs honeypot:', error)
+  }, () => {
     loadingLogs.value = false
   })
 }
@@ -1129,9 +1212,7 @@ const deleteLog = async (logId) => {
   if (!confirm('Supprimer cette tentative ?')) return
   try {
     await deleteDoc(doc(db, 'honeypot_logs', logId))
-    console.log('✅ Log supprimé')
   } catch (error) {
-    console.error('Erreur suppression log:', error)
     alert('Erreur lors de la suppression')
   }
 }
@@ -1149,9 +1230,7 @@ const clearHoneypotLogs = async () => {
     )
     
     await Promise.all(deletePromises)
-    console.log('✅ Tous les logs honeypot supprimés')
   } catch (error) {
-    console.error('Erreur suppression logs:', error)
     alert('Erreur lors de la suppression')
   }
 }
@@ -1212,6 +1291,15 @@ const handleLogin = async () => {
     blockUntil.value = null
     showCaptcha.value = false
     saveFailedAttempts()
+
+    // Navigate to orders tab after successful login
+    activeTab.value = 'orders'
+    localStorage.setItem('admin_active_tab', 'orders')
+
+    // Load admin-only data now that we're authenticated
+    loadHoneypotLogs()
+    loadOrders()
+    loadClients()
   } else {
     // Increment failed attempts
     failedAttempts.value++
@@ -1242,6 +1330,12 @@ const handleLogin = async () => {
       }
     }
   }
+}
+
+const handleLogout = () => {
+  // Clear saved tab on logout
+  localStorage.removeItem('admin_active_tab')
+  adminStore.logout()
 }
 
 const handleChangePassword = async () => {

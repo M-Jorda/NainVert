@@ -27,19 +27,15 @@
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 flex-1">
         <!-- Colonne gauche : Images avec loupe qui suit la souris -->
         <div class="flex flex-col items-center justify-center gap-3">
-          <!-- Image principale avec effet loupe suivant la souris -->
-          <div
-            class="w-[60%] aspect-square rounded-lg border-2 border-[rgba(57,255,20,0.2)] relative overflow-hidden bg-[var(--color-black-light)] p-4"
-            @mousemove="handleMouseMove"
-            @mouseleave="resetZoom"
-          >
-            <img
+          <!-- Image principale avec zoom Amazon-style -->
+          <div class="w-[60%] aspect-square rounded-lg border-2 border-[rgba(57,255,20,0.2)] relative overflow-hidden bg-[var(--color-black-light)] p-4">
+            <ImageZoom
               :src="mainImage"
               :alt="design.name"
-              class="w-full h-full object-contain cursor-zoom-in rounded-lg"
-              :style="zoomStyle"
-              ref="zoomImage"
-            >
+              :zoom-level="3"
+              :panel-width="450"
+              :panel-height="450"
+            />
           </div>
 
           <!-- Miniatures (seulement si un type est sélectionné ET que le type a des images) -->
@@ -156,6 +152,13 @@
             </div>
           </div>
 
+          <!-- Message rupture de stock -->
+          <div v-if="isOutOfStock" class="mb-3 p-3 bg-red-500/10 border border-red-500/30 rounded-lg">
+            <p class="text-red-400 font-semibold text-center">
+              Ce produit est actuellement en rupture de stock
+            </p>
+          </div>
+
           <!-- Récapitulatif prix + Bouton ajouter au panier -->
           <div class="flex items-center justify-between gap-4 p-3 bg-[var(--color-black-light)] border border-[rgba(57,255,20,0.2)] rounded-lg">
             <div class="text-left">
@@ -166,15 +169,16 @@
             </div>
             <button
               @click="addToCart"
-              :disabled="!selectedType || !selectedSize"
+              :disabled="!selectedType || !selectedSize || isOutOfStock"
               :class="[
                 'btn py-3 px-6 text-base font-bold transition-all',
-                selectedType && selectedSize
+                selectedType && selectedSize && !isOutOfStock
                   ? 'btn-primary hover:scale-105'
                   : 'bg-gray-700 text-gray-400 cursor-not-allowed'
               ]"
             >
-              {{ selectedType && selectedSize ? '🛒 Ajouter au panier' : 'Sélectionne une taille' }}
+              <template v-if="isOutOfStock">Rupture de stock</template>
+              <template v-else>{{ selectedType && selectedSize ? '🛒 Ajouter au panier' : 'Sélectionne une taille' }}</template>
             </button>
           </div>
         </div>
@@ -184,17 +188,21 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useDesigns } from '@/composables/useDesigns'
 import { useGarments } from '@/composables/useGarments'
 import { useGarmentTypes } from '@/composables/useGarmentTypes'
+import { useStock } from '@/composables/useStock'
 import { useCart } from '@/stores/cart'
+import ImageZoom from '@/components/shop/ImageZoom.vue'
 
 const route = useRoute()
+const router = useRouter()
 const { getDesignBySlug } = useDesigns()
 const { garments, loadGarments, getGarmentByType } = useGarments()
 const { garmentTypes } = useGarmentTypes()
+const { stockData, loadStock, getStockQuantity, cleanup: cleanupStock } = useStock()
 const cart = useCart()
 
 const design = ref(null)
@@ -202,8 +210,6 @@ const loading = ref(true)
 const selectedType = ref('tshirt') // Par défaut T-shirt sélectionné
 const selectedSize = ref('L') // Par défaut taille L
 const selectedImageIndex = ref(0)
-const zoomImage = ref(null)
-const zoomStyle = ref({})
 
 // Liste des tailles disponibles
 const sizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL']
@@ -247,28 +253,19 @@ const garmentDetails = computed(() => {
   return garment?.details || garmentTypes.value[selectedType.value]?.details || {}
 })
 
-// Effet loupe qui suit la souris
-const handleMouseMove = (e) => {
-  const rect = e.currentTarget.getBoundingClientRect()
-  const x = ((e.clientX - rect.left) / rect.width) * 100
-  const y = ((e.clientY - rect.top) / rect.height) * 100
+// Vérifier si le produit est en stock
+const currentStock = computed(() => {
+  if (!design.value) return 0
+  return getStockQuantity(design.value.slug || design.value.id)
+})
 
-  zoomStyle.value = {
-    transform: 'scale(2)',
-    transformOrigin: `${x}% ${y}%`,
-    transition: 'transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)'
-  }
-}
-
-const resetZoom = () => {
-  zoomStyle.value = {
-    transform: 'scale(1)',
-    transition: 'transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)'
-  }
-}
+const isOutOfStock = computed(() => currentStock.value <= 0)
 
 onMounted(async () => {
   loading.value = true
+
+  // Charger le stock en temps réel
+  loadStock()
 
   // Charger les garments depuis la BDD
   await loadGarments()
@@ -280,9 +277,19 @@ onMounted(async () => {
   loading.value = false
 })
 
+onUnmounted(() => {
+  cleanupStock()
+})
+
 // Ajouter au panier
 const addToCart = () => {
   if (!selectedType.value || !selectedSize.value || !design.value) return
+
+  // Vérifier le stock avant d'ajouter
+  if (isOutOfStock.value) {
+    alert('Ce produit est actuellement en rupture de stock')
+    return
+  }
 
   const cartItem = {
     id: `${design.value.slug}-${selectedType.value}-${selectedSize.value}`,

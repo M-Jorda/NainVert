@@ -25,8 +25,7 @@ export function useStock() {
         ...doc.data()
       }))
       loading.value = false
-    }, (error) => {
-      console.error('❌ Erreur chargement stock:', error)
+    }, () => {
       loading.value = false
     })
 
@@ -43,16 +42,14 @@ export function useStock() {
   const updateDesignStock = async (designId, stockUpdate) => {
     try {
       const stockRef = doc(db, 'stock', designId)
-      
+
       await setDoc(stockRef, {
         quantity: stockUpdate.quantity || 0,
         lastUpdated: new Date()
       }, { merge: true })
-      
-      console.log('✅ Stock mis à jour pour', designId)
+
       return { success: true }
     } catch (error) {
-      console.error('❌ Erreur mise à jour stock:', error)
       return { success: false, error: error.message }
     }
   }
@@ -61,33 +58,31 @@ export function useStock() {
     try {
       const stockRef = doc(db, 'stock', designId)
       const docSnap = await getDoc(stockRef)
-      
+
       if (docSnap.exists()) {
         const data = docSnap.data()
         const currentQuantity = data.quantity || 0
         const salesStats = data.salesStats || { tshirt: 0, hoodie: 0, total: 0 }
-        
+
         const newQuantity = Math.max(0, currentQuantity - quantity)
-        
+
         // Mettre à jour les stats de ventes
         if (garmentType === 'tshirt' || garmentType === 'hoodie') {
           salesStats[garmentType] = (salesStats[garmentType] || 0) + quantity
         }
         salesStats.total = (salesStats.total || 0) + quantity
-        
+
         await updateDoc(stockRef, {
           quantity: newQuantity,
           salesStats: salesStats,
           lastUpdated: new Date()
         })
-        
-        console.log(`✅ Stock décrémenté: ${designId} (-${quantity})`)
+
         return { success: true, newQuantity }
       }
-      
+
       return { success: false, error: 'Stock non trouvé' }
     } catch (error) {
-      console.error('❌ Erreur décrémentation stock:', error)
       return { success: false, error: error.message }
     }
   }
@@ -112,17 +107,15 @@ export function useStock() {
           const designId = item.designSlug || item.designId
           const quantity = item.quantity || 1
           const garmentType = item.type // 'tshirt' ou 'hoodie'
-          
+
           updates.push(decrementStock(designId, quantity, garmentType))
         }
       }
 
       await Promise.all(updates)
-      
-      console.log('✅ Stock mis à jour suite à livraison')
+
       return { success: true }
     } catch (error) {
-      console.error('❌ Erreur décrémentation stock pour commande:', error)
       return { success: false, error: error.message }
     }
   }

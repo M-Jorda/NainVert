@@ -20,12 +20,7 @@ export function useGarments() {
         id: doc.id,
         ...doc.data()
       }))
-      
-      if (import.meta.env.DEV) {
-        console.log('✅ Vêtements chargés:', garments.value)
-      }
     } catch (err) {
-      console.error('❌ Erreur chargement vêtements:', err)
       error.value = err.message
     } finally {
       loading.value = false
@@ -61,14 +56,9 @@ export function useGarments() {
       }
 
       garments.value.push(newGarment)
-      
-      if (import.meta.env.DEV) {
-        console.log('✅ Vêtement créé:', newGarment)
-      }
 
       return { success: true, garment: newGarment }
     } catch (err) {
-      console.error('❌ Erreur création vêtement:', err)
       error.value = err.message
       return { success: false, error: err.message }
     } finally {
@@ -100,13 +90,8 @@ export function useGarments() {
         }
       }
 
-      if (import.meta.env.DEV) {
-        console.log('✅ Vêtement mis à jour:', garmentId)
-      }
-
       return { success: true }
     } catch (err) {
-      console.error('❌ Erreur mise à jour vêtement:', err)
       error.value = err.message
       return { success: false, error: err.message }
     } finally {
@@ -123,17 +108,12 @@ export function useGarments() {
 
     try {
       await deleteDoc(doc(db, 'garments', garmentId))
-      
+
       // Supprimer localement
       garments.value = garments.value.filter(g => g.id !== garmentId)
 
-      if (import.meta.env.DEV) {
-        console.log('✅ Vêtement supprimé:', garmentId)
-      }
-
       return { success: true }
     } catch (err) {
-      console.error('❌ Erreur suppression vêtement:', err)
       error.value = err.message
       return { success: false, error: err.message }
     } finally {

@@ -1,7 +1,8 @@
 import { ref } from 'vue'
-import { collection, addDoc, doc, updateDoc, serverTimestamp } from 'firebase/firestore'
+import { collection, addDoc, doc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore'
 import { db } from '@/config/firebase'
 import { useStock } from './useStock'
+import { useClients } from './useClients'
 import { formatAmountForStripe } from '@/services/stripe'
 
 const processing = ref(false)
@@ -9,6 +10,74 @@ const error = ref(null)
 
 export function useCheckout() {
   const { decrementStockForOrder } = useStock()
+  const { getClientId } = useClients()
+
+  /**
+   * Récupère les tags et notes d'un client depuis Firestore
+   * @param {string} email - Email du client
+   * @returns {Object} - { tag, privateNote }
+   */
+  const getClientTags = async (email) => {
+    try {
+      const clientId = getClientId(email)
+      if (!clientId) return { tag: '', privateNote: '' }
+
+      const clientRef = doc(db, 'clients', clientId)
+      const clientSnap = await getDoc(clientRef)
+
+      if (clientSnap.exists()) {
+        const data = clientSnap.data()
+        return {
+          tag: data.tag || '',
+          privateNote: data.privateNote || ''
+        }
+      }
+
+      return { tag: '', privateNote: '' }
+    } catch (err) {
+      return { tag: '', privateNote: '' }
+    }
+  }
+
+  /**
+   * Vérifie la disponibilité du stock pour tous les articles
+   * Fetch directement depuis Firestore pour garantir des données à jour
+   * @param {Array} items - Articles du panier
+   * @returns {Object} - { available: boolean, outOfStockItems: Array }
+   */
+  const validateStockForItems = async (items) => {
+    const outOfStockItems = []
+
+    for (const item of items) {
+      const designId = item.designSlug || item.designId
+      if (!designId) continue
+
+      // Fetch le stock directement depuis Firestore pour garantir des données à jour
+      const stockRef = doc(db, 'stock', designId)
+      const stockSnap = await getDoc(stockRef)
+
+      let stockQty = 0
+      if (stockSnap.exists()) {
+        stockQty = stockSnap.data().quantity || 0
+      }
+
+      const requestedQty = item.quantity || 1
+
+      if (stockQty < requestedQty) {
+        outOfStockItems.push({
+          name: item.designName || item.name,
+          designId,
+          requested: requestedQty,
+          available: stockQty
+        })
+      }
+    }
+
+    return {
+      available: outOfStockItems.length === 0,
+      outOfStockItems
+    }
+  }
 
   /**
    * Crée une nouvelle commande en BDD
@@ -31,6 +100,21 @@ export function useCheckout() {
       if (!customer || !customer.email || !customer.name) {
         throw new Error('Informations client manquantes')
       }
+
+      // Vérifier la disponibilité du stock AVANT de créer la commande
+      const stockValidation = await validateStockForItems(items)
+      if (!stockValidation.available) {
+        const outOfStockNames = stockValidation.outOfStockItems.map(item => {
+          if (item.available === 0) {
+            return `${item.name} (rupture de stock)`
+          }
+          return `${item.name} (seulement ${item.available} disponible${item.available > 1 ? 's' : ''})`
+        }).join(', ')
+        throw new Error(`Produit(s) en rupture de stock : ${outOfStockNames}`)
+      }
+
+      // Récupérer les tags du client
+      const clientTags = await getClientTags(customer.email)
 
       // Préparer les données de la commande
       const orderData = {
@@ -58,12 +142,14 @@ export function useCheckout() {
         shipping: shipping?.cost || 0,
         total: total + (shipping?.cost || 0),
         
-        // Informations client
+        // Informations client (avec tags récupérés de la fiche client)
         customer: {
           name: customer.name,
           email: customer.email,
           phone: customer.phone || '',
-          address: customer.address || {}
+          address: customer.address || {},
+          tag: clientTags.tag,
+          privateNote: clientTags.privateNote
         },
         
         // Informations de livraison
@@ -89,18 +175,9 @@ export function useCheckout() {
 
       // Créer la commande dans Firestore
       const docRef = await addDoc(collection(db, 'orders'), orderData)
-      
-      console.log('✅ Commande créée avec succès:', docRef.id)
-      
+
       // Décrémenter le stock immédiatement après la création de la commande
-      // (ou tu peux le faire seulement quand le paiement est confirmé)
-      const stockResult = await decrementStockForOrder(orderData.items)
-      
-      if (!stockResult.success) {
-        console.warn('⚠️ Attention: Stock non décrémenté:', stockResult.error)
-        // La commande est créée mais le stock n'a pas été mis à jour
-        // Tu peux choisir de gérer ça différemment
-      }
+      await decrementStockForOrder(orderData.items)
 
       processing.value = false
       return { 
@@ -110,7 +187,6 @@ export function useCheckout() {
       }
 
     } catch (err) {
-      console.error('❌ Erreur création commande:', err)
       error.value = err.message
       processing.value = false
       return { 
@@ -156,7 +232,6 @@ export function useCheckout() {
       return result
 
     } catch (err) {
-      console.error('❌ Erreur processus checkout:', err)
       return {
         success: false,
         error: err.message
@@ -212,7 +287,6 @@ export function useCheckout() {
       return data
 
     } catch (err) {
-      console.error('❌ Erreur création PaymentIntent:', err)
       error.value = err.message
       throw err
     } finally {
@@ -235,9 +309,8 @@ export function useCheckout() {
         'payment.transactionId': paymentData.paymentIntentId,
         updatedAt: serverTimestamp()
       })
-      console.log('✅ Statut paiement mis à jour:', paymentData.status)
     } catch (err) {
-      console.error('❌ Erreur mise à jour paiement:', err)
+      // Silent error handling for payment status update
     }
   }
 

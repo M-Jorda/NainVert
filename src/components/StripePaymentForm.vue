@@ -23,9 +23,9 @@
       </div>
       
       <!-- Stripe Elements Container -->
-      <div 
-        ref="paymentElementContainer" 
-        class="stripe-element-container p-4 bg-[var(--color-black-lighter)] rounded-lg border border-[rgba(57,255,20,0.2)] min-h-[150px]"
+      <div
+        ref="paymentElementContainer"
+        class="stripe-element-container p-6 bg-[var(--color-black-lighter)] rounded-lg border border-[rgba(57,255,20,0.2)] min-h-[150px] space-y-4"
       ></div>
       
       <!-- Erreur de paiement -->
@@ -253,5 +253,14 @@ const handlePayment = async () => {
 .stripe-element-container:focus-within {
   border-color: var(--color-neon-green);
   box-shadow: 0 0 15px rgba(57, 255, 20, 0.2);
+}
+
+/* Add spacing for Stripe injected elements */
+.stripe-element-container :deep(iframe) {
+  min-height: 45px;
+}
+
+.stripe-element-container :deep(.p-Input) {
+  padding: 12px 16px;
 }
 </style>
